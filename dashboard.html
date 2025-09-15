@@ -5,99 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard - HR Connect</title>
   <link rel="stylesheet" href="style.css"/>
-  <style>
-    /* Rainbow Animated Background for the Body */
-    body {
-      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
-      background-size: 400% 400%;
-      animation: gradientAnimation 10s ease infinite;
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    @keyframes gradientAnimation {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    /* Different Background Colors for Each Table */
-    .table-1 {
-      background-color: lightblue; 
-    }
-
-    .table-2 {
-      background-color: lightblue; 
-    }
-
-    .table-3 {
-      background-color: lightblue; 
-    }
-
-    /* Table Animation for Cycling Different Colors */
-    @keyframes tableAnimation1 {
-      0% { background-color: rgba(255, 0, 0, 0.3); } /* Red */
-      50% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
-      100% { background-color: rgba(255, 0, 0, 0.3); } /* Red */
-    }
-
-    @keyframes tableAnimation2 {
-      0% { background-color: rgba(255, 165, 0, 0.3); } /* Orange */
-      50% { background-color: rgba(0, 255, 0, 0.3); } /* Green */
-      100% { background-color: rgba(255, 165, 0, 0.3); } /* Orange */
-    }
-
-    @keyframes tableAnimation3 {
-      0% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
-      50% { background-color: rgba(0, 0, 255, 0.3); } /* Blue */
-      100% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
-    }
-
-    .btn-sm {
-      padding: 5px 10px;
-      margin-left: 5px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .payroll-section {
-      margin-top: 10px;
-      font-size: 14px;
-      color: green;
-    }
-
-    .input-salary {
-      width: 100px;
-    }
-
-    .btn-logout {
-      padding: 10px 20px;
-      background-color: #ff4d4d;
-      color: white;
-      font-size: 16px;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    .btn-logout:hover {
-      background-color: #ff1a1a;
-    }
-  </style>
+  <link rel="stylesheet" href="dashboard.css"/>
 </head>
 <body>
-  <header><h1 style="text-align:center;">Employee Records</h1></header>
+  <header><h1>Employee Records</h1></header>
 
   <section class="dashboard">
     <div class="container">
       <h3>🧾 Active Records</h3>
-      <table class="table-1" border="1" cellpadding="10" style="margin:auto;">
+      <table class="table-1">
         <thead>
           <tr>
             <th>Name</th>
@@ -105,16 +21,15 @@
             <th>Date</th>
             <th>Time In</th>
             <th>Time Out</th>
-            <th>Earnings</th> <!-- Earnings Column -->
+            <th>Earnings</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="recordsTableBody"></tbody>
       </table>
 
-      <br><br>
       <h3>📝 Employee Salary Requests</h3>
-      <table class="table-2" border="1" cellpadding="10" style="margin:auto;">
+      <table class="table-2">
         <thead>
           <tr>
             <th>Employee Name</th>
@@ -126,9 +41,8 @@
         <tbody id="employeeSalaryTableBody"></tbody>
       </table>
 
-      <br><br>
       <h3>🗑️ Deleted Records</h3>
-      <table class="table-3" border="1" cellpadding="10" style="margin:auto;">
+      <table class="table-3">
         <thead>
           <tr>
             <th>Name</th>
@@ -142,16 +56,12 @@
         <tbody id="deletedRecordsTableBody"></tbody>
       </table>
 
-      <br><br>
       <center><a href="index.html" class="btn">Back to Home</a></center>
-
-      <!-- Log Out Button -->
-      <center>
-        <button class="btn-logout" onclick="logOut()">Log Out</button>
-      </center>
+      <center><button class="btn-logout" onclick="logOut()">Log Out</button></center>
     </div>
   </section>
 
+  <!-- JavaScript to handle data fetching and rendering -->
   <script>
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
@@ -197,32 +107,31 @@
 
     // Render Employee Records and Salary Requests
     function renderTables() {
-  const tbody = document.getElementById("recordsTableBody");
-  tbody.innerHTML = "";
+      const tbody = document.getElementById("recordsTableBody");
+      tbody.innerHTML = "";
 
-  employeeRecords.forEach((record, index) => {
-    // Format earnings display
-    const earningsDisplay = record.earnings ? `$${parseFloat(record.earnings).toFixed(2)}` : "Not Available";
-    
-    const row = document.createElement("tr");
-    row.innerHTML = `  
-      <td>${record.name}</td>
-      <td>${record.position}</td>
-      <td>${record.work_date}</td>
-      <td>${record.time_in}</td>
-      <td>${record.time_out || '-'}</td>
-      <td>${earningsDisplay}</td>
-      <td>
-        <button class="btn-sm" onclick="deleteRecord(${record.record_id})">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
+      employeeRecords.forEach((record, index) => {
+        // Format earnings display
+        const earningsDisplay = record.earnings ? `$${parseFloat(record.earnings).toFixed(2)}` : "Not Available";
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `  
+          <td>${record.name}</td>
+          <td>${record.position}</td>
+          <td>${record.work_date}</td>
+          <td>${record.time_in}</td>
+          <td>${record.time_out || '-'}</td>
+          <td>${earningsDisplay}</td>
+          <td>
+            <button class="btn-sm" onclick="deleteRecord(${record.record_id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
 
-  renderSalaryRequests();
-  renderDeletedRecords();
-}
-
+      renderSalaryRequests();
+      renderDeletedRecords();
+    }
 
     // Render Salary Requests
     function renderSalaryRequests() {
@@ -264,7 +173,9 @@
         } else {
           alert('Error deleting salary request');
         }
-      } catch (error) {
+      } 
+      
+      catch (error) {
         console.error('Error:', error);
         alert('Error deleting salary request');
       }

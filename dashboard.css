@@ -1,0 +1,132 @@
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f6f9f6;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #9caf88; /* Sage green */
+      padding: 20px;
+      color: white;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    .dashboard {
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    h3 {
+      color: #4d6b4a;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    thead {
+      background-color: #9caf88;
+      color: white;
+    }
+
+    thead th {
+      padding: 12px;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    tbody tr:hover {
+      background-color: #f0f7f0;
+    }
+
+    .btn, .btn-sm, .btn-logout {
+      background-color: #9caf88;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .btn:hover, .btn-sm:hover, .btn-logout:hover {
+      background-color: #88a172;
+    }
+
+    .btn-logout {
+      margin-top: 20px;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+
+    center a.btn {
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody tr {
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        background: white;
+      }
+
+      tbody td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+      }
+
+      tbody td:before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #4d6b4a;
+      }
+    }
+  </style>
