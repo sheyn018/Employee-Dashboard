@@ -123,7 +123,7 @@
           <td>${record.time_out || '-'}</td>
           <td>${earningsDisplay}</td>
           <td>
-            <button class="btn-sm" onclick="deleteRecord(${record.record_id})">Delete</button>
+            <button class="btn-sm" onclick="deleteRecord(${record.id})">Delete</button>
           </td>
         `;
         tbody.appendChild(row);
@@ -145,12 +145,12 @@
           <td>$${parseFloat(request.requested_salary).toLocaleString()}</td>
           <td>${request.status || "Pending"}</td>
           <td>
-            <select onchange="updateSalaryStatus(${request.request_id}, this.value)">
+            <select onchange="updateSalaryStatus(${request.id}, this.value)">
               <option value="Pending" ${request.status === "Pending" ? "selected" : ""}>Pending</option>
               <option value="Approved" ${request.status === "Approved" ? "selected" : ""}>Approved</option>
               <option value="Declined" ${request.status === "Declined" ? "selected" : ""}>Declined</option>
             </select>
-            <button class="btn-sm" onclick="deleteSalaryRequest(${request.request_id})">Delete</button>
+            <button class="btn-sm" onclick="deleteSalaryRequest(${request.id})">Delete</button>
           </td>
         `;
         tbody.appendChild(row);
@@ -160,6 +160,7 @@
     // Delete Salary Request
     async function deleteSalaryRequest(id) {
       try {
+        console.log('Deleting salary request with ID:', id); // Debugging log
         const response = await fetch(`${API_BASE}/salary-requests`, {
           method: 'DELETE',
           headers: {
@@ -195,8 +196,8 @@
           <td>${record.time_in}</td>
           <td>${record.time_out || '-'}</td>
           <td>
-            <button class="btn-sm" onclick="restoreRecord(${record.deleted_id})">Restore</button>
-            <button class="btn-sm" onclick="permanentlyDeleteRecord(${record.deleted_id})">Delete Permanently</button>
+            <button class="btn-sm" onclick="restoreRecord(${record.id})">Restore</button>
+            <button class="btn-sm" onclick="permanentlyDeleteRecord(${record.id})">Delete Permanently</button>
           </td>
         `;
         tbody.appendChild(row);
@@ -273,6 +274,7 @@
     async function permanentlyDeleteRecord(id) {
       if (confirm('Are you sure you want to permanently delete this record?')) {
         try {
+          console.log('Permanently deleting record with ID:', id); // Debugging log
           const response = await fetch(`${API_BASE}/deleted-records`, {
             method: 'DELETE',
             headers: {

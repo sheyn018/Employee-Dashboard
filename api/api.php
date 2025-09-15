@@ -1,4 +1,7 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 require_once 'config.php';
 
 // Get the request method and path
@@ -72,7 +75,7 @@ switch ($endpoint) {
 function handleEmployees($conn, $method) {
     switch ($method) {
         case 'GET':
-            $result = $conn->query("SELECT * FROM activerecords ORDER BY record_id DESC");
+            $result = $conn->query("SELECT * FROM activerecords ORDER BY id DESC");
             $employees = [];
             while ($row = $result->fetch_assoc()) {
                 $employees[] = $row;
@@ -97,17 +100,17 @@ function handleEmployees($conn, $method) {
             $id = $input['id'];
             
             // First, get the record to move to deletedrecords
-            $result = $conn->query("SELECT * FROM activerecords WHERE record_id = $id");
+            $result = $conn->query("SELECT * FROM activerecords WHERE id = $id");
             $employee = $result->fetch_assoc();
             
             if ($employee) {
                 // Insert into deletedrecords
                 $stmt = $conn->prepare("INSERT INTO deletedrecords (original_id, name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("isssssd", $employee['record_id'], $employee['name'], $employee['position'], $employee['work_date'], $employee['time_in'], $employee['time_out'], $employee['earnings']);
+                $stmt->bind_param("isssssd", $employee['id'], $employee['name'], $employee['position'], $employee['work_date'], $employee['time_in'], $employee['time_out'], $employee['earnings']);
                 $stmt->execute();
                 
                 // Delete from activerecords
-                $conn->query("DELETE FROM activerecords WHERE record_id = $id");
+                $conn->query("DELETE FROM activerecords WHERE id = $id");
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Employee not found'], 404);
@@ -120,7 +123,7 @@ function handleEmployees($conn, $method) {
 function handleSalaryRequests($conn, $method) {
     switch ($method) {
         case 'GET':
-            $result = $conn->query("SELECT * FROM employeesalaryrequests ORDER BY request_id DESC");
+            $result = $conn->query("SELECT * FROM employeesalaryrequests ORDER BY id DESC");
             $requests = [];
             while ($row = $result->fetch_assoc()) {
                 $requests[] = $row;
@@ -169,7 +172,7 @@ function handleSalaryRequests($conn, $method) {
 function handleDeletedRecords($conn, $method) {
     switch ($method) {
         case 'GET':
-            $result = $conn->query("SELECT * FROM deletedrecords ORDER BY deleted_id DESC");
+            $result = $conn->query("SELECT * FROM deletedrecords ORDER BY id DESC");
             $records = [];
             while ($row = $result->fetch_assoc()) {
                 $records[] = $row;
@@ -182,7 +185,7 @@ function handleDeletedRecords($conn, $method) {
             $id = $input['id'];
             
             // Get the deleted record
-            $result = $conn->query("SELECT * FROM deletedrecords WHERE deleted_id = $id");
+            $result = $conn->query("SELECT * FROM deletedrecords WHERE id = $id");
             $record = $result->fetch_assoc();
             
             if ($record) {
@@ -192,7 +195,7 @@ function handleDeletedRecords($conn, $method) {
                 $stmt->execute();
                 
                 // Remove from deletedrecords
-                $conn->query("DELETE FROM deletedrecords WHERE deleted_id = $id");
+                $conn->query("DELETE FROM deletedrecords WHERE id = $id");
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Deleted record not found'], 404);
@@ -203,7 +206,7 @@ function handleDeletedRecords($conn, $method) {
             $input = json_decode(file_get_contents('php://input'), true);
             $id = $input['id'];
             
-            if ($conn->query("DELETE FROM deletedrecords WHERE deleted_id = $id")) {
+            if ($conn->query("DELETE FROM deletedrecords WHERE id = $id")) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to permanently delete record'], 500);
