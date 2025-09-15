@@ -139,17 +139,19 @@
       tbody.innerHTML = "";
 
       salaryRequests.forEach((request, index) => {
+        const currentStatus = request.status || "Pending";
         const row = document.createElement("tr");
         row.innerHTML = ` 
           <td>${request.employee_name}</td>
           <td>$${parseFloat(request.requested_salary).toLocaleString()}</td>
-          <td>${request.status || "Pending"}</td>
           <td>
             <select onchange="updateSalaryStatus(${request.id}, this.value)">
-              <option value="Pending" ${request.status === "Pending" ? "selected" : ""}>Pending</option>
-              <option value="Approved" ${request.status === "Approved" ? "selected" : ""}>Approved</option>
-              <option value="Declined" ${request.status === "Declined" ? "selected" : ""}>Declined</option>
+              <option value="Pending" ${currentStatus === "Pending" ? "selected" : ""}>Pending</option>
+              <option value="Approved" ${currentStatus === "Approved" ? "selected" : ""}>Approved</option>
+              <option value="Declined" ${currentStatus === "Declined" ? "selected" : ""}>Declined</option>
             </select>
+          </td>
+          <td>
             <button class="btn-sm" onclick="deleteSalaryRequest(${request.id})">Delete</button>
           </td>
         `;
@@ -166,7 +168,7 @@
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ id: id })
+          body: JSON.stringify({ id: id})
         });
         
         if (response.ok) {

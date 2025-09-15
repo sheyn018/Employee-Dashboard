@@ -164,9 +164,16 @@ function handleSalaryRequests($conn, $method) {
 
         case 'PUT':
             $input = json_decode(file_get_contents('php://input'), true);
+
+            // Ensure status is valid
+            $allowed = ['Pending','Approved','Declined'];
+            $status = in_array($input['status'], $allowed) ? $input['status'] : 'Pending';
+
+            $id = intval($input['id']);
+
             $stmt = $conn->prepare("UPDATE employeesalaryrequests SET status = ? WHERE id = ?");
-            $stmt->bind_param("si", $input['status'], $input['id']);
-            
+            $stmt->bind_param("si", $status, $id);
+
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true]);
             } else {
