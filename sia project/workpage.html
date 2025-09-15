@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Work - HR Connect</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(45deg, #6a5acd, #ff6f61);
+      color: white;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2.5rem;
+    }
+
+    .work-container {
+      width: 80%;
+      max-width: 800px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .task-container {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #ff7e5f;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .input-field {
+      padding: 8px;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 300px;
+      margin: 10px 0;
+    }
+
+    .result {
+      margin-top: 10px;
+      font-size: 1.2rem;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      background-color: #f44336;
+      font-size: 1rem;
+    }
+
+    #wordToType {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ffeb3b;
+    }
+
+    .done-btn {
+      background-color: #008CBA;
+    }
+
+    .done-btn:hover {
+      background-color: #007b8a;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Employee Typing Task</h1>
+  </header>
+
+  <div class="work-container">
+    <div class="task-container">
+      <h2>📝 Typing Challenge</h2>
+      <p>Type the following word as quickly as you can:</p>
+      
+      <div id="wordToType">Loading word...</div>
+
+      <input type="text" id="typedWord" class="input-field" placeholder="Start typing here..." oninput="checkTyping()" autofocus />
+      
+      <div id="taskStatus" class="result"></div>
+      <div id="earnings" class="result">Total Earnings: $ 0</div>
+    </div>
+
+    <button class="done-btn" onclick="doneWorking()">Done Working</button>
+    <button class="back-btn" onclick="goBack()">Back to Profile</button>
+  </div>
+
+  <script>
+    const words = [
+      "apple", "banana", "orange", "grape", "cherry", "strawberry", "blueberry", "kiwi", "mango", "pear",
+      "computer", "keyboard", "javascript", "employee", "task", "challenge", "work", "office", "success", "team"
+    ];
+
+    let earnings = 0;
+    let wordCount = 0;
+
+    function loadRandomWord() {
+      const randomWord = words[Math.floor(Math.random() * words.length)];
+      document.getElementById("wordToType").textContent = randomWord;
+    }
+
+    function checkTyping() {
+      const typedText = document.getElementById("typedWord").value;
+      const wordToType = document.getElementById("wordToType").textContent;
+      const taskStatus = document.getElementById("taskStatus");
+
+      if (typedText === wordToType) {
+        taskStatus.textContent = "Correct! Get ready for the next word...";
+        taskStatus.style.color = "green";
+
+        earnings += 100;
+        wordCount++;
+
+        document.getElementById("earnings").textContent = `Total Earnings: $${earnings} `;
+
+        document.getElementById("typedWord").value = "";
+        setTimeout(loadRandomWord, 1000);
+      } else {
+        taskStatus.textContent = "Keep going, you're doing great!";
+        taskStatus.style.color = "yellow";
+      }
+    }
+
+    function goBack() {
+      localStorage.setItem("employeeEarnings", earnings);
+      localStorage.setItem("employeeWordCount", wordCount);
+      window.location.href = "profile.html";
+    }
+
+    function doneWorking() {
+  localStorage.setItem("employeeEarnings", earnings);
+  localStorage.setItem("employeeWordCount", wordCount);
+
+  // Save to employeeRecords (assumes you're managing employee records this way)
+  let employeeRecords = JSON.parse(localStorage.getItem("employeeRecords")) || [];
+  const employeeName = "John Doe"; // You need to fetch the actual employee name, this is just a placeholder
+
+  // Find the employee record and update the earnings
+  const employeeIndex = employeeRecords.findIndex(record => record.name === employeeName);
+  if (employeeIndex !== -1) {
+    employeeRecords[employeeIndex].earnings = earnings;
+  }
+
+  localStorage.setItem("employeeRecords", JSON.stringify(employeeRecords));
+
+  alert("You've finished working! Your data has been saved to the dashboard and profile.");
+  window.location.href = "profile.html"; // Redirect to profile
+}
+
+
+
+    window.onload = loadRandomWord;
+  </script>
+
+</body>
+</html>
