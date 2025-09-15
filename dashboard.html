@@ -196,7 +196,7 @@
           <td>${record.time_in}</td>
           <td>${record.time_out || '-'}</td>
           <td>
-            <button class="btn-sm" onclick="restoreRecord(${record.id})">Restore</button>
+            <button class="btn-sm" onclick="restoreRecord(${record.id}, this)">Restore</button>
             <button class="btn-sm" onclick="permanentlyDeleteRecord(${record.id})">Delete Permanently</button>
           </td>
         `;
@@ -250,26 +250,32 @@
     }
 
     // Restore Deleted Record
-    async function restoreRecord(id) {
+    async function restoreRecord(id, btn) {
+      btn.disabled = true; // prevent multiple clicks
+      console.log('Restoring record with ID:', id); // Debugging log
       try {
         const response = await fetch(`${API_BASE}/deleted-records`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: id })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
         });
-        
+
+        const data = await response.json();
+        console.log('Restore response:', data);
+
         if (response.ok) {
-          fetchData(); // Refresh data
+          await fetchData(); // wait for data to refresh
         } else {
           alert('Error restoring record');
+          btn.disabled = false; // re-enable on error
         }
       } catch (error) {
         console.error('Error:', error);
         alert('Error restoring record');
+        btn.disabled = false; // re-enable on error
       }
     }
+
 
     // Permanently Delete Record
     async function permanentlyDeleteRecord(id) {

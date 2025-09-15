@@ -100,16 +100,17 @@ function handleEmployees($conn, $method) {
             break;
 
         case 'DELETE':
+            $input = json_decode(file_get_contents('php://input'), true);
             $id = intval($input['id']);
 
             $result = $conn->query("SELECT * FROM activerecords WHERE id = $id");
             $employee = $result ? $result->fetch_assoc() : null;
 
             if ($employee) {
-                // Use prepared statement to insert into deletedrecords
+                // Insert into deletedrecords with SAME structure
                 $stmt = $conn->prepare("
                     INSERT INTO deletedrecords 
-                    (id, name, position, work_date, time_in, time_out, actions) 
+                    (id, name, position, work_date, time_in, time_out, earnings) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->bind_param(
@@ -151,8 +152,8 @@ function handleSalaryRequests($conn, $method) {
 
         case 'POST':
             $input = json_decode(file_get_contents('php://input'), true);
-            $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (name, salary, status) VALUES (?, ?, ?)");
-            $stmt->bind_param("sds", $input['name'], $input['salary'], $input['status']);
+            $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (employee_name, requested_salary, status, actions) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("sdss", $input['employee_name'], $input['requested_salary'], $input['status'], $input['actions']);
             
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true, 'id' => $conn->insert_id]);
@@ -198,24 +199,74 @@ function handleDeletedRecords($conn, $method) {
             sendJsonResponse($records);
             break;
 
-        case 'POST': // Restore
-            $input = json_decode(file_get_contents('php://input'), true);
-            $id = intval($input['id']);
+case 'POST': // Restore deleted record
+    $input = json_decode(file_get_contents('php://input'), true);
+    $id = isset($input['id']) ? intval($input['id']) : 0;
 
-            $result = $conn->query("SELECT * FROM deletedrecords WHERE id = $id");
-            $record = $result ? $result->fetch_assoc() : null;
-            
-            if ($record) {
-                $stmt = $conn->prepare("INSERT INTO activerecords (name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssssd", $record['name'], $record['position'], $record['work_date'], $record['time_in'], $record['time_out'], $record['earnings']);
-                $stmt->execute();
-                
-                $conn->query("DELETE FROM deletedrecords WHERE id = $id");
-                sendJsonResponse(['success' => true]);
-            } else {
-                sendJsonResponse(['error' => 'Deleted record not found'], 404);
-            }
-            break;
+    if ($id <= 0) {
+        sendJsonResponse(['error' => 'Invalid ID'], 400);
+        break;
+    }
+
+    // Fetch the record from deletedrecords
+    $stmtSelect = $conn->prepare("SELECT * FROM deletedrecords WHERE id = ?");
+    $stmtSelect->bind_param("i", $id);
+    $stmtSelect->execute();
+    $result = $stmtSelect->get_result();
+    $record = $result->fetch_assoc();
+
+    if (!$record) {
+        sendJsonResponse(['error' => 'Deleted record not found'], 404);
+        break;
+    }
+
+    // Check if the ID already exists in activerecords
+    $stmtCheck = $conn->prepare("SELECT id FROM activerecords WHERE id = ?");
+    $stmtCheck->bind_param("i", $record['id']);
+    $stmtCheck->execute();
+    $exists = $stmtCheck->get_result()->num_rows > 0;
+
+    if ($exists) {
+        // Let MySQL auto-assign a new ID
+        $stmtInsert = $conn->prepare("INSERT INTO activerecords (name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmtInsert->bind_param(
+            "sssssd",
+            $record['name'],
+            $record['position'],
+            $record['work_date'],
+            $record['time_in'],
+            $record['time_out'],
+            $record['earnings']
+        );
+    } else {
+        // Insert with old ID
+        $stmtInsert = $conn->prepare("INSERT INTO activerecords (id, name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmtInsert->bind_param(
+            "isssssd",
+            $record['id'],
+            $record['name'],
+            $record['position'],
+            $record['work_date'],
+            $record['time_in'],
+            $record['time_out'],
+            $record['earnings']
+        );
+    }
+
+    // Execute insert
+    if ($stmtInsert->execute()) {
+        // Delete from deletedrecords only if insert succeeded
+        $stmtDelete = $conn->prepare("DELETE FROM deletedrecords WHERE id = ?");
+        $stmtDelete->bind_param("i", $id);
+        $stmtDelete->execute();
+
+        sendJsonResponse(['success' => true]);
+    } else {
+        sendJsonResponse(['error' => 'Failed to restore record'], 500);
+    }
+
+    break;
+
 
         case 'DELETE':
             $input = json_decode(file_get_contents('php://input'), true);
