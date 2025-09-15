@@ -2,6 +2,12 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once 'config.php';
 
 // Get the request method and path
@@ -15,7 +21,6 @@ $endpoint = end($pathParts);
 
 // If no specific endpoint or just accessing api.php directly, show connection status
 if ($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoint === basename(__FILE__, '.php')) {
-    // Test database connection and show status
     $connectionStatus = [
         'status' => 'success',
         'message' => 'Database connection successful!',
@@ -36,24 +41,23 @@ if ($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoint
     $tablesResult = $conn->query("SHOW TABLES");
     $allTables = [];
     while ($row = $tablesResult->fetch_assoc()) {
-        $allTables[] = array_values($row)[0]; // Get table name from result
+        $allTables[] = array_values($row)[0];
     }
     $connectionStatus['all_tables_in_current_db'] = $allTables;
     
     // Test if required tables exist
     $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords'];
     $tableStatus = [];
-    
     foreach ($requiredTables as $table) {
         $result = $conn->query("SHOW TABLES LIKE '$table'");
         $tableStatus[$table] = $result->num_rows > 0 ? 'exists' : 'missing';
     }
-    
     $connectionStatus['required_tables_status'] = $tableStatus;
+
     sendJsonResponse($connectionStatus);
 }
 
-// Handle different endpoints
+// Route endpoints
 switch ($endpoint) {
     case 'employees':
     case 'activerecords':
@@ -71,7 +75,7 @@ switch ($endpoint) {
         sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'salary-requests', 'deleted-records', 'activerecords', 'employeesalaryrequests', 'deletedrecords']], 404);
 }
 
-// Handle employees endpoint
+// Employees
 function handleEmployees($conn, $method) {
     switch ($method) {
         case 'GET':
@@ -82,44 +86,58 @@ function handleEmployees($conn, $method) {
             }
             sendJsonResponse($employees);
             break;
-            
+
         case 'POST':
             $input = json_decode(file_get_contents('php://input'), true);
-            $stmt = $conn->prepare("INSERT INTO activerecords (name, position, date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssssd", $input['name'], $input['position'], $input['date'], $input['time_in'], $input['time_out'], $input['earnings']);
+            $stmt = $conn->prepare("INSERT INTO activerecords (name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssd", $input['name'], $input['position'], $input['work_date'], $input['time_in'], $input['time_out'], $input['earnings']);
             
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true, 'id' => $conn->insert_id]);
             } else {
-                sendJsonResponse(['error' => 'Failed to create employee record'], 500);
+                sendJsonResponse(['error' => 'Failed to create employee record', 'details' => $conn->error], 500);
             }
             break;
-            
+
         case 'DELETE':
-            $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'];
-            
-            // First, get the record to move to deletedrecords
+            $id = intval($input['id']);
+
             $result = $conn->query("SELECT * FROM activerecords WHERE id = $id");
-            $employee = $result->fetch_assoc();
-            
+            $employee = $result ? $result->fetch_assoc() : null;
+
             if ($employee) {
-                // Insert into deletedrecords
-                $stmt = $conn->prepare("INSERT INTO deletedrecords (original_id, name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("isssssd", $employee['id'], $employee['name'], $employee['position'], $employee['work_date'], $employee['time_in'], $employee['time_out'], $employee['earnings']);
-                $stmt->execute();
-                
-                // Delete from activerecords
-                $conn->query("DELETE FROM activerecords WHERE id = $id");
-                sendJsonResponse(['success' => true]);
+                // Use prepared statement to insert into deletedrecords
+                $stmt = $conn->prepare("
+                    INSERT INTO deletedrecords 
+                    (id, name, position, work_date, time_in, time_out, actions) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param(
+                    "isssssd", 
+                    $employee['id'], 
+                    $employee['name'], 
+                    $employee['position'], 
+                    $employee['work_date'], 
+                    $employee['time_in'], 
+                    $employee['time_out'], 
+                    $employee['earnings']
+                );
+
+                if ($stmt->execute()) {
+                    $conn->query("DELETE FROM activerecords WHERE id = $id");
+                    sendJsonResponse(['success' => true, 'moved_id' => $id]);
+                } else {
+                    sendJsonResponse(['error' => 'Failed to insert into deletedrecords', 'details' => $stmt->error], 500);
+                }
             } else {
                 sendJsonResponse(['error' => 'Employee not found'], 404);
             }
             break;
+
     }
 }
 
-// Handle salary requests endpoint
+// Salary requests
 function handleSalaryRequests($conn, $method) {
     switch ($method) {
         case 'GET':
@@ -130,7 +148,7 @@ function handleSalaryRequests($conn, $method) {
             }
             sendJsonResponse($requests);
             break;
-            
+
         case 'POST':
             $input = json_decode(file_get_contents('php://input'), true);
             $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (name, salary, status) VALUES (?, ?, ?)");
@@ -139,10 +157,10 @@ function handleSalaryRequests($conn, $method) {
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true, 'id' => $conn->insert_id]);
             } else {
-                sendJsonResponse(['error' => 'Failed to create salary request'], 500);
+                sendJsonResponse(['error' => 'Failed to create salary request', 'details' => $conn->error], 500);
             }
             break;
-            
+
         case 'PUT':
             $input = json_decode(file_get_contents('php://input'), true);
             $stmt = $conn->prepare("UPDATE employeesalaryrequests SET status = ? WHERE id = ?");
@@ -151,24 +169,24 @@ function handleSalaryRequests($conn, $method) {
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true]);
             } else {
-                sendJsonResponse(['error' => 'Failed to update salary request'], 500);
+                sendJsonResponse(['error' => 'Failed to update salary request', 'details' => $conn->error], 500);
             }
             break;
-            
+
         case 'DELETE':
             $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'];
+            $id = intval($input['id']);
             
             if ($conn->query("DELETE FROM employeesalaryrequests WHERE id = $id")) {
                 sendJsonResponse(['success' => true]);
             } else {
-                sendJsonResponse(['error' => 'Failed to delete salary request'], 500);
+                sendJsonResponse(['error' => 'Failed to delete salary request', 'details' => $conn->error], 500);
             }
             break;
     }
 }
 
-// Handle deleted records endpoint
+// Deleted records
 function handleDeletedRecords($conn, $method) {
     switch ($method) {
         case 'GET':
@@ -179,39 +197,44 @@ function handleDeletedRecords($conn, $method) {
             }
             sendJsonResponse($records);
             break;
-            
-        case 'POST': // Restore record
+
+        case 'POST': // Restore
             $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'];
-            
-            // Get the deleted record
+            $id = intval($input['id']);
+
             $result = $conn->query("SELECT * FROM deletedrecords WHERE id = $id");
-            $record = $result->fetch_assoc();
+            $record = $result ? $result->fetch_assoc() : null;
             
             if ($record) {
-                // Insert back into activerecords
                 $stmt = $conn->prepare("INSERT INTO activerecords (name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->bind_param("sssssd", $record['name'], $record['position'], $record['work_date'], $record['time_in'], $record['time_out'], $record['earnings']);
                 $stmt->execute();
                 
-                // Remove from deletedrecords
                 $conn->query("DELETE FROM deletedrecords WHERE id = $id");
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Deleted record not found'], 404);
             }
             break;
-            
+
         case 'DELETE':
             $input = json_decode(file_get_contents('php://input'), true);
-            $id = $input['id'];
+            $id = intval($input['id']);
             
             if ($conn->query("DELETE FROM deletedrecords WHERE id = $id")) {
                 sendJsonResponse(['success' => true]);
             } else {
-                sendJsonResponse(['error' => 'Failed to permanently delete record'], 500);
+                sendJsonResponse(['error' => 'Failed to permanently delete record', 'details' => $conn->error], 500);
             }
             break;
     }
+}
+
+// JSON response helper
+function sendJsonResponse($data, $statusCode = 200) {
+    http_response_code($statusCode);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit();
 }
 ?>

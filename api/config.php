@@ -16,17 +16,6 @@ if ($conn->connect_error) {
 // Set charset to utf8
 $conn->set_charset("utf8");
 
-// Function to return JSON response
-function sendJsonResponse($data, $status = 200) {
-    http_response_code($status);
-    header('Content-Type: application/json');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
-    echo json_encode($data);
-    exit;
-}
-
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     header('Access-Control-Allow-Origin: *');

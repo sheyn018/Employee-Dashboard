@@ -229,6 +229,7 @@
     // Delete Employee Record
     async function deleteRecord(id) {
       try {
+        console.log('Deleting employee record with ID:', id); // Debugging log
         const response = await fetch(`${API_BASE}/employees`, {
           method: 'DELETE',
           headers: {
