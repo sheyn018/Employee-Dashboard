@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - HR Connect</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Rainbow Animated Background for the Body */
+    body {
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      animation: gradientAnimation 10s ease infinite;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    @keyframes gradientAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Different Background Colors for Each Table */
+    .table-1 {
+      background-color: lightblue; 
+    }
+
+    .table-2 {
+      background-color: lightblue; 
+    }
+
+    .table-3 {
+      background-color: lightblue; 
+    }
+
+    /* Table Animation for Cycling Different Colors */
+    @keyframes tableAnimation1 {
+      0% { background-color: rgba(255, 0, 0, 0.3); } /* Red */
+      50% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
+      100% { background-color: rgba(255, 0, 0, 0.3); } /* Red */
+    }
+
+    @keyframes tableAnimation2 {
+      0% { background-color: rgba(255, 165, 0, 0.3); } /* Orange */
+      50% { background-color: rgba(0, 255, 0, 0.3); } /* Green */
+      100% { background-color: rgba(255, 165, 0, 0.3); } /* Orange */
+    }
+
+    @keyframes tableAnimation3 {
+      0% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
+      50% { background-color: rgba(0, 0, 255, 0.3); } /* Blue */
+      100% { background-color: rgba(255, 255, 0, 0.3); } /* Yellow */
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      margin-left: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .payroll-section {
+      margin-top: 10px;
+      font-size: 14px;
+      color: green;
+    }
+
+    .input-salary {
+      width: 100px;
+    }
+
+    .btn-logout {
+      padding: 10px 20px;
+      background-color: #ff4d4d;
+      color: white;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn-logout:hover {
+      background-color: #ff1a1a;
+    }
+  </style>
+</head>
+<body>
+  <header><h1 style="text-align:center;">Employee Records</h1></header>
+
+  <section class="dashboard">
+    <div class="container">
+      <h3>🧾 Active Records</h3>
+      <table class="table-1" border="1" cellpadding="10" style="margin:auto;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Earnings</th> <!-- Earnings Column -->
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recordsTableBody"></tbody>
+      </table>
+
+      <br><br>
+      <h3>📝 Employee Salary Requests</h3>
+      <table class="table-2" border="1" cellpadding="10" style="margin:auto;">
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Requested Salary</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="employeeSalaryTableBody"></tbody>
+      </table>
+
+      <br><br>
+      <h3>🗑️ Deleted Records</h3>
+      <table class="table-3" border="1" cellpadding="10" style="margin:auto;">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deletedRecordsTableBody"></tbody>
+      </table>
+
+      <br><br>
+      <center><a href="index.html" class="btn">Back to Home</a></center>
+
+      <!-- Log Out Button -->
+      <center>
+        <button class="btn-logout" onclick="logOut()">Log Out</button>
+      </center>
+    </div>
+  </section>
+
+  <script>
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Global variables to store data
+    let employeeRecords = [];
+    let deletedRecords = [];
+    let salaryRequests = [];
+
+    // Fetch data from API
+    async function fetchData() {
+      try {
+        // Fetch employee records
+        const employeesResponse = await fetch(`${API_BASE}/employees`);
+        employeeRecords = await employeesResponse.json();
+
+        console.log('Employee Records:', employeeRecords); // Debugging log
+
+        // Fetch salary requests
+        const salaryResponse = await fetch(`${API_BASE}/salary-requests`);
+        salaryRequests = await salaryResponse.json();
+
+        console.log('Salary Requests:', salaryRequests); // Debugging log
+
+        // Fetch deleted records
+        const deletedResponse = await fetch(`${API_BASE}/deleted-records`);
+        deletedRecords = await deletedResponse.json();
+
+        console.log('Deleted Records:', deletedRecords); // Debugging log
+
+        renderTables();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        alert('Error connecting to database. Please check your PHP server.');
+      }
+    }
+
+    // Render Employee Records and Salary Requests
+    function renderTables() {
+  const tbody = document.getElementById("recordsTableBody");
+  tbody.innerHTML = "";
+
+  employeeRecords.forEach((record, index) => {
+    // Format earnings display
+    const earningsDisplay = record.earnings ? `$${parseFloat(record.earnings).toFixed(2)}` : "Not Available";
+    
+    const row = document.createElement("tr");
+    row.innerHTML = `  
+      <td>${record.name}</td>
+      <td>${record.position}</td>
+      <td>${record.work_date}</td>
+      <td>${record.time_in}</td>
+      <td>${record.time_out || '-'}</td>
+      <td>${earningsDisplay}</td>
+      <td>
+        <button class="btn-sm" onclick="deleteRecord(${record.record_id})">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  renderSalaryRequests();
+  renderDeletedRecords();
+}
+
+
+    // Render Salary Requests
+    function renderSalaryRequests() {
+      const tbody = document.getElementById("employeeSalaryTableBody");
+      tbody.innerHTML = "";
+
+      salaryRequests.forEach((request, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = ` 
+          <td>${request.employee_name}</td>
+          <td>$${parseFloat(request.requested_salary).toLocaleString()}</td>
+          <td>${request.status || "Pending"}</td>
+          <td>
+            <select onchange="updateSalaryStatus(${request.request_id}, this.value)">
+              <option value="Pending" ${request.status === "Pending" ? "selected" : ""}>Pending</option>
+              <option value="Approved" ${request.status === "Approved" ? "selected" : ""}>Approved</option>
+              <option value="Declined" ${request.status === "Declined" ? "selected" : ""}>Declined</option>
+            </select>
+            <button class="btn-sm" onclick="deleteSalaryRequest(${request.request_id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Delete Salary Request
+    async function deleteSalaryRequest(id) {
+      try {
+        const response = await fetch(`${API_BASE}/salary-requests`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error deleting salary request');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting salary request');
+      }
+    }
+
+    // Render Deleted Records
+    function renderDeletedRecords() {
+      const tbody = document.getElementById("deletedRecordsTableBody");
+      tbody.innerHTML = "";
+
+      deletedRecords.forEach((record, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${record.name}</td>
+          <td>${record.position}</td>
+          <td>${record.work_date}</td>
+          <td>${record.time_in}</td>
+          <td>${record.time_out || '-'}</td>
+          <td>
+            <button class="btn-sm" onclick="restoreRecord(${record.deleted_id})">Restore</button>
+            <button class="btn-sm" onclick="permanentlyDeleteRecord(${record.deleted_id})">Delete Permanently</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Update Salary Status
+    async function updateSalaryStatus(id, newStatus) {
+      try {
+        const response = await fetch(`${API_BASE}/salary-requests`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id, status: newStatus })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error updating salary status');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating salary status');
+      }
+    }
+
+    // Delete Employee Record
+    async function deleteRecord(id) {
+      try {
+        const response = await fetch(`${API_BASE}/employees`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error deleting employee record');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting employee record');
+      }
+    }
+
+    // Restore Deleted Record
+    async function restoreRecord(id) {
+      try {
+        const response = await fetch(`${API_BASE}/deleted-records`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error restoring record');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error restoring record');
+      }
+    }
+
+    // Permanently Delete Record
+    async function permanentlyDeleteRecord(id) {
+      if (confirm('Are you sure you want to permanently delete this record?')) {
+        try {
+          const response = await fetch(`${API_BASE}/deleted-records`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: id })
+          });
+          
+          if (response.ok) {
+            fetchData(); // Refresh data
+          } else {
+            alert('Error permanently deleting record');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error permanently deleting record');
+        }
+      }
+    }
+
+    // Log Out Function
+    function logOut() {
+      localStorage.removeItem("isAdmin");
+      window.location.href = "index.html";
+    }
+
+    // Initial data fetch and render
+    fetchData();
+  </script>
+</body>
+</html>

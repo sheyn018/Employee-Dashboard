@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In - HR Connect</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* Rainbow Animated Background for body */
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(270deg, 
+        #ff0000, #ff9900, #33cc33, #00ccff, #9900cc, #ff3399, #ff0000);
+      background-size: 1400% 1400%;
+      animation: rainbowBG 15s ease infinite;
+    }
+
+    @keyframes rainbowBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    header {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    /* Oval background for the <h1> element */
+    header h1 {
+      background-color: rgba(0, 68, 128, 0.8); /* Dark blue background with some transparency */
+      color: white;
+      padding: 15px 40px;
+      border-radius: 100px; /* Oval shape */
+      display: inline-block;
+      font-size: 36px;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+      font-weight: bold;
+    }
+
+    /* Curve Background Wrapper */
+    .curve-background {
+      background: rgba(255, 255, 255, 0.9);
+      margin: 40px auto;
+      padding: 50px 30px;
+      border-radius: 50px 50px 0 0; /* Top corners rounded */
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Optional: Add wave effect */
+    .curve-background::before {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+      height: 80px;
+      background: white;
+      border-radius: 100%;
+    }
+
+    .curve-background h3 {
+      margin-bottom: 20px;
+      color: #004080;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .btn-sm {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #004080;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn-sm:hover {
+      background-color: #003366;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Employee Sign In</h1>
+  </header>
+
+  <section class="curve-background">
+    <h3>Enter Your Information</h3>
+    <input type="text" id="employeeName" placeholder="Your Name" required />
+    <input type="text" id="employeePosition" placeholder="Position" required />
+    <input type="date" id="employeeDate" placeholder="Date" required />
+    <input type="time" id="employeeTimeIn" placeholder="Time In" required />
+    <input type="time" id="employeeTimeOut" placeholder="Time Out" />
+    <button class="btn-sm" onclick="submitSignIn()">Sign In</button>
+  </section>
+
+  <script>
+    function submitSignIn() {
+      const name = document.getElementById("employeeName").value;
+      const position = document.getElementById("employeePosition").value;
+      const date = document.getElementById("employeeDate").value;
+      const timeIn = document.getElementById("employeeTimeIn").value;
+      const timeOut = document.getElementById("employeeTimeOut").value;
+
+      if (!name || !position || !date || !timeIn) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      const employeeData = { name, position, date, timeIn, timeOut };
+      let employeeRecords = JSON.parse(localStorage.getItem("employeeRecords")) || [];
+      employeeRecords.push(employeeData);
+      localStorage.setItem("employeeRecords", JSON.stringify(employeeRecords));
+
+      alert("Sign-in successful! Redirecting to your profile...");
+      window.location.href = "profile.html";
+    }
+  </script>
+</body>
+</html>

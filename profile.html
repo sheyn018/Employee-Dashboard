@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Profile - HR Connect</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      animation: rainbowBackground 10s ease infinite;
+    }
+
+    @keyframes rainbowBackground {
+      0% { background-position: 0% 50%; }
+      25% { background-position: 50% 50%; }
+      50% { background-position: 100% 50%; }
+      75% { background-position: 50% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .btn-sm {
+      padding: 10px 20px;
+      margin-top: 10px;
+      margin-left: 700px;
+      font-size: 14px;
+      cursor: pointer;
+      align-self: center;
+    }
+
+    .btn-logout {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 16px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    table {
+      margin: auto;
+      width: 80%;
+      border-collapse: collapse;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    input {
+      margin: 10px;
+      padding: 8px;
+      font-size: 14px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 30px 0;
+    }
+
+    .salary-request-section {
+      margin-top: 20px;
+      padding: 30px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .container {
+      background: linear-gradient(45deg, #ff6f61, #6a5acd);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      color: white;
+      text-align: center;
+    }
+
+    .btn-logout:hover {
+      background-color: #e53935;
+    }
+
+    .btn-sm:hover {
+      background-color: #45a049;
+    }
+
+    button{
+      display: block;
+      width: 10%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-start-working {
+      display: block;
+      width: 15%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+      text-align: center;
+      margin: 0 auto;
+    }
+
+    .btn-start-working:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="text-align:center;">Employee Profile</h1>
+  </header>
+
+  <section class="profile-section">
+    <div class="container">
+      <h2>Welcome, Employee!</h2>
+      <p>Here you can view your profile and request a salary update.</p>
+      <div id="employeeEarnings"></div>
+      <div id="employeeWordCount"></div>
+    </div>
+
+    <div class="salary-request-section">
+      <h3>📝 Employee Salary Requests</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Requested Salary</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="employeeSalaryTableBody"></tbody>
+      </table>
+
+      <div class="form-container">
+        <h4>Submit Your Salary Request</h4>
+        <input type="text" id="employeeName" placeholder="Your Name" required />
+        <input type="number" id="employeeRequestedSalary" placeholder="Requested Salary" required />
+        <button class="btn-sm" onclick="submitSalaryRequest()">Submit</button>
+      </div>
+    </div>
+
+    <center>
+      <button class="btn-start-working" onclick="startWorking()">Start Working</button>
+    </center>
+
+    <br><br>
+    <center>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </center>
+  </section>
+
+  <script>
+    let salaryRequests = JSON.parse(localStorage.getItem("salaryRequests")) || [];
+    let earnings = localStorage.getItem("employeeEarnings") || 0;
+    let wordCount = localStorage.getItem("employeeWordCount") || 0;
+
+    function renderEmployeeSalaryRequests() {
+      const tbody = document.getElementById("employeeSalaryTableBody");
+      tbody.innerHTML = "";
+
+      salaryRequests.forEach((request, index) => {
+        const status = request.status || "Pending";
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${request.name}</td>
+          <td>$${parseFloat(request.salary).toLocaleString()}</td>
+          <td>${status}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function submitSalaryRequest() {
+      const name = document.getElementById("employeeName").value.trim();
+      const salary = document.getElementById("employeeRequestedSalary").value.trim();
+
+      if (!name || !salary || isNaN(salary)) {
+        alert("Please enter a valid name and salary.");
+        return;
+      }
+
+      salaryRequests.push({ name, salary, status: "Pending" });
+      localStorage.setItem("salaryRequests", JSON.stringify(salaryRequests));
+
+      document.getElementById("employeeName").value = "";
+      document.getElementById("employeeRequestedSalary").value = "";
+
+      renderEmployeeSalaryRequests();
+      alert("Salary request submitted!");
+    }
+
+    function logout() {
+      localStorage.removeItem("isEmployee");
+      window.location.href = "index.html";
+    }
+
+    function startWorking() {
+      window.location.href = "workpage.html";
+    }
+
+    document.getElementById("employeeEarnings").innerText = `Total Earnings: $${earnings} `;
+    document.getElementById("employeeWordCount").innerText = `Words Typed: ${wordCount}`;
+
+    renderEmployeeSalaryRequests();
+  </script>
+</body>
+</html>
