@@ -5,19 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Payslip - HR Connect</title>
   <link rel="stylesheet" href="../css/payslip.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
 </head>
 <body>
-  <button class="menu-btn" onclick="openNav()">☰</button>
-  <button class="logout-btn" onclick="logout()">Logout</button>
-
-  <div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    <a href="admin-welcome.html">🏠 Dashboard</a>
-    <a href="dashboard.html">📊 Employee Records</a>
-    <a href="employee-list.html">👥 Employee List</a>
-    <a href="applicant.html">📝 Applicant</a>
-    <a href="payslip.html">💰 Payslip</a>
-  </div>
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
 
   <div class="content">
     <header>
@@ -79,7 +71,11 @@
     </div>
   </div>
 
+  <script src="../components/navigation.js"></script>
   <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
     // API Configuration
     const API_BASE_URL = 'http://localhost:3000/api/api.php';
     
@@ -129,10 +125,21 @@
       window.location.href = "index.html";
     }
 
-    // Check admin authentication
+    // Check admin authentication and initialize navigation
     if (localStorage.getItem("isAdmin") !== "true") {
       window.location.href = "admin-login.html";
     }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('payslip.html');
 
     let selectedPayslip = null;
 

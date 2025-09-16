@@ -1,20 +1,14 @@
-// Navigation Component for HR Connect System
-// Usage: Include this script and call NavigationComponent.init() after page load
-
+// Navigation Component
 const NavigationComponent = {
   // Configuration for different navigation menus
   menus: {
     admin: [
-      { href: "admin-welcome.html", icon: "🏠", text: "Dashboard" },
       { href: "dashboard.html", icon: "📊", text: "Employee Records" },
-      { href: "employee-list.html", icon: "👥", text: "Employee List" },
       { href: "add-employee.html", icon: "➕", text: "Add Employee" },
-      { href: "applicant.html", icon: "📝", text: "Applicant" },
       { href: "payslip.html", icon: "💰", text: "Payslip" }
     ],
     employee: [
-      { href: "dashboard.html", icon: "📊", text: "Dashboard" },
-      { href: "employees.html", icon: "👥", text: "Employees" },
+      { href: "dashboard.html", icon: "👥", text: "Employee Records" },
       { href: "new-employee.html", icon: "➕", text: "Add Employee" },
       { href: "payslips.html", icon: "💰", text: "Payslips" }
     ]

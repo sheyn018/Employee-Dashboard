@@ -63,7 +63,7 @@ switch ($endpoint) {
     case 'activerecords':
         handleEmployees($conn, $method);
         break;
-    case 'new-employee': // 👈 New endpoint for inserting employees only
+    case 'new-employee':
         handleNewEmployee($conn, $method);
         break;
     case 'salary-requests':
