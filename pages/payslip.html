@@ -172,9 +172,14 @@
               name: payslip.employee_name,
               position: payslip.position,
               earnings: parseFloat(payslip.earnings) || 0,
-              tasksCompleted: parseInt(payslip.tasks_completed) || 0,
+              tasksCompleted: 1, // Each payslip row = 1 task
               lastPayslipDate: payslip.date_generated
             });
+          } else {
+            // If employee already exists, increment task count and add earnings
+            const existing = employeeMap.get(payslip.employee_name);
+            existing.tasksCompleted += 1; // Count the rows
+            existing.earnings += parseFloat(payslip.earnings) || 0;
           }
         });
 
@@ -233,16 +238,12 @@
     async function sendPayslip() {
       if (selectedPayslip) {
         try {
-          // Save payslip to API
-          await apiCall('payslips', 'POST', {
-            employee_name: selectedPayslip.name,
-            position: selectedPayslip.position,
-            earnings: selectedPayslip.earnings,
-            tasks_completed: selectedPayslip.tasksCompleted
+          // Create payslip using the API (it will automatically count tasks and sum earnings)
+          const payslipResult = await apiCall('payslips', 'POST', {
+            employee_name: selectedPayslip.name
           });
 
           // Delete all employee records to reset their earnings (since they've been paid)
-          // First, get all records for this employee
           const allEmployees = await apiCall('employees');
           const employeeRecords = allEmployees.filter(emp => emp.name === selectedPayslip.name);
           
@@ -251,7 +252,14 @@
             await apiCall('employees', 'DELETE', { id: record.id });
           }
 
-          alert(`Payslip for ${selectedPayslip.name} has been sent and earnings reset.`);
+          const payslipData = payslipResult.payslip_data;
+          alert(`Payslip for ${selectedPayslip.name} has been generated:
+          
+Tasks Completed: ${payslipData.tasks_completed}
+Total Earnings: ₱${parseFloat(payslipData.total_earnings).toLocaleString()}
+
+All records have been reset for this employee.`);
+          
           closeModal();
           loadPayslipTable();
           
@@ -283,7 +291,8 @@
           // Sort history by date, most recent first
           payslipHistory.sort((a, b) => new Date(b.date_generated) - new Date(a.date_generated));
 
-          payslipHistory.forEach((record) => {
+          // Each row in payslip_history represents one task completion
+          payslipHistory.forEach((record, index) => {
             const row = document.createElement("tr");
             const formattedDate = new Date(record.date_generated).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -296,7 +305,7 @@
             row.innerHTML = `
               <td>${formattedDate}</td>
               <td>${record.position}</td>
-              <td>${record.tasks_completed || 0} tasks</td>
+              <td>1 task completed</td>
               <td>₱${parseFloat(record.earnings).toLocaleString()}</td>
               <td>
                 <button class="modal-btn delete-btn" onclick="deleteRecord(${record.id}, '${employeeName}')">
@@ -306,6 +315,10 @@
             `;
             historyTableBody.appendChild(row);
           });
+          
+          // Show total count at the bottom or in a summary
+          const totalTasks = payslipHistory.length;
+          console.log(`Total tasks completed by ${employeeName}: ${totalTasks}`);
         }
 
         document.getElementById("historyModal").style.display = "flex";

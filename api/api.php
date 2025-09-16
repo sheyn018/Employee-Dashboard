@@ -118,12 +118,36 @@ function handleNewEmployee($conn, $method) {
 function handleEmployees($conn, $method) {
     switch ($method) {
         case 'GET':
-            $result = $conn->query("SELECT * FROM activerecords ORDER BY id DESC");
-            $employees = [];
-            while ($row = $result->fetch_assoc()) {
-                $employees[] = $row;
+            // Check if we need aggregated data for payslip display
+            $aggregate = isset($_GET['aggregate']) ? $_GET['aggregate'] === 'true' : false;
+            
+            if ($aggregate) {
+                // Return aggregated data grouped by employee (for payslip table display)
+                $result = $conn->query("
+                    SELECT 
+                        name, 
+                        position, 
+                        COUNT(*) as task_count,
+                        SUM(earnings) as total_earnings,
+                        MAX(work_date) as last_work_date
+                    FROM activerecords 
+                    GROUP BY name, position 
+                    ORDER BY last_work_date DESC
+                ");
+                $employees = [];
+                while ($row = $result->fetch_assoc()) {
+                    $employees[] = $row;
+                }
+                sendJsonResponse($employees);
+            } else {
+                // Return individual records
+                $result = $conn->query("SELECT * FROM activerecords ORDER BY id DESC");
+                $employees = [];
+                while ($row = $result->fetch_assoc()) {
+                    $employees[] = $row;
+                }
+                sendJsonResponse($employees);
             }
-            sendJsonResponse($employees);
             break;
 
         case 'POST':
@@ -351,13 +375,52 @@ function handlePayslips($conn, $method) {
             break;
 
         case 'POST':
-            // Generate/create a new payslip
+            // Generate/create a new payslip by counting tasks and summing earnings
             $input = json_decode(file_get_contents('php://input'), true);
-            $stmt = $conn->prepare("INSERT INTO payslip_history (employee_name, position, earnings, tasks_completed, date_generated) VALUES (?, ?, ?, ?, NOW())");
-            $stmt->bind_param("ssdi", $input['employee_name'], $input['position'], $input['earnings'], $input['tasks_completed']);
             
-            if ($stmt->execute()) {
-                sendJsonResponse(['success' => true, 'id' => $conn->insert_id]);
+            if (!isset($input['employee_name'])) {
+                sendJsonResponse(['error' => 'Employee name is required'], 400);
+                break;
+            }
+            
+            $employeeName = $input['employee_name'];
+            
+            // Get employee data by counting tasks and summing earnings from activerecords
+            $stmt = $conn->prepare("
+                SELECT 
+                    name, 
+                    position, 
+                    COUNT(*) as tasks_completed,
+                    SUM(earnings) as total_earnings
+                FROM activerecords 
+                WHERE name = ? 
+                GROUP BY name, position
+            ");
+            $stmt->bind_param("s", $employeeName);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $employeeData = $result->fetch_assoc();
+            
+            if (!$employeeData) {
+                sendJsonResponse(['error' => 'No active records found for this employee'], 404);
+                break;
+            }
+            
+            // Insert into payslip_history (without tasks_completed if column doesn't exist)
+            $stmtInsert = $conn->prepare("INSERT INTO payslip_history (employee_name, position, earnings, date_generated) VALUES (?, ?, ?, NOW())");
+            $stmtInsert->bind_param("ssd", $employeeData['name'], $employeeData['position'], $employeeData['total_earnings']);
+            
+            if ($stmtInsert->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $conn->insert_id,
+                    'payslip_data' => [
+                        'employee_name' => $employeeData['name'],
+                        'position' => $employeeData['position'],
+                        'total_earnings' => $employeeData['total_earnings'],
+                        'tasks_completed' => $employeeData['tasks_completed']
+                    ]
+                ]);
             } else {
                 sendJsonResponse(['error' => 'Failed to create payslip record', 'details' => $conn->error], 500);
             }
