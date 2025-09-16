@@ -46,7 +46,7 @@ if ($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoint
     $connectionStatus['all_tables_in_current_db'] = $allTables;
     
     // Test if required tables exist
-    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords'];
+    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history'];
     $tableStatus = [];
     foreach ($requiredTables as $table) {
         $result = $conn->query("SHOW TABLES LIKE '$table'");
@@ -71,8 +71,12 @@ switch ($endpoint) {
     case 'deletedrecords':
         handleDeletedRecords($conn, $method);
         break;
+    case 'payslips':
+    case 'payslip-history':
+        handlePayslips($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'salary-requests', 'deleted-records', 'activerecords', 'employeesalaryrequests', 'deletedrecords']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'salary-requests', 'deleted-records', 'payslips', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Employees
@@ -283,6 +287,87 @@ function handleDeletedRecords($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to permanently delete record', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Payslips
+function handlePayslips($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get payslip history, optionally filtered by employee name
+            $employeeName = isset($_GET['employee']) ? $_GET['employee'] : null;
+            
+            if ($employeeName) {
+                $stmt = $conn->prepare("SELECT * FROM payslip_history WHERE employee_name = ? ORDER BY date_generated DESC");
+                $stmt->bind_param("s", $employeeName);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query("SELECT * FROM payslip_history ORDER BY date_generated DESC");
+            }
+            
+            $payslips = [];
+            while ($row = $result->fetch_assoc()) {
+                $payslips[] = $row;
+            }
+            sendJsonResponse($payslips);
+            break;
+
+        case 'POST':
+            // Generate/create a new payslip
+            $input = json_decode(file_get_contents('php://input'), true);
+            $stmt = $conn->prepare("INSERT INTO payslip_history (employee_name, position, earnings, tasks_completed, date_generated) VALUES (?, ?, ?, ?, NOW())");
+            $stmt->bind_param("ssdi", $input['employee_name'], $input['position'], $input['earnings'], $input['tasks_completed']);
+            
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true, 'id' => $conn->insert_id]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create payslip record', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update payslip record (if needed)
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id = intval($input['id']);
+
+            $stmt = $conn->prepare("UPDATE payslip_history SET employee_name = ?, position = ?, earnings = ?, tasks_completed = ? WHERE id = ?");
+            $stmt->bind_param("ssdii", $input['employee_name'], $input['position'], $input['earnings'], $input['tasks_completed'], $id);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update payslip record', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete payslip record(s)
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (isset($input['employee_name'])) {
+                // Delete all payslips for a specific employee
+                $stmt = $conn->prepare("DELETE FROM payslip_history WHERE employee_name = ?");
+                $stmt->bind_param("s", $input['employee_name']);
+                
+                if ($stmt->execute()) {
+                    sendJsonResponse(['success' => true, 'message' => 'All payslips deleted for employee']);
+                } else {
+                    sendJsonResponse(['error' => 'Failed to delete payslips', 'details' => $conn->error], 500);
+                }
+            } else if (isset($input['id'])) {
+                // Delete specific payslip by ID
+                $id = intval($input['id']);
+                
+                if ($conn->query("DELETE FROM payslip_history WHERE id = $id")) {
+                    sendJsonResponse(['success' => true, 'message' => 'Payslip deleted']);
+                } else {
+                    sendJsonResponse(['error' => 'Failed to delete payslip', 'details' => $conn->error], 500);
+                }
+            } else {
+                sendJsonResponse(['error' => 'Either employee_name or id must be provided'], 400);
             }
             break;
     }
