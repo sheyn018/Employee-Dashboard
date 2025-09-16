@@ -6,19 +6,13 @@
   <title>Dashboard - HR Connect</title>
   <link rel="stylesheet" href="../css/style.css"/>
   <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
 </head>
 <body>
   <header><h1>Employee Records</h1></header>
 
-  <button class="menu-btn" onclick="openNav()">☰</button>
-  <div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    <a href="admin-welcome.html">🏠 Dashboard</a>
-    <a href="dashboard.html">📊 Employee Records</a>
-    <a href="employee-list.html">👥 Employee List</a>
-    <a href="applicant.html">📝 Applicant</a>
-    <a href="payslip.html">💰 Payslip</a>
-  </div>
+  <!-- Navigation component will be inserted here -->
+  <div id="navigation-container"></div>
 
   <section class="dashboard">
     <div class="container">
@@ -67,25 +61,32 @@
       </table>
 
       <center><a href="index.html" class="btn">Back to Home</a></center>
-      <center><button class="btn-logout" onclick="logOut()">Log Out</button></center>
+      <center><button class="btn-logout" onclick="NavigationComponent.logout()">Log Out</button></center>
     </div>
   </section>
 
   <!-- JavaScript to handle data fetching and rendering -->
+  <script src="../components/navigation.js"></script>
   <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
       alert("Access denied. Admins only.");
       window.location.href = "admin-login.html";
     }
 
-    function openNav() {
-      document.getElementById("mySidebar").style.width = "250px";
-    }
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
 
-    function closeNav() {
-      document.getElementById("mySidebar").style.width = "0";
-    }
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('dashboard.html');
 
     // API base URL
     const API_BASE = 'http://localhost:3000/api/api.php';
@@ -320,12 +321,6 @@
           alert('Error permanently deleting record');
         }
       }
-    }
-
-    // Log Out Function
-    function logOut() {
-      localStorage.removeItem("isAdmin");
-      window.location.href = "index.html";
     }
 
     // Initial data fetch and render
