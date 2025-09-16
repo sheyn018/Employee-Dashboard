@@ -63,6 +63,9 @@ switch ($endpoint) {
     case 'activerecords':
         handleEmployees($conn, $method);
         break;
+    case 'new-employee': // 👈 New endpoint for inserting employees only
+        handleNewEmployee($conn, $method);
+        break;
     case 'salary-requests':
     case 'employeesalaryrequests':
         handleSalaryRequests($conn, $method);
@@ -76,7 +79,39 @@ switch ($endpoint) {
         handlePayslips($conn, $method);
         break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'salary-requests', 'deleted-records', 'payslips', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+}
+
+// Insert-only employee endpoint
+function handleNewEmployee($conn, $method) {
+    if ($method !== 'POST') {
+        sendJsonResponse(['error' => 'Only POST method allowed'], 405);
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['name'], $input['position'], $input['work_date'], $input['time_in'], $input['time_out'], $input['earnings'])) {
+        sendJsonResponse(['error' => 'Missing required fields'], 400);
+    }
+
+    // Generate unique random 5-digit ID
+    do {
+        $randomId = rand(10000, 99999);
+        $check = $conn->prepare("SELECT id FROM activerecords WHERE id = ?");
+        $check->bind_param("i", $randomId);
+        $check->execute();
+        $result = $check->get_result();
+    } while ($result && $result->num_rows > 0);
+
+    // Insert with custom ID
+    $stmt = $conn->prepare("INSERT INTO activerecords (id, name, position, work_date, time_in, time_out, earnings) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssd", $randomId, $input['name'], $input['position'], $input['work_date'], $input['time_in'], $input['time_out'], $input['earnings']);
+    
+    if ($stmt->execute()) {
+        sendJsonResponse(['success' => true, 'id' => $randomId]);
+    } else {
+        sendJsonResponse(['error' => 'Failed to insert new employee', 'details' => $conn->error], 500);
+    }
 }
 
 // Employees

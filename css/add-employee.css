@@ -1,0 +1,58 @@
+/* Reuse your base styles */
+@import url("dashboard.css");
+
+/* Form container */
+.form-container {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  max-width: 600px;
+  margin: auto;
+}
+
+/* Form groups */
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #2d3748;
+}
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e0;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.form-group input:focus {
+  border-color: #9caf88;
+  box-shadow: 0 0 0 3px rgba(156, 175, 136, 0.3);
+  outline: none;
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Response messages */
+.response {
+  margin-top: 20px;
+  font-size: 14px;
+  text-align: center;
+}
+.response .success {
+  color: #2f855a;
+  font-weight: 600;
+}
+.response .error {
+  color: #c53030;
+  font-weight: 600;
+}
