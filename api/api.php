@@ -206,14 +206,14 @@ function handleDeletedRecords($conn, $method) {
             sendJsonResponse($records);
             break;
 
-case 'POST': // Restore deleted record
-    $input = json_decode(file_get_contents('php://input'), true);
-    $id = isset($input['id']) ? intval($input['id']) : 0;
+    case 'POST': // Restore deleted record
+        $input = json_decode(file_get_contents('php://input'), true);
+        $id = isset($input['id']) ? intval($input['id']) : 0;
 
-    if ($id <= 0) {
-        sendJsonResponse(['error' => 'Invalid ID'], 400);
-        break;
-    }
+        if ($id <= 0) {
+            sendJsonResponse(['error' => 'Invalid ID'], 400);
+            break;
+        }
 
     // Fetch the record from deletedrecords
     $stmtSelect = $conn->prepare("SELECT * FROM deletedrecords WHERE id = ?");
