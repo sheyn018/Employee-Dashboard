@@ -1,4 +1,4 @@
-/* Base typography and layout improvements */
+/* Base typography and layout */
 * {
     margin: 0;
     padding: 0;
@@ -13,48 +13,101 @@ body {
     line-height: 1.6;
 }
 
-/* Sidebar */
+/* Sidebar Styles */
 .sidebar {
-    height: 100%;
+    height: 100vh;
     width: 0;
     position: fixed;
-    z-index: 2;
+    z-index: 1000;
     top: 0;
     left: 0;
     background: linear-gradient(180deg, #4d6b4a 0%, #3a5038 100%);
-    overflow-x: hidden;
-    transition: 0.3s ease-in-out;
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: 60px;
     color: #fff;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
+
 .sidebar a {
-    padding: 15px 20px;
+    padding: 16px 20px 16px 24px;
     text-decoration: none;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
-    color: #fff;
-    display: block;
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.25s ease;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
 }
+
+.sidebar a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #9caf88;
+    transform: scaleY(0);
+    transition: transform 0.25s ease;
+}
+
 .sidebar a:hover {
-    background-color: rgba(255,255,255,0.1);
-    border-left: 3px solid #9caf88;
-    padding-left: 23px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
 }
+
+.sidebar a:hover::before {
+    transform: scaleY(1);
+}
+
 .sidebar .closebtn {
     position: absolute;
-    top: 10px;
+    top: 15px;
     right: 20px;
-    font-size: 32px;
-    font-weight: bold;
-    transition: all 0.2s ease;
+    font-size: 28px;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 4px;
+    border-radius: 4px;
 }
+
 .sidebar .closebtn:hover {
     color: #9caf88;
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
+}
+
+/* Navigation Section Styles */
+.nav-section {
+    margin: 20px 0 8px 0;
+}
+
+.nav-section-title {
+    padding: 8px 24px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+}
+
+.nav-section:first-child {
+    margin-top: 0;
+}
+
+.nav-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 16px 20px;
 }
 
 /* Main content */
@@ -100,51 +153,104 @@ header h1 {
     z-index: 1;
 }
 
-/* Buttons */
-.menu-btn, .logout-btn {
-    background: linear-gradient(135deg, #9caf88 0%, #88a172 100%);
-    color: white;
+/* Button Styles */
+.menu-btn, .logout-btn, .generate-btn, .modal-btn, .reset-btn, .delete-btn, .close-history-btn {
     border: none;
-    padding: 12px 20px;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    transition: all 0.3s ease;
-    margin: 5px;
-    box-shadow: 0 2px 8px rgba(156, 175, 136, 0.3);
-    backdrop-filter: blur(10px);
+    margin: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: capitalize;
+    letter-spacing: 0.025em;
+    color: white;
 }
-.menu-btn:hover, .logout-btn:hover {
+
+/* Primary buttons */
+.menu-btn, .logout-btn, .generate-btn, .modal-btn, .close-history-btn {
+    background: linear-gradient(135deg, #9caf88 0%, #88a172 100%);
+    box-shadow: 0 2px 8px rgba(156, 175, 136, 0.25);
+}
+
+.menu-btn, .logout-btn, .generate-btn, .modal-btn, .close-history-btn:hover {
     background: linear-gradient(135deg, #88a172 0%, #7a9968 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(156, 175, 136, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(156, 175, 136, 0.35);
 }
-.menu-btn:active, .logout-btn:active {
-    transform: translateY(0);
-}
+
+/* Fixed position buttons */
 .menu-btn { 
     position: fixed; 
     top: 20px; 
     left: 20px; 
-    z-index: 3; 
+    z-index: 1001;
+    padding: 12px 20px;
 }
+
 .logout-btn { 
     position: fixed; 
     top: 20px; 
     right: 20px; 
-    z-index: 3; 
+    z-index: 1001;
+    padding: 12px 20px;
 }
 
-/* Payslip Table */
-table {
+/* Destructive buttons */
+.delete-btn { 
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.delete-btn:hover { 
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Warning buttons */
+.reset-btn {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
+}
+
+.reset-btn:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Modal specific buttons */
+.modal-send {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+    box-shadow: 0 2px 6px rgba(72, 187, 120, 0.25);
+}
+
+.modal-send:hover {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%) !important;
+    box-shadow: 0 4px 10px rgba(72, 187, 120, 0.35);
+}
+
+.modal-cancel {
+    background: linear-gradient(135deg, #a0aec0 0%, #718096 100%) !important;
+    box-shadow: 0 2px 6px rgba(160, 174, 192, 0.25);
+}
+
+.modal-cancel:hover {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%) !important;
+    box-shadow: 0 4px 10px rgba(160, 174, 192, 0.35);
+}
+
+/* Table Styles */
+table, .history-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
     background: white;
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     table-layout: fixed;
     font-size: 15px;
 }
@@ -155,27 +261,27 @@ thead {
 }
 
 th {
-    padding: 20px 16px;
+    padding: 16px 12px;
     text-align: left;
     font-weight: 600;
-    font-size: 14px;
-    letter-spacing: 0.5px;
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
     text-transform: uppercase;
-    border-bottom: 2px solid rgba(255,255,255,0.1);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 td {
-    padding: 18px 16px;
+    padding: 14px 12px;
     text-align: left;
     vertical-align: middle;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 500;
     color: #4a5568;
     border-bottom: 1px solid #e2e8f0;
 }
 
 tbody tr {
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 }
 
 tbody tr:nth-child(even) {
@@ -185,7 +291,7 @@ tbody tr:nth-child(even) {
 tbody tr:hover {
     background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 tbody tr:last-child td {
@@ -200,53 +306,44 @@ tbody tr td[colspan="5"] {
     font-style: italic;
     font-size: 16px;
 }
-.generate-btn, .modal-btn, .reset-btn, .delete-btn, .close-history-btn {
-    background: linear-gradient(135deg, #9caf88 0%, #88a172 100%);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
+
+/* History table specific styles */
+.history-table {
+    margin: 20px 0;
+    font-size: 13px;
+}
+
+.history-table th {
+    padding: 14px 10px;
+    font-size: 0.8rem;
+}
+
+.history-table td {
+    padding: 12px 10px;
+    font-size: 0.8rem;
+}
+
+/* Employee Name Styling */
+.employee-name {
+    color: #4a5568;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    margin: 2px;
-    transition: all 0.3s ease;
-    text-transform: capitalize;
-    letter-spacing: 0.3px;
-    box-shadow: 0 2px 6px rgba(156, 175, 136, 0.25);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid transparent;
 }
 
-.generate-btn:hover, .modal-btn:hover, .reset-btn:hover, .close-history-btn:hover {
-    background: linear-gradient(135deg, #88a172 0%, #7a9968 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(156, 175, 136, 0.35);
+.employee-name:hover {
+    color: #7a9968;
+    border-bottom: 1px solid #9caf88;
+    transform: translateX(2px);
 }
 
-.delete-btn { 
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
-}
-
-.delete-btn:hover { 
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
-}
-
-.reset-btn {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.25);
-}
-
-.reset-btn:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.35);
-}
-
-/* Modals */
+/* Modal Styles */
 .modal, .history-modal {
     display: none;
     position: fixed;
-    z-index: 4;
+    z-index: 1100;
     left: 0;
     top: 0;
     width: 100%;
@@ -257,25 +354,18 @@ tbody tr td[colspan="5"] {
     justify-content: center;
     align-items: center;
     padding: 20px;
-    animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 .modal-content {
     background: white;
     padding: 32px;
-    border-radius: 20px;
+    border-radius: 16px;
     max-width: 600px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     position: relative;
-    animation: slideUp 0.3s ease-out;
     border: 1px solid rgba(156, 175, 136, 0.1);
+    animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
@@ -291,20 +381,18 @@ tbody tr td[colspan="5"] {
 
 .modal-content h2 {
     margin: 0 0 24px 0;
-    font-size: 1.75rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
     color: #2d3748;
     text-align: center;
     padding-bottom: 16px;
-    border-bottom: 2px solid #e2e8f0;
-    letter-spacing: -0.025em;
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-content p {
     margin: 12px 0;
     color: #4a5568;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 14px;
     line-height: 1.6;
 }
 
@@ -312,58 +400,11 @@ tbody tr td[colspan="5"] {
     color: #2d3748;
     font-weight: 600;
     display: inline-block;
-    min-width: 140px;
+    min-width: 120px;
 }
 
-.modal-content p span {
-    color: #9caf88;
-    font-weight: 600;
-}
-
-/* History Modal specific styles */
 .history-modal .modal-content {
     max-width: 900px;
-}
-
-.history-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.history-table thead {
-    background: linear-gradient(135deg, #9caf88 0%, #7a9968 100%);
-    color: white;
-}
-
-.history-table th {
-    padding: 16px 12px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.history-table td {
-    padding: 14px 12px;
-    text-align: left;
-    font-size: 13px;
-    color: #4a5568;
-    border-bottom: 1px solid #e2e8f0;
-    font-weight: 500;
-}
-
-.history-table tbody tr:nth-child(even) {
-    background-color: #f8fafc;
-}
-
-.history-table tbody tr:hover {
-    background-color: #f0f7f0;
 }
 
 .action-buttons {
@@ -374,47 +415,6 @@ tbody tr td[colspan="5"] {
     padding-top: 20px;
     border-top: 1px solid #e2e8f0;
     flex-wrap: wrap;
-}
-
-/* Modal button layout */
-.modal-content > .modal-btn {
-    margin: 8px 6px 0 6px;
-}
-
-.modal-send {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-    box-shadow: 0 2px 6px rgba(72, 187, 120, 0.25);
-}
-
-.modal-send:hover {
-    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
-    box-shadow: 0 4px 10px rgba(72, 187, 120, 0.35);
-}
-
-.modal-cancel {
-    background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
-    box-shadow: 0 2px 6px rgba(160, 174, 192, 0.25);
-}
-
-.modal-cancel:hover {
-    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
-    box-shadow: 0 4px 10px rgba(160, 174, 192, 0.35);
-}
-
-/* Employee clickable */
-.employee-name {
-    color: #4a5568;
-    cursor: pointer;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid transparent;
-}
-
-.employee-name:hover {
-    color: #7a9968;
-    border-bottom: 1px solid #9caf88;
-    transform: translateX(2px);
 }
 
 /* Responsive improvements */

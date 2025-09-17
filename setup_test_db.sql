@@ -3,7 +3,7 @@ CREATE DATABASE IF NOT EXISTS employee_db;
 USE employee_db;
 
 -- ===========================
--- activerecords (master employee table)
+-- activerecords
 -- ===========================
 CREATE TABLE IF NOT EXISTS activerecords (
   id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit employee ID
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS activerecords (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===========================
--- deletedrecords (keeps removed employee rows)
+-- deletedrecords
 -- ===========================
 CREATE TABLE IF NOT EXISTS deletedrecords (
   id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999),
@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS deletedrecords (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===========================
--- employeesalaryrequests (stores request + snapshot of employee name)
+-- employeesalaryrequests
 -- ===========================
 CREATE TABLE IF NOT EXISTS employeesalaryrequests (
   id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit request id
   employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
-  employee_name VARCHAR(100),           -- denormalized snapshot of employee name
+  employee_name VARCHAR(100),
   requested_salary DECIMAL(12,2),
   status VARCHAR(50),
   actions VARCHAR(50),
@@ -46,12 +46,12 @@ CREATE TABLE IF NOT EXISTS employeesalaryrequests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===========================
--- payslip_history (stores payslip + snapshot of employee name)
+-- payslip_history
 -- ===========================
 CREATE TABLE IF NOT EXISTS payslip_history (
   id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit payslip id
   employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
-  employee_name VARCHAR(100),   -- denormalized snapshot (optional)
+  employee_name VARCHAR(100), 
   position VARCHAR(100),
   earnings DECIMAL(12,2),
   date_generated DATETIME,

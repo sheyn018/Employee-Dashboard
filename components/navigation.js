@@ -2,26 +2,74 @@
 const NavigationComponent = {
   // Configuration for different navigation menus
   menus: {
-    admin: [
-      { href: "dashboard.html", icon: "📊", text: "Employee Records" },
-      { href: "add-employee.html", icon: "➕", text: "Add Employee" },
-      { href: "add-payslip.html", icon: "💳", text: "Add Payslip" },
-      { href: "payslip.html", icon: "💰", text: "Payslip" }
-    ],
-    employee: [
-      { href: "dashboard.html", icon: "👥", text: "Employee Records" },
-      { href: "new-employee.html", icon: "➕", text: "Add Employee" },
-      { href: "payslips.html", icon: "💰", text: "Payslips" }
-    ]
+    admin: {
+      sections: [
+        {
+          title: "Records & Dashboard",
+          items: [
+            { href: "dashboard.html", icon: "📊", text: "Employee Records" },
+            { href: "payslip.html", icon: "💰", text: "Payslip Management" }
+          ]
+        },
+        {
+          title: "Add New",
+          items: [
+            { href: "add-employee.html", icon: "�", text: "Add Employee" },
+            { href: "add-payslip.html", icon: "�", text: "Add Payslip" }
+          ]
+        }
+      ]
+    },
+    employee: {
+      sections: [
+        {
+          title: "Dashboard",
+          items: [
+            { href: "dashboard.html", icon: "👥", text: "Employee Records" }
+          ]
+        },
+        {
+          title: "Payroll",
+          items: [
+            { href: "payslips.html", icon: "💰", text: "My Payslips" }
+          ]
+        }
+      ]
+    }
   },
 
   // Generate navigation HTML
   generateNavHTML: function(menuType = 'admin') {
-    const menuItems = this.menus[menuType] || this.menus.admin;
+    const menu = this.menus[menuType] || this.menus.admin;
     
-    const menuItemsHTML = menuItems.map(item => 
-      `<a href="${item.href}">${item.icon} ${item.text}</a>`
-    ).join('');
+    let menuItemsHTML = '';
+    
+    // Generate sections
+    if (menu.sections) {
+      menu.sections.forEach((section, index) => {
+        // Add section title
+        menuItemsHTML += `<div class="nav-section">`;
+        menuItemsHTML += `<div class="nav-section-title">${section.title}</div>`;
+        
+        // Add section items
+        section.items.forEach(item => {
+          menuItemsHTML += `<a href="${item.href}">${item.icon} ${item.text}</a>`;
+        });
+        
+        menuItemsHTML += `</div>`;
+        
+        // Add divider between sections (except for last section)
+        if (index < menu.sections.length - 1) {
+          menuItemsHTML += `<div class="nav-divider"></div>`;
+        }
+      });
+    } else {
+      // Fallback for old format
+      const menuItems = menu || [];
+      menuItemsHTML = menuItems.map(item => 
+        `<a href="${item.href}">${item.icon} ${item.text}</a>`
+      ).join('');
+    }
 
     return `
       <button class="menu-btn" onclick="NavigationComponent.openNav()">☰</button>

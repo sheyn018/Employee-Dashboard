@@ -1,5 +1,4 @@
-/* Import base dashboard styles */
-@import url("dashboard.css");
+/* Shared Form Styles */
 
 /* Form Container */
 .form-container {
@@ -46,7 +45,6 @@
   background: white;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
-  box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -68,17 +66,6 @@
 
 .form-group input[type="time"] {
   cursor: pointer;
-}
-
-/* Enhanced styling for earnings field */
-.form-group input[name="earnings"] {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-color: #9caf88;
-}
-
-.form-group input[name="earnings"]:focus {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  border-color: #7a9968;
 }
 
 /* Form Actions */
@@ -150,15 +137,6 @@
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #991b1b;
   border: 1px solid #fecaca;
-}
-
-/* Small helper text styling */
-.form-group small {
-  display: block;
-  margin-top: 4px;
-  color: #6b7280;
-  font-size: 0.75rem;
-  line-height: 1.4;
 }
 
 /* Responsive Design */
