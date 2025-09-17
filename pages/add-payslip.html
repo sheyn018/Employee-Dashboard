@@ -25,9 +25,8 @@
         </div>
 
         <div class="form-group">
-          <label for="employee_id">Employee ID (Optional)</label>
-          <input type="number" id="employee_id" name="employee_id" min="1">
-          <small style="color: #666; font-size: 12px;">Leave empty if unknown</small>
+          <label for="employee_id">Employee ID</label>
+          <input type="number" id="employee_id" name="employee_id" required>
         </div>
 
         <div class="form-group">
@@ -133,16 +132,11 @@
 
       const data = {
         employee_name: document.getElementById("employee_name").value,
+        employee_id: parseInt(document.getElementById("employee_id").value),
         position: document.getElementById("position").value,
         earnings: parseFloat(document.getElementById("earnings").value),
         date_generated: document.getElementById("date_generated").value
       };
-
-      // Add employee_id if provided
-      const employeeId = document.getElementById("employee_id").value;
-      if (employeeId && employeeId.trim() !== '') {
-        data.employee_id = parseInt(employeeId);
-      }
 
       try {
         const result = await apiCall('add-payslip', 'POST', data);

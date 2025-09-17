@@ -14,8 +14,8 @@ const NavigationComponent = {
         {
           title: "Add New",
           items: [
-            { href: "add-employee.html", icon: "�", text: "Add Employee" },
-            { href: "add-payslip.html", icon: "�", text: "Add Payslip" }
+            { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
+            { href: "add-payslip.html", icon: "💰📄", text: "Add Payslip" }
           ]
         }
       ]
