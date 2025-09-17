@@ -19,30 +19,96 @@
 
     <div class="form-container">
       <form id="payslipForm">
-        <div class="form-group">
-          <label for="employee_name">Employee Name</label>
-          <input type="text" id="employee_name" name="employee_name" required>
+        <!-- Employee Information Section -->
+        <div class="form-section">
+          <h3>Employee Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="employee_name">Employee Name</label>
+              <input type="text" id="employee_name" name="employee_name" required>
+            </div>
+            <div class="form-group">
+              <label for="employee_id">Employee ID</label>
+              <input type="number" id="employee_id" name="employee_id" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="position">Position</label>
+              <input type="text" id="position" name="position" required>
+            </div>
+            <div class="form-group">
+              <label for="date_generated">Date Generated (Optional)</label>
+              <input type="date" id="date_generated" name="date_generated">
+              <small style="color: #666; font-size: 12px;">Leave empty to use current date and time</small>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="employee_id">Employee ID</label>
-          <input type="number" id="employee_id" name="employee_id" required>
+        <!-- Earnings and Deductions Section -->
+        <div class="form-section">
+          <div class="earnings-deductions-container">
+            <!-- Earnings Column -->
+            <div class="earnings-column">
+              <h3>Earnings</h3>
+              <div class="form-group">
+                <label for="earnings">Base Earnings</label>
+                <input type="number" step="0.01" id="earnings" name="earnings" required min="0">
+              </div>
+              <div class="form-group">
+                <label for="overtime_hours">Overtime Hours (Optional)</label>
+                <input type="number" step="0.1" id="overtime_hours" name="overtime_hours" min="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="overtime_pay">Overtime Pay (Optional)</label>
+                <input type="number" step="0.01" id="overtime_pay" name="overtime_pay" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group total-field">
+                <label for="total_earnings">Total Earnings</label>
+                <input type="number" step="0.01" id="total_earnings" name="total_earnings" readonly>
+              </div>
+            </div>
+
+            <!-- Deductions Column -->
+            <div class="deductions-column">
+              <h3>Deductions</h3>
+              <div class="form-group">
+                <label for="sss_deduction">SSS Contribution</label>
+                <input type="number" step="0.01" id="sss_deduction" name="sss_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="philhealth_deduction">PhilHealth Contribution</label>
+                <input type="number" step="0.01" id="philhealth_deduction" name="philhealth_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="pagibig_deduction">PAG-IBIG Contribution</label>
+                <input type="number" step="0.01" id="pagibig_deduction" name="pagibig_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="withholding_tax">Withholding Tax</label>
+                <input type="number" step="0.01" id="withholding_tax" name="withholding_tax" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="other_deductions">Other Deductions</label>
+                <input type="number" step="0.01" id="other_deductions" name="other_deductions" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group total-field">
+                <label for="total_deductions">Total Deductions</label>
+                <input type="number" step="0.01" id="total_deductions" name="total_deductions" readonly>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="position">Position</label>
-          <input type="text" id="position" name="position" required>
-        </div>
-
-        <div class="form-group">
-          <label for="earnings">Earnings</label>
-          <input type="number" step="0.01" id="earnings" name="earnings" required min="0">
-        </div>
-
-        <div class="form-group">
-          <label for="date_generated">Date Generated (Optional)</label>
-          <input type="date" id="date_generated" name="date_generated">
-          <small style="color: #666; font-size: 12px;">Leave empty to use current date and time</small>
+        <!-- Net Pay Section -->
+        <div class="form-section">
+          <div class="net-pay-section">
+            <h3>Summary</h3>
+            <div class="form-group net-pay-field">
+              <label for="net_pay">Net Pay</label>
+              <input type="number" step="0.01" id="net_pay" name="net_pay" readonly>
+            </div>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -125,16 +191,87 @@
     document.addEventListener('DOMContentLoaded', function() {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('date_generated').value = today;
+      
+      // Add event listeners to calculate total earnings
+      const baseEarningsInput = document.getElementById('earnings');
+      const overtimePayInput = document.getElementById('overtime_pay');
+      const totalEarningsInput = document.getElementById('total_earnings');
+      
+      // Deduction inputs
+      const sssInput = document.getElementById('sss_deduction');
+      const philhealthInput = document.getElementById('philhealth_deduction');
+      const pagibigInput = document.getElementById('pagibig_deduction');
+      const withholdingTaxInput = document.getElementById('withholding_tax');
+      const otherDeductionsInput = document.getElementById('other_deductions');
+      const totalDeductionsInput = document.getElementById('total_deductions');
+      const netPayInput = document.getElementById('net_pay');
+      
+      function calculateTotalEarnings() {
+        const baseEarnings = parseFloat(baseEarningsInput.value) || 0;
+        const overtimePay = parseFloat(overtimePayInput.value) || 0;
+        const total = baseEarnings + overtimePay;
+        totalEarningsInput.value = total.toFixed(2);
+        calculateNetPay(); // Recalculate net pay when earnings change
+      }
+      
+      function calculateTotalDeductions() {
+        const sss = parseFloat(sssInput.value) || 0;
+        const philhealth = parseFloat(philhealthInput.value) || 0;
+        const pagibig = parseFloat(pagibigInput.value) || 0;
+        const tax = parseFloat(withholdingTaxInput.value) || 0;
+        const other = parseFloat(otherDeductionsInput.value) || 0;
+        const total = sss + philhealth + pagibig + tax + other;
+        totalDeductionsInput.value = total.toFixed(2);
+        calculateNetPay(); // Recalculate net pay when deductions change
+      }
+      
+      function calculateNetPay() {
+        const totalEarnings = parseFloat(totalEarningsInput.value) || 0;
+        const totalDeductions = parseFloat(totalDeductionsInput.value) || 0;
+        const netPay = totalEarnings - totalDeductions;
+        netPayInput.value = netPay.toFixed(2);
+      }
+      
+      // Add event listeners for earnings calculation
+      baseEarningsInput.addEventListener('input', calculateTotalEarnings);
+      overtimePayInput.addEventListener('input', calculateTotalEarnings);
+      
+      // Add event listeners for deductions calculation
+      sssInput.addEventListener('input', calculateTotalDeductions);
+      philhealthInput.addEventListener('input', calculateTotalDeductions);
+      pagibigInput.addEventListener('input', calculateTotalDeductions);
+      withholdingTaxInput.addEventListener('input', calculateTotalDeductions);
+      otherDeductionsInput.addEventListener('input', calculateTotalDeductions);
+      
+      // Initial calculations
+      calculateTotalEarnings();
+      calculateTotalDeductions();
     });
 
     document.getElementById("payslipForm").addEventListener("submit", async function(e) {
       e.preventDefault();
 
+      // Calculate total earnings (base + overtime)
+      const baseEarnings = parseFloat(document.getElementById("earnings").value) || 0;
+      const overtimePay = parseFloat(document.getElementById("overtime_pay").value) || 0;
+      const totalEarnings = baseEarnings + overtimePay;
+
+      // Calculate total deductions
+      const sssDeduction = parseFloat(document.getElementById("sss_deduction").value) || 0;
+      const philhealthDeduction = parseFloat(document.getElementById("philhealth_deduction").value) || 0;
+      const pagibigDeduction = parseFloat(document.getElementById("pagibig_deduction").value) || 0;
+      const withholdingTax = parseFloat(document.getElementById("withholding_tax").value) || 0;
+      const otherDeductions = parseFloat(document.getElementById("other_deductions").value) || 0;
+      const totalDeductions = sssDeduction + philhealthDeduction + pagibigDeduction + withholdingTax + otherDeductions;
+
+      // Calculate net pay
+      const netPay = totalEarnings - totalDeductions;
+
       const data = {
         employee_name: document.getElementById("employee_name").value,
         employee_id: parseInt(document.getElementById("employee_id").value),
         position: document.getElementById("position").value,
-        earnings: parseFloat(document.getElementById("earnings").value),
+        earnings: netPay, // Send the final net pay (with overtime and after deductions)
         date_generated: document.getElementById("date_generated").value
       };
 
