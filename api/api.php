@@ -78,8 +78,11 @@ switch ($endpoint) {
     case 'payslip-history':
         handlePayslips($conn, $method);
         break;
+    case 'add-payslip':
+        handleAddPayslip($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -468,6 +471,67 @@ function handlePayslips($conn, $method) {
                 sendJsonResponse(['error' => 'Either employee_name or id must be provided'], 400);
             }
             break;
+    }
+}
+
+// Direct payslip insertion endpoint
+function handleAddPayslip($conn, $method) {
+    if ($method !== 'POST') {
+        sendJsonResponse(['error' => 'Only POST method allowed'], 405);
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($input['employee_name'], $input['position'], $input['earnings'])) {
+        sendJsonResponse(['error' => 'Missing required fields: employee_name, position, earnings'], 400);
+    }
+
+    // Validate earnings is a valid number
+    $earnings = floatval($input['earnings']);
+    if ($earnings < 0) {
+        sendJsonResponse(['error' => 'Earnings must be a positive number'], 400);
+    }
+
+    // Generate unique random 5-digit ID
+    do {
+        $randomId = rand(10000, 99999);
+        $check = $conn->prepare("SELECT id FROM payslip_history WHERE id = ?");
+        $check->bind_param("i", $randomId);
+        $check->execute();
+        $result = $check->get_result();
+    } while ($result && $result->num_rows > 0);
+
+    // Get or create employee_id (optional field)
+    $employeeId = isset($input['employee_id']) ? intval($input['employee_id']) : null;
+
+    // Use provided date or current timestamp
+    $dateGenerated = isset($input['date_generated']) && !empty($input['date_generated']) 
+        ? $input['date_generated'] . ' ' . date('H:i:s') 
+        : date('Y-m-d H:i:s');
+
+    // Insert directly into payslip_history with custom ID
+    if ($employeeId) {
+        $stmt = $conn->prepare("INSERT INTO payslip_history (id, employee_name, position, earnings, date_generated, employee_id) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("issdsi", $randomId, $input['employee_name'], $input['position'], $earnings, $dateGenerated, $employeeId);
+    } else {
+        $stmt = $conn->prepare("INSERT INTO payslip_history (id, employee_name, position, earnings, date_generated) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("issds", $randomId, $input['employee_name'], $input['position'], $earnings, $dateGenerated);
+    }
+    
+    if ($stmt->execute()) {
+        sendJsonResponse([
+            'success' => true, 
+            'id' => $randomId,
+            'payslip_data' => [
+                'employee_name' => $input['employee_name'],
+                'position' => $input['position'],
+                'earnings' => $earnings,
+                'date_generated' => $dateGenerated,
+                'employee_id' => $employeeId
+            ]
+        ]);
+    } else {
+        sendJsonResponse(['error' => 'Failed to create payslip record', 'details' => $conn->error], 500);
     }
 }
 

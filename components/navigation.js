@@ -5,6 +5,7 @@ const NavigationComponent = {
     admin: [
       { href: "dashboard.html", icon: "📊", text: "Employee Records" },
       { href: "add-employee.html", icon: "➕", text: "Add Employee" },
+      { href: "add-payslip.html", icon: "💳", text: "Add Payslip" },
       { href: "payslip.html", icon: "💰", text: "Payslip" }
     ],
     employee: [
