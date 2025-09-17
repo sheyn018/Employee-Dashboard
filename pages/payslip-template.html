@@ -6,198 +6,178 @@
   <title>Payslip</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+    .payslip {
+      background: white;
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
-      background: white;
-      color: #333;
+      border: 2px solid #333;
+      padding: 25px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .header {
       text-align: center;
-      border-bottom: 3px solid #9caf88;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      border-bottom: 2px solid #333;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
     }
     .company-name {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: bold;
       color: #2d3748;
-      margin-bottom: 5px;
     }
     .payslip-title {
       font-size: 20px;
-      color: #666;
-      margin-bottom: 10px;
+      margin-top: 5px;
+      font-weight: bold;
+      letter-spacing: 2px;
     }
     .date {
-      color: #888;
       font-size: 14px;
+      color: #666;
     }
     .employee-info {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 8px;
       margin-bottom: 20px;
     }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .info-table td {
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
     .info-label {
+      background: #f9fafb;
       font-weight: bold;
-      color: #555;
-    }
-    .earnings-deductions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-bottom: 20px;
+      width: 35%;
     }
     .section {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 20px;
+      margin-bottom: 25px;
     }
     .section-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid;
-    }
-    .earnings .section-title {
-      color: #059669;
-      border-bottom-color: #059669;
-    }
-    .deductions .section-title {
-      color: #dc2626;
-      border-bottom-color: #dc2626;
-    }
-    .line-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 5px 0;
-      border-bottom: 1px dotted #ccc;
-    }
-    .line-item:last-child {
-      border-bottom: none;
-    }
-    .total-line {
-      font-weight: bold;
       font-size: 16px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 2px solid #333;
+      font-weight: bold;
+      margin-bottom: 8px;
+      text-align: left;
+      background: #f3f4f6;
+      padding: 8px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      text-align: right;
+    }
+    th {
+      background: #f9fafb;
+      text-align: left;
+    }
+    .total-row {
+      font-weight: bold;
+      background: #f3f4f6;
     }
     .net-pay {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border: 3px solid #059669;
-      border-radius: 12px;
-      padding: 20px;
       text-align: center;
+      border: 2px solid #059669;
+      border-radius: 6px;
+      padding: 20px;
       margin-top: 30px;
+      background: #ecfdf5;
     }
     .net-pay-label {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #059669;
-      margin-bottom: 10px;
+      color: #065f46;
     }
     .net-pay-amount {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: bold;
       color: #059669;
+      margin-top: 8px;
     }
-    .hidden {
-      display: none;
+    .footer {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+    .signature {
+      border-top: 1px solid #333;
+      width: 200px;
+      text-align: center;
+      padding-top: 5px;
     }
     @media print {
-      body { margin: 0; padding: 15px; }
-      .earnings-deductions { grid-template-columns: 1fr; gap: 15px; }
+      body { background: white; padding: 0; }
+      .payslip { border: none; box-shadow: none; }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="company-name">Employee Dashboard</div>
-    <div class="payslip-title">PAYSLIP</div>
-    <div class="date" id="dateGenerated">Generated on: </div>
-  </div>
+  <div class="payslip">
+    <div class="header">
+      <div class="company-name">Employee Dashboard Inc.</div>
+      <div class="payslip-title">PAYSLIP</div>
+      <div class="date" id="dateGenerated">Generated on:</div>
+    </div>
 
-  <div class="employee-info">
-    <div class="info-row">
-      <span class="info-label">Employee Name:</span>
-      <span id="employeeName"></span>
+    <div class="employee-info">
+      <table class="info-table">
+        <tr><td class="info-label">Employee Name</td><td id="employeeName"></td></tr>
+        <tr><td class="info-label">Employee ID</td><td id="employeeId"></td></tr>
+        <tr><td class="info-label">Position</td><td id="position"></td></tr>
+        <tr><td class="info-label">Pay Period</td><td id="payPeriod"></td></tr>
+      </table>
     </div>
-    <div class="info-row">
-      <span class="info-label">Employee ID:</span>
-      <span id="employeeId"></span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Position:</span>
-      <span id="position"></span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Pay Period:</span>
-      <span id="payPeriod"></span>
-    </div>
-  </div>
 
-  <div class="earnings-deductions">
-    <div class="section earnings">
+    <div class="section">
       <div class="section-title">EARNINGS</div>
-      <div class="line-item">
-        <span>Base Salary</span>
-        <span id="baseSalary"></span>
-      </div>
-      <div class="line-item" id="overtimeRow">
-        <span id="overtimeLabel">Overtime</span>
-        <span id="overtimePay"></span>
-      </div>
-      <div class="line-item total-line">
-        <span>TOTAL EARNINGS</span>
-        <span id="totalEarnings"></span>
-      </div>
+      <table>
+        <tr><th>Description</th><th>Amount</th></tr>
+        <tr><td>Base Salary</td><td id="baseSalary"></td></tr>
+        <tr id="overtimeRow"><td id="overtimeLabel">Overtime</td><td id="overtimePay"></td></tr>
+        <tr class="total-row"><td>Total Earnings</td><td id="totalEarnings"></td></tr>
+      </table>
     </div>
 
-    <div class="section deductions">
+    <div class="section">
       <div class="section-title">DEDUCTIONS</div>
-      <div class="line-item" id="sssRow">
-        <span>SSS Contribution</span>
-        <span id="sssAmount"></span>
-      </div>
-      <div class="line-item" id="philhealthRow">
-        <span>PhilHealth</span>
-        <span id="philhealthAmount"></span>
-      </div>
-      <div class="line-item" id="pagibigRow">
-        <span>PAG-IBIG</span>
-        <span id="pagibigAmount"></span>
-      </div>
-      <div class="line-item" id="taxRow">
-        <span>Withholding Tax</span>
-        <span id="taxAmount"></span>
-      </div>
-      <div class="line-item" id="otherRow">
-        <span>Other Deductions</span>
-        <span id="otherAmount"></span>
-      </div>
-      <div class="line-item total-line">
-        <span>TOTAL DEDUCTIONS</span>
-        <span id="totalDeductions"></span>
-      </div>
+      <table>
+        <tr><th>Description</th><th>Amount</th></tr>
+        <tr id="sssRow"><td>SSS Contribution</td><td id="sssAmount"></td></tr>
+        <tr id="philhealthRow"><td>PhilHealth</td><td id="philhealthAmount"></td></tr>
+        <tr id="pagibigRow"><td>PAG-IBIG</td><td id="pagibigAmount"></td></tr>
+        <tr id="taxRow"><td>Withholding Tax</td><td id="taxAmount"></td></tr>
+        <tr id="otherRow"><td>Other Deductions</td><td id="otherAmount"></td></tr>
+        <tr class="total-row"><td>Total Deductions</td><td id="totalDeductions"></td></tr>
+      </table>
     </div>
-  </div>
 
-  <div class="net-pay">
-    <div class="net-pay-label">NET PAY</div>
-    <div class="net-pay-amount" id="netPay"></div>
+    <div class="net-pay">
+      <div class="net-pay-label">NET PAY</div>
+      <div class="net-pay-amount" id="netPay"></div>
+    </div>
+
+    <div class="footer">
+      <div class="signature">Employee Signature</div>
+      <div class="signature">Authorized Signature</div>
+    </div>
   </div>
 
   <script>
-    // Get data from URL parameters
     function getUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
       return {
@@ -219,73 +199,49 @@
       };
     }
 
-    // Format currency
     function formatCurrency(amount) {
       return '₱' + amount.toLocaleString('en-US', {minimumFractionDigits: 2});
     }
 
-    // Populate the payslip
     function populatePayslip() {
       const data = getUrlParams();
-      
-      // Employee info
       document.getElementById('employeeName').textContent = data.employee_name;
       document.getElementById('employeeId').textContent = data.employee_id;
       document.getElementById('position').textContent = data.position;
       document.getElementById('dateGenerated').textContent = 'Generated on: ' + new Date(data.date_generated).toLocaleDateString();
       document.getElementById('payPeriod').textContent = new Date(data.date_generated).toLocaleDateString();
 
-      // Earnings
       document.getElementById('baseSalary').textContent = formatCurrency(data.base_earnings);
       document.getElementById('totalEarnings').textContent = formatCurrency(data.total_earnings);
-      
-      // Overtime (show only if > 0)
+
       if (data.overtime_hours > 0 && data.overtime_pay > 0) {
         document.getElementById('overtimeLabel').textContent = `Overtime (${data.overtime_hours} hrs)`;
         document.getElementById('overtimePay').textContent = formatCurrency(data.overtime_pay);
       } else {
-        document.getElementById('overtimeRow').classList.add('hidden');
+        document.getElementById('overtimeRow').style.display = "none";
       }
 
-      // Deductions (show only if > 0)
-      if (data.sss_deduction > 0) {
-        document.getElementById('sssAmount').textContent = formatCurrency(data.sss_deduction);
-      } else {
-        document.getElementById('sssRow').classList.add('hidden');
-      }
+      if (data.sss_deduction > 0) document.getElementById('sssAmount').textContent = formatCurrency(data.sss_deduction);
+      else document.getElementById('sssRow').style.display = "none";
 
-      if (data.philhealth_deduction > 0) {
-        document.getElementById('philhealthAmount').textContent = formatCurrency(data.philhealth_deduction);
-      } else {
-        document.getElementById('philhealthRow').classList.add('hidden');
-      }
+      if (data.philhealth_deduction > 0) document.getElementById('philhealthAmount').textContent = formatCurrency(data.philhealth_deduction);
+      else document.getElementById('philhealthRow').style.display = "none";
 
-      if (data.pagibig_deduction > 0) {
-        document.getElementById('pagibigAmount').textContent = formatCurrency(data.pagibig_deduction);
-      } else {
-        document.getElementById('pagibigRow').classList.add('hidden');
-      }
+      if (data.pagibig_deduction > 0) document.getElementById('pagibigAmount').textContent = formatCurrency(data.pagibig_deduction);
+      else document.getElementById('pagibigRow').style.display = "none";
 
-      if (data.withholding_tax > 0) {
-        document.getElementById('taxAmount').textContent = formatCurrency(data.withholding_tax);
-      } else {
-        document.getElementById('taxRow').classList.add('hidden');
-      }
+      if (data.withholding_tax > 0) document.getElementById('taxAmount').textContent = formatCurrency(data.withholding_tax);
+      else document.getElementById('taxRow').style.display = "none";
 
-      if (data.other_deductions > 0) {
-        document.getElementById('otherAmount').textContent = formatCurrency(data.other_deductions);
-      } else {
-        document.getElementById('otherRow').classList.add('hidden');
-      }
+      if (data.other_deductions > 0) document.getElementById('otherAmount').textContent = formatCurrency(data.other_deductions);
+      else document.getElementById('otherRow').style.display = "none";
 
       document.getElementById('totalDeductions').textContent = formatCurrency(data.total_deductions);
       document.getElementById('netPay').textContent = formatCurrency(data.net_pay);
-      
-      // Update page title
+
       document.title = `Payslip - ${data.employee_name}`;
     }
 
-    // Run when page loads
     window.onload = populatePayslip;
   </script>
 </body>

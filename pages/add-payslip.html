@@ -291,10 +291,15 @@
             Earnings: ₱${parseFloat(result.payslip_data.earnings).toLocaleString()}<br>
             Date: ${new Date(result.payslip_data.date_generated).toLocaleDateString()}</p>`;
             
+          // Add Generate Payslip button
+          successMessage += `<button id="generatePayslipBtn" class="generate-btn" style="margin-top: 15px;">
+            📄 Generate Payslip
+          </button>`;
+            
           messageDiv.innerHTML = successMessage;
           
-          // Generate HTML payslip in new tab
-          generatePayslipHTML({
+          // Store payslip data for the button
+          window.currentPayslipData = {
             employee_name: document.getElementById("employee_name").value,
             employee_id: document.getElementById("employee_id").value,
             position: document.getElementById("position").value,
@@ -310,6 +315,11 @@
             total_deductions: totalDeductions,
             net_pay: netPay,
             date_generated: document.getElementById("date_generated").value || new Date().toISOString().split('T')[0]
+          };
+          
+          // Add click event to the button
+          document.getElementById("generatePayslipBtn").addEventListener("click", function() {
+            generatePayslipHTML(window.currentPayslipData);
           });
           
           document.getElementById("payslipForm").reset();
