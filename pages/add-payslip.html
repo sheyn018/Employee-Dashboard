@@ -292,6 +292,26 @@
             Date: ${new Date(result.payslip_data.date_generated).toLocaleDateString()}</p>`;
             
           messageDiv.innerHTML = successMessage;
+          
+          // Generate HTML payslip in new tab
+          generatePayslipHTML({
+            employee_name: document.getElementById("employee_name").value,
+            employee_id: document.getElementById("employee_id").value,
+            position: document.getElementById("position").value,
+            base_earnings: parseFloat(document.getElementById("earnings").value) || 0,
+            overtime_hours: parseFloat(document.getElementById("overtime_hours").value) || 0,
+            overtime_pay: parseFloat(document.getElementById("overtime_pay").value) || 0,
+            sss_deduction: parseFloat(document.getElementById("sss_deduction").value) || 0,
+            philhealth_deduction: parseFloat(document.getElementById("philhealth_deduction").value) || 0,
+            pagibig_deduction: parseFloat(document.getElementById("pagibig_deduction").value) || 0,
+            withholding_tax: parseFloat(document.getElementById("withholding_tax").value) || 0,
+            other_deductions: parseFloat(document.getElementById("other_deductions").value) || 0,
+            total_earnings: baseEarnings + overtimePay,
+            total_deductions: totalDeductions,
+            net_pay: netPay,
+            date_generated: document.getElementById("date_generated").value || new Date().toISOString().split('T')[0]
+          });
+          
           document.getElementById("payslipForm").reset();
           // Reset date to today after form reset
           const today = new Date().toISOString().split('T')[0];
@@ -304,6 +324,32 @@
         document.getElementById("responseMessage").innerHTML = `<p class="error">⚠️ Error: ${err.message}</p>`;
       }
     });
+
+    // Function to generate HTML payslip in new tab
+    function generatePayslipHTML(data) {
+      // Build URL with parameters
+      const params = new URLSearchParams({
+        employee_name: data.employee_name,
+        employee_id: data.employee_id,
+        position: data.position,
+        base_earnings: data.base_earnings,
+        overtime_hours: data.overtime_hours,
+        overtime_pay: data.overtime_pay,
+        sss_deduction: data.sss_deduction,
+        philhealth_deduction: data.philhealth_deduction,
+        pagibig_deduction: data.pagibig_deduction,
+        withholding_tax: data.withholding_tax,
+        other_deductions: data.other_deductions,
+        total_earnings: data.total_earnings,
+        total_deductions: data.total_deductions,
+        net_pay: data.net_pay,
+        date_generated: data.date_generated
+      });
+
+      // Open payslip template in new tab with data
+      const payslipUrl = `payslip-template.html?${params.toString()}`;
+      window.open(payslipUrl, '_blank');
+    }
   </script>
 </body>
 </html>
