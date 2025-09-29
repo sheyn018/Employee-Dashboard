@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login - HR Connect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 25%, #7dd3a0 50%, #6bcf7c 75%, #4caf50 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Background pattern overlay */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 2px, transparent 2px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 2px, transparent 2px);
+      background-size: 50px 50px;
+      background-position: 0 0, 25px 25px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    header {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      background: rgba(76, 175, 80, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border-bottom: 3px solid #388e3c;
+    }
+
+    header h1 {
+      text-align: center;
+      color: white;
+      font-size: 32px;
+      font-weight: 600;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: 1px;
+    }
+
+    .login-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 50px 40px;
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.2);
+      max-width: 450px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      border: 2px solid rgba(76, 175, 80, 0.3);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px;
+    }
+
+    #adminLoginForm {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    #adminPassword {
+      width: 100%;
+      padding: 18px 20px;
+      border: 2px solid #a8e6cf;
+      border-radius: 12px;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      outline: none;
+      color: #2e7d32;
+    }
+
+    #adminPassword:focus {
+      border-color: #4caf50;
+      box-shadow: 
+        0 0 0 3px rgba(76, 175, 80, 0.2),
+        0 8px 25px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 1);
+    }
+
+    #adminPassword::placeholder {
+      color: #81c784;
+      font-weight: 400;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      color: white;
+      border: none;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #388e3c, #4caf50);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .back-home-btn {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.9);
+      color: #2e7d32;
+      padding: 14px 28px;
+      border: 2px solid #4caf50;
+      border-radius: 12px;
+      font-size: 16px;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .back-home-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #4caf50, #66bb6a);
+      transition: left 0.3s ease;
+      z-index: -1;
+    }
+
+    .back-home-btn:hover {
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+    }
+
+    .back-home-btn:hover::before {
+      left: 0;
+    }
+
+    /* Floating elements for visual interest */
+    .floating-element {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .floating-element:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .floating-element:nth-child(2) {
+      width: 60px;
+      height: 60px;
+      top: 60%;
+      right: 10%;
+      animation-delay: 2s;
+    }
+
+    .floating-element:nth-child(3) {
+      width: 40px;
+      height: 40px;
+      bottom: 20%;
+      left: 20%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.5;
+      }
+      50% {
+        transform: translateY(-20px) rotate(180deg);
+        opacity: 0.8;
+      }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .login-section {
+        padding: 40px 30px;
+        margin: 20px;
+      }
+
+      header h1 {
+        font-size: 28px;
+      }
+
+      #adminPassword, .btn {
+        padding: 16px;
+        font-size: 16px;
+      }
+
+      .back-home-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-section {
+        padding: 30px 20px;
+      }
+
+      header h1 {
+        font-size: 24px;
+      }
+
+      #adminPassword, .btn {
+        padding: 14px;
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Floating decorative elements -->
+  <div class="floating-element"></div>
+  <div class="floating-element"></div>
+  <div class="floating-element"></div>
+
+  <header>
+    <h1>Admin Login</h1>
+  </header>
+
+  <section class="login-section">
+    <div class="container">
+      <form id="adminLoginForm">
+        <input type="password" id="adminPassword" placeholder="Enter Admin Password" required />
+        <button type="submit" class="btn">Login</button>
+      </form>
+      
+      <!-- Back Home Button -->
+      <a href="index.html" class="back-home-btn">Back Home</a>
+    </div>
+  </section>
+
+  <script>
+    document.getElementById("adminLoginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const enteredPassword = document.getElementById("adminPassword").value;
+
+      // Simple admin password check
+      const correctPassword = "admin123"; // <- you can change this!
+
+      if (enteredPassword === correctPassword) {
+        localStorage.setItem("isAdmin", "true");
+        window.location.href = "dashboard.html";
+      } else {
+        alert("Incorrect password.");
+      }
+    });
+  </script>
+</body>
+</html>

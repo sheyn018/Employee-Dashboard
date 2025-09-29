@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payslip</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: white;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #9caf88;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .company-name {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2d3748;
+      margin-bottom: 5px;
+    }
+    .payslip-title {
+      font-size: 20px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .date {
+      color: #888;
+      font-size: 14px;
+    }
+    .employee-info {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .info-label {
+      font-weight: bold;
+      color: #555;
+    }
+    .earnings-deductions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+    .section {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid;
+    }
+    .earnings .section-title {
+      color: #059669;
+      border-bottom-color: #059669;
+    }
+    .deductions .section-title {
+      color: #dc2626;
+      border-bottom-color: #dc2626;
+    }
+    .line-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+    .line-item:last-child {
+      border-bottom: none;
+    }
+    .total-line {
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 2px solid #333;
+    }
+    .net-pay {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 3px solid #059669;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .net-pay-label {
+      font-size: 20px;
+      font-weight: bold;
+      color: #059669;
+      margin-bottom: 10px;
+    }
+    .net-pay-amount {
+      font-size: 32px;
+      font-weight: bold;
+      color: #059669;
+    }
+    .hidden {
+      display: none;
+    }
+    @media print {
+      body { margin: 0; padding: 15px; }
+      .earnings-deductions { grid-template-columns: 1fr; gap: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company-name">Employee Dashboard</div>
+    <div class="payslip-title">PAYSLIP</div>
+    <div class="date" id="dateGenerated">Generated on: </div>
+  </div>
+
+  <div class="employee-info">
+    <div class="info-row">
+      <span class="info-label">Employee Name:</span>
+      <span id="employeeName"></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Employee ID:</span>
+      <span id="employeeId"></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Position:</span>
+      <span id="position"></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Pay Period:</span>
+      <span id="payPeriod"></span>
+    </div>
+  </div>
+
+  <div class="earnings-deductions">
+    <div class="section earnings">
+      <div class="section-title">EARNINGS</div>
+      <div class="line-item">
+        <span>Base Salary</span>
+        <span id="baseSalary"></span>
+      </div>
+      <div class="line-item" id="overtimeRow">
+        <span id="overtimeLabel">Overtime</span>
+        <span id="overtimePay"></span>
+      </div>
+      <div class="line-item total-line">
+        <span>TOTAL EARNINGS</span>
+        <span id="totalEarnings"></span>
+      </div>
+    </div>
+
+    <div class="section deductions">
+      <div class="section-title">DEDUCTIONS</div>
+      <div class="line-item" id="sssRow">
+        <span>SSS Contribution</span>
+        <span id="sssAmount"></span>
+      </div>
+      <div class="line-item" id="philhealthRow">
+        <span>PhilHealth</span>
+        <span id="philhealthAmount"></span>
+      </div>
+      <div class="line-item" id="pagibigRow">
+        <span>PAG-IBIG</span>
+        <span id="pagibigAmount"></span>
+      </div>
+      <div class="line-item" id="taxRow">
+        <span>Withholding Tax</span>
+        <span id="taxAmount"></span>
+      </div>
+      <div class="line-item" id="otherRow">
+        <span>Other Deductions</span>
+        <span id="otherAmount"></span>
+      </div>
+      <div class="line-item total-line">
+        <span>TOTAL DEDUCTIONS</span>
+        <span id="totalDeductions"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="net-pay">
+    <div class="net-pay-label">NET PAY</div>
+    <div class="net-pay-amount" id="netPay"></div>
+  </div>
+
+  <script>
+    // Get data from URL parameters
+    function getUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return {
+        employee_name: urlParams.get('employee_name') || '',
+        employee_id: urlParams.get('employee_id') || '',
+        position: urlParams.get('position') || '',
+        base_earnings: parseFloat(urlParams.get('base_earnings')) || 0,
+        overtime_hours: parseFloat(urlParams.get('overtime_hours')) || 0,
+        overtime_pay: parseFloat(urlParams.get('overtime_pay')) || 0,
+        sss_deduction: parseFloat(urlParams.get('sss_deduction')) || 0,
+        philhealth_deduction: parseFloat(urlParams.get('philhealth_deduction')) || 0,
+        pagibig_deduction: parseFloat(urlParams.get('pagibig_deduction')) || 0,
+        withholding_tax: parseFloat(urlParams.get('withholding_tax')) || 0,
+        other_deductions: parseFloat(urlParams.get('other_deductions')) || 0,
+        total_earnings: parseFloat(urlParams.get('total_earnings')) || 0,
+        total_deductions: parseFloat(urlParams.get('total_deductions')) || 0,
+        net_pay: parseFloat(urlParams.get('net_pay')) || 0,
+        date_generated: urlParams.get('date_generated') || new Date().toISOString().split('T')[0]
+      };
+    }
+
+    // Format currency
+    function formatCurrency(amount) {
+      return '₱' + amount.toLocaleString('en-US', {minimumFractionDigits: 2});
+    }
+
+    // Populate the payslip
+    function populatePayslip() {
+      const data = getUrlParams();
+      
+      // Employee info
+      document.getElementById('employeeName').textContent = data.employee_name;
+      document.getElementById('employeeId').textContent = data.employee_id;
+      document.getElementById('position').textContent = data.position;
+      document.getElementById('dateGenerated').textContent = 'Generated on: ' + new Date(data.date_generated).toLocaleDateString();
+      document.getElementById('payPeriod').textContent = new Date(data.date_generated).toLocaleDateString();
+
+      // Earnings
+      document.getElementById('baseSalary').textContent = formatCurrency(data.base_earnings);
+      document.getElementById('totalEarnings').textContent = formatCurrency(data.total_earnings);
+      
+      // Overtime (show only if > 0)
+      if (data.overtime_hours > 0 && data.overtime_pay > 0) {
+        document.getElementById('overtimeLabel').textContent = `Overtime (${data.overtime_hours} hrs)`;
+        document.getElementById('overtimePay').textContent = formatCurrency(data.overtime_pay);
+      } else {
+        document.getElementById('overtimeRow').classList.add('hidden');
+      }
+
+      // Deductions (show only if > 0)
+      if (data.sss_deduction > 0) {
+        document.getElementById('sssAmount').textContent = formatCurrency(data.sss_deduction);
+      } else {
+        document.getElementById('sssRow').classList.add('hidden');
+      }
+
+      if (data.philhealth_deduction > 0) {
+        document.getElementById('philhealthAmount').textContent = formatCurrency(data.philhealth_deduction);
+      } else {
+        document.getElementById('philhealthRow').classList.add('hidden');
+      }
+
+      if (data.pagibig_deduction > 0) {
+        document.getElementById('pagibigAmount').textContent = formatCurrency(data.pagibig_deduction);
+      } else {
+        document.getElementById('pagibigRow').classList.add('hidden');
+      }
+
+      if (data.withholding_tax > 0) {
+        document.getElementById('taxAmount').textContent = formatCurrency(data.withholding_tax);
+      } else {
+        document.getElementById('taxRow').classList.add('hidden');
+      }
+
+      if (data.other_deductions > 0) {
+        document.getElementById('otherAmount').textContent = formatCurrency(data.other_deductions);
+      } else {
+        document.getElementById('otherRow').classList.add('hidden');
+      }
+
+      document.getElementById('totalDeductions').textContent = formatCurrency(data.total_deductions);
+      document.getElementById('netPay').textContent = formatCurrency(data.net_pay);
+      
+      // Update page title
+      document.title = `Payslip - ${data.employee_name}`;
+    }
+
+    // Run when page loads
+    window.onload = populatePayslip;
+  </script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - HR Connect</title>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <header><h1>Employee Records</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <section class="dashboard">
+    <div class="container">
+      <h3>🧾 Active Records</h3>
+      <table class="table-1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Earnings</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="recordsTableBody"></tbody>
+      </table>
+
+      <h3>📝 Employee Salary Requests</h3>
+      <table class="table-2">
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Requested Salary</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="employeeSalaryTableBody"></tbody>
+      </table>
+
+      <h3>🗑️ Deleted Records</h3>
+      <table class="table-3">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Position</th>
+            <th>Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deletedRecordsTableBody"></tbody>
+      </table>
+
+      <center><a href="index.html" class="btn">Back to Home</a></center>
+      <center><button class="btn-logout" onclick="NavigationComponent.logout()">Log Out</button></center>
+    </div>
+  </section>
+
+  <!-- JavaScript to handle data fetching and rendering -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('dashboard.html');
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Global variables to store data
+    let employeeRecords = [];
+    let deletedRecords = [];
+    let salaryRequests = [];
+
+    // Fetch data from API
+    async function fetchData() {
+      try {
+        // Fetch employee records
+        const employeesResponse = await fetch(`${API_BASE}/employees`);
+        employeeRecords = await employeesResponse.json();
+
+        console.log('Employee Records:', employeeRecords); // Debugging log
+
+        // Fetch salary requests
+        const salaryResponse = await fetch(`${API_BASE}/salary-requests`);
+        salaryRequests = await salaryResponse.json();
+
+        console.log('Salary Requests:', salaryRequests); // Debugging log
+
+        // Fetch deleted records
+        const deletedResponse = await fetch(`${API_BASE}/deleted-records`);
+        deletedRecords = await deletedResponse.json();
+
+        console.log('Deleted Records:', deletedRecords); // Debugging log
+
+        renderTables();
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        alert('Error connecting to database. Please check your PHP server.');
+      }
+    }
+
+    // Render Employee Records and Salary Requests
+    function renderTables() {
+      const tbody = document.getElementById("recordsTableBody");
+      tbody.innerHTML = "";
+
+      employeeRecords.forEach((record, index) => {
+        // Format earnings display
+        const earningsDisplay = record.earnings ? `₱${parseFloat(record.earnings).toFixed(2)}` : "Not Available";
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `  
+          <td>${record.name}</td>
+          <td>${record.position}</td>
+          <td>${record.work_date}</td>
+          <td>${record.time_in}</td>
+          <td>${record.time_out || '-'}</td>
+          <td>${earningsDisplay}</td>
+          <td>
+            <button class="btn-sm" onclick="deleteRecord(${record.id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      renderSalaryRequests();
+      renderDeletedRecords();
+    }
+
+    // Render Salary Requests
+    function renderSalaryRequests() {
+      const tbody = document.getElementById("employeeSalaryTableBody");
+      tbody.innerHTML = "";
+
+      salaryRequests.forEach((request, index) => {
+        const currentStatus = request.status || "Pending";
+        const row = document.createElement("tr");
+        row.innerHTML = ` 
+          <td>${request.employee_name}</td>
+          <td>$${parseFloat(request.requested_salary).toLocaleString()}</td>
+          <td>
+            <select onchange="updateSalaryStatus(${request.id}, this.value)">
+              <option value="Pending" ${currentStatus === "Pending" ? "selected" : ""}>Pending</option>
+              <option value="Approved" ${currentStatus === "Approved" ? "selected" : ""}>Approved</option>
+              <option value="Declined" ${currentStatus === "Declined" ? "selected" : ""}>Declined</option>
+            </select>
+          </td>
+          <td>
+            <button class="btn-sm" onclick="deleteSalaryRequest(${request.id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Delete Salary Request
+    async function deleteSalaryRequest(id) {
+      try {
+        console.log('Deleting salary request with ID:', id); // Debugging log
+        const response = await fetch(`${API_BASE}/salary-requests`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id})
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error deleting salary request');
+        }
+      } 
+      
+      catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting salary request');
+      }
+    }
+
+    // Render Deleted Records
+    function renderDeletedRecords() {
+      const tbody = document.getElementById("deletedRecordsTableBody");
+      tbody.innerHTML = "";
+
+      deletedRecords.forEach((record, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${record.name}</td>
+          <td>${record.position}</td>
+          <td>${record.work_date}</td>
+          <td>${record.time_in}</td>
+          <td>${record.time_out || '-'}</td>
+          <td>
+            <button class="btn-sm" onclick="restoreRecord(${record.id}, this)">Restore</button>
+            <button class="btn-sm" onclick="permanentlyDeleteRecord(${record.id})">Delete Permanently</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Update Salary Status
+    async function updateSalaryStatus(id, newStatus) {
+      try {
+        const response = await fetch(`${API_BASE}/salary-requests`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id, status: newStatus })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error updating salary status');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating salary status');
+      }
+    }
+
+    // Delete Employee Record
+    async function deleteRecord(id) {
+      try {
+        console.log('Deleting employee record with ID:', id); // Debugging log
+        const response = await fetch(`${API_BASE}/employees`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id })
+        });
+        
+        if (response.ok) {
+          fetchData(); // Refresh data
+        } else {
+          alert('Error deleting employee record');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting employee record');
+      }
+    }
+
+    // Restore Deleted Record
+    async function restoreRecord(id, btn) {
+      btn.disabled = true; // prevent multiple clicks
+      console.log('Restoring record with ID:', id); // Debugging log
+      try {
+        const response = await fetch(`${API_BASE}/deleted-records`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        const data = await response.json();
+        console.log('Restore response:', data);
+
+        if (response.ok) {
+          await fetchData(); // wait for data to refresh
+        } else {
+          alert('Error restoring record');
+          btn.disabled = false; // re-enable on error
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error restoring record');
+        btn.disabled = false; // re-enable on error
+      }
+    }
+
+
+    // Permanently Delete Record
+    async function permanentlyDeleteRecord(id) {
+      if (confirm('Are you sure you want to permanently delete this record?')) {
+        try {
+          console.log('Permanently deleting record with ID:', id); // Debugging log
+          const response = await fetch(`${API_BASE}/deleted-records`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: id })
+          });
+          
+          if (response.ok) {
+            fetchData(); // Refresh data
+          } else {
+            alert('Error permanently deleting record');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Error permanently deleting record');
+        }
+      }
+    }
+
+    // Initial data fetch and render
+    fetchData();
+  </script>
+</body>
+</html>
