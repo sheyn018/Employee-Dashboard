@@ -46,7 +46,7 @@ if ($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoint
     $connectionStatus['all_tables_in_current_db'] = $allTables;
     
     // Test if required tables exist
-    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history'];
+    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history', 'leave_requests', 'employee_evaluations'];
     $tableStatus = [];
     foreach ($requiredTables as $table) {
         $result = $conn->query("SHOW TABLES LIKE '$table'");
@@ -81,8 +81,15 @@ switch ($endpoint) {
     case 'add-payslip':
         handleAddPayslip($conn, $method);
         break;
+    case 'leave-requests':
+        handleLeaveRequests($conn, $method);
+        break;
+    case 'evaluations':
+    case 'employee-evaluations':
+        handleEvaluations($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'evaluations', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -543,6 +550,560 @@ function handleAddPayslip($conn, $method) {
         ]);
     } else {
         sendJsonResponse(['error' => 'Failed to create payslip record', 'details' => $conn->error], 500);
+    }
+}
+
+// Leave requests
+function handleLeaveRequests($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all leave requests, optionally filtered
+            $employeeName = isset($_GET['employee']) ? $_GET['employee'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            
+            $query = "SELECT * FROM leave_requests";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeName) {
+                $conditions[] = "employee_name = ?";
+                $params[] = $employeeName;
+                $types .= "s";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY date_requested DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $requests = [];
+            while ($row = $result->fetch_assoc()) {
+                $requests[] = $row;
+            }
+            sendJsonResponse($requests);
+            break;
+
+        case 'POST':
+            // Create new leave request
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            if (!isset($input['employee_name'], $input['leave_type'], $input['start_date'], $input['end_date'])) {
+                sendJsonResponse(['error' => 'Missing required fields: employee_name, leave_type, start_date, end_date'], 400);
+                break;
+            }
+
+            // Validate leave type
+            $validLeaveTypes = ['sick_leave', 'vacation_leave', 'personal_leave', 'emergency_leave', 'maternity_leave', 'paternity_leave'];
+            if (!in_array($input['leave_type'], $validLeaveTypes)) {
+                sendJsonResponse(['error' => 'Invalid leave type'], 400);
+                break;
+            }
+
+            // Validate dates
+            $startDate = new DateTime($input['start_date']);
+            $endDate = new DateTime($input['end_date']);
+            $today = new DateTime();
+            $today->setTime(0, 0, 0);
+
+            if ($startDate < $today) {
+                sendJsonResponse(['error' => 'Start date cannot be in the past'], 400);
+                break;
+            }
+
+            if ($endDate < $startDate) {
+                sendJsonResponse(['error' => 'End date cannot be before start date'], 400);
+                break;
+            }
+
+            // Check for reasonable duration (max 1 year)
+            $interval = $startDate->diff($endDate);
+            if ($interval->days > 365) {
+                sendJsonResponse(['error' => 'Leave duration cannot exceed 1 year'], 400);
+                break;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM leave_requests WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Try to find employee_id from activerecords
+            $employeeId = null;
+            $stmt = $conn->prepare("SELECT id FROM activerecords WHERE name = ? LIMIT 1");
+            $stmt->bind_param("s", $input['employee_name']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $employeeId = $row['id'];
+            }
+
+            // Insert leave request
+            $stmt = $conn->prepare("
+                INSERT INTO leave_requests 
+                (id, employee_id, employee_name, leave_type, start_date, end_date, reason, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $status = isset($input['status']) ? $input['status'] : 'pending';
+            $reason = isset($input['reason']) ? $input['reason'] : null;
+            
+            $stmt->bind_param(
+                "iissssss", 
+                $randomId, 
+                $employeeId, 
+                $input['employee_name'], 
+                $input['leave_type'], 
+                $input['start_date'], 
+                $input['end_date'], 
+                $reason, 
+                $status
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'leave_request' => [
+                        'id' => $randomId,
+                        'employee_name' => $input['employee_name'],
+                        'leave_type' => $input['leave_type'],
+                        'start_date' => $input['start_date'],
+                        'end_date' => $input['end_date'],
+                        'reason' => $reason,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create leave request', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update leave request (mainly for status changes)
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Leave request ID is required'], 400);
+                break;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['pending', 'approved', 'rejected'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    break;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+            }
+
+            if (isset($input['reason'])) {
+                $updates[] = "reason = ?";
+                $params[] = $input['reason'];
+                $types .= "s";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                break;
+            }
+
+            // Add updated timestamp
+            $updates[] = "date_updated = CURRENT_TIMESTAMP";
+            
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE leave_requests SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update leave request', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete leave request
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Leave request ID is required'], 400);
+                break;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM leave_requests WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete leave request', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Employee evaluations
+function handleEvaluations($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all evaluations, optionally filtered
+            $employeeName = isset($_GET['employee']) ? $_GET['employee'] : null;
+            $evaluationPeriod = isset($_GET['period']) ? $_GET['period'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            
+            $query = "SELECT * FROM employee_evaluations";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeName) {
+                $conditions[] = "employee_name = ?";
+                $params[] = $employeeName;
+                $types .= "s";
+            }
+            
+            if ($evaluationPeriod) {
+                $conditions[] = "evaluation_period = ?";
+                $params[] = $evaluationPeriod;
+                $types .= "s";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY date_created DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $evaluations = [];
+            while ($row = $result->fetch_assoc()) {
+                $evaluations[] = $row;
+            }
+            sendJsonResponse($evaluations);
+            break;
+
+        case 'POST':
+            // Create new evaluation
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            $requiredFields = ['employee_name', 'evaluator_name', 'evaluation_period', 'technical_skills', 'communication', 'teamwork', 'reliability', 'problem_solving'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field])) {
+                    sendJsonResponse(['error' => "Missing required field: $field"], 400);
+                    return;
+                }
+            }
+
+            // Validate rating values (1-5)
+            $ratingFields = ['technical_skills', 'communication', 'teamwork', 'reliability', 'problem_solving'];
+            foreach ($ratingFields as $field) {
+                $value = intval($input[$field]);
+                if ($value < 1 || $value > 5) {
+                    sendJsonResponse(['error' => "$field must be between 1 and 5"], 400);
+                    return;
+                }
+            }
+
+            // Validate overall score if provided
+            if (isset($input['overall_score'])) {
+                $score = floatval($input['overall_score']);
+                if ($score < 1.00 || $score > 5.00) {
+                    sendJsonResponse(['error' => 'Overall score must be between 1.00 and 5.00'], 400);
+                    return;
+                }
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM employee_evaluations WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Try to get employee_id from request first, then lookup by name as fallback
+            $employeeId = null;
+            
+            // Check if employee_id was provided directly in the request
+            if (isset($input['employee_id']) && !empty($input['employee_id'])) {
+                $employeeId = intval($input['employee_id']);
+                
+                // Verify this employee_id exists in activerecords
+                $stmt = $conn->prepare("SELECT id FROM activerecords WHERE id = ? LIMIT 1");
+                $stmt->bind_param("i", $employeeId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if (!$result || $result->num_rows === 0) {
+                    $employeeId = null; // Invalid employee_id provided
+                }
+            }
+            
+            // If no valid employee_id from request, try to find by name
+            if ($employeeId === null) {
+                $stmt = $conn->prepare("SELECT id FROM activerecords WHERE name = ? LIMIT 1");
+                $stmt->bind_param("s", $input['employee_name']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($row = $result->fetch_assoc()) {
+                    $employeeId = $row['id'];
+                }
+            }
+
+            // Insert evaluation
+            if ($employeeId !== null) {
+                // Prepare variables for bind_param (must be variables, not expressions)
+                $technicalSkills = intval($input['technical_skills']);
+                $communication = intval($input['communication']);
+                $teamwork = intval($input['teamwork']);
+                $reliability = intval($input['reliability']);
+                $problemSolving = intval($input['problem_solving']);
+                $overallScore = floatval($input['overall_score']);
+                $strengths = isset($input['strengths']) ? $input['strengths'] : null;
+                $areasForImprovement = isset($input['areas_for_improvement']) ? $input['areas_for_improvement'] : null;
+                $goalsNextPeriod = isset($input['goals_next_period']) ? $input['goals_next_period'] : null;
+                $additionalComments = isset($input['additional_comments']) ? $input['additional_comments'] : null;
+                
+                $stmt = $conn->prepare("
+                    INSERT INTO employee_evaluations 
+                    (id, employee_id, employee_name, evaluator_name, evaluation_period, 
+                     technical_skills, communication, teamwork, reliability, problem_solving, 
+                     overall_score, strengths, areas_for_improvement, goals_next_period, 
+                     additional_comments) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                
+                $stmt->bind_param(
+                    "iisssiiiiidssss", 
+                    $randomId,
+                    $employeeId,
+                    $input['employee_name'],
+                    $input['evaluator_name'],
+                    $input['evaluation_period'],
+                    $technicalSkills,
+                    $communication,
+                    $teamwork,
+                    $reliability,
+                    $problemSolving,
+                    $overallScore,
+                    $strengths,
+                    $areasForImprovement,
+                    $goalsNextPeriod,
+                    $additionalComments
+                );
+            } else {
+                // Prepare variables for bind_param (must be variables, not expressions)
+                $technicalSkills = intval($input['technical_skills']);
+                $communication = intval($input['communication']);
+                $teamwork = intval($input['teamwork']);
+                $reliability = intval($input['reliability']);
+                $problemSolving = intval($input['problem_solving']);
+                $overallScore = floatval($input['overall_score']);
+                $strengths = isset($input['strengths']) ? $input['strengths'] : null;
+                $areasForImprovement = isset($input['areas_for_improvement']) ? $input['areas_for_improvement'] : null;
+                $goalsNextPeriod = isset($input['goals_next_period']) ? $input['goals_next_period'] : null;
+                $additionalComments = isset($input['additional_comments']) ? $input['additional_comments'] : null;
+                
+                $stmt = $conn->prepare("
+                    INSERT INTO employee_evaluations 
+                    (id, employee_name, evaluator_name, evaluation_period, 
+                     technical_skills, communication, teamwork, reliability, problem_solving, 
+                     overall_score, strengths, areas_for_improvement, goals_next_period, 
+                     additional_comments) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                
+                $stmt->bind_param(
+                    "isssiiiiidssss", 
+                    $randomId,
+                    $input['employee_name'],
+                    $input['evaluator_name'],
+                    $input['evaluation_period'],
+                    $technicalSkills,
+                    $communication,
+                    $teamwork,
+                    $reliability,
+                    $problemSolving,
+                    $overallScore,
+                    $strengths,
+                    $areasForImprovement,
+                    $goalsNextPeriod,
+                    $additionalComments
+                );
+            }
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'evaluation' => [
+                        'id' => $randomId,
+                        'employee_name' => $input['employee_name'],
+                        'evaluator_name' => $input['evaluator_name'],
+                        'evaluation_period' => $input['evaluation_period'],
+                        'overall_score' => floatval($input['overall_score'])
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create evaluation', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update evaluation
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Evaluation ID is required'], 400);
+                return;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['draft', 'completed', 'acknowledged'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    return;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+                
+                // Set date_completed if status is being set to completed
+                if ($input['status'] === 'completed') {
+                    $updates[] = "date_completed = CURRENT_TIMESTAMP";
+                }
+            }
+
+            // Allow updating text fields
+            $textFields = ['strengths', 'areas_for_improvement', 'goals_next_period', 'additional_comments'];
+            foreach ($textFields as $field) {
+                if (isset($input[$field])) {
+                    $updates[] = "$field = ?";
+                    $params[] = $input[$field];
+                    $types .= "s";
+                }
+            }
+
+            // Allow updating ratings
+            $ratingFields = ['technical_skills', 'communication', 'teamwork', 'reliability', 'problem_solving'];
+            foreach ($ratingFields as $field) {
+                if (isset($input[$field])) {
+                    $value = intval($input[$field]);
+                    if ($value < 1 || $value > 5) {
+                        sendJsonResponse(['error' => "$field must be between 1 and 5"], 400);
+                        return;
+                    }
+                    $updates[] = "$field = ?";
+                    $params[] = $value;
+                    $types .= "i";
+                }
+            }
+
+            // Update overall score if provided
+            if (isset($input['overall_score'])) {
+                $score = floatval($input['overall_score']);
+                if ($score < 1.00 || $score > 5.00) {
+                    sendJsonResponse(['error' => 'Overall score must be between 1.00 and 5.00'], 400);
+                    return;
+                }
+                $updates[] = "overall_score = ?";
+                $params[] = $score;
+                $types .= "d";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                return;
+            }
+
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE employee_evaluations SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update evaluation', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete evaluation
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Evaluation ID is required'], 400);
+                return;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM employee_evaluations WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete evaluation', 'details' => $conn->error], 500);
+            }
+            break;
     }
 }
 

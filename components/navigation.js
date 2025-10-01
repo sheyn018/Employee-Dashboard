@@ -19,9 +19,11 @@ const NavigationComponent = {
           ]
         },
         {
-          title: "Salary Requests",
+          title: "Employee Requests",
           items: [
-            { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" }
+            { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" },
+            { href: "leave-request.html", icon: "📅", text: "Request Leave" },
+            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" }
           ]
         }
       ]
