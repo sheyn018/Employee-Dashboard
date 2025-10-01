@@ -118,6 +118,24 @@ CREATE TABLE IF NOT EXISTS employee_evaluations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===========================
+-- attendance_records
+-- ===========================
+CREATE TABLE IF NOT EXISTS attendance_records (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit attendance record id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  attendance_date DATE NOT NULL,
+  attendance_time TIME NOT NULL,
+  attendance_type ENUM('check_in', 'check_out') NOT NULL,
+  notes VARCHAR(255) NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  
+  CONSTRAINT fk_attendance_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ===========================
 -- Sample Data
 -- ===========================
 
@@ -157,3 +175,12 @@ INSERT INTO employee_evaluations (id, employee_id, employee_name, evaluator_name
 (95001, 13579, 'Williiam Searl', 'John Manager', 'Annual 2024', 4, 4, 5, 4, 5, 4.40, 'Excellent problem-solving skills and great team collaboration. Shows strong technical expertise in software development.', 'Could improve on communication with clients and presenting technical concepts to non-technical stakeholders.', 'Complete advanced communication training. Lead at least 2 client presentations. Mentor junior developers.', 'Employee shows great potential for leadership roles. Consider for promotion to senior developer.', 'completed', '2025-01-15 09:00:00', '2025-01-20 14:30:00'),
 (95002, 24680, 'Maria Garcia', 'Sarah Supervisor', 'Annual 2024', 3, 5, 4, 5, 3, 4.00, 'Outstanding reliability and customer service skills. Always punctual and professional with customers.', 'Technical skills could be enhanced. Could benefit from additional training in POS systems and inventory management.', 'Complete technical training program. Cross-train in kitchen operations. Aim for team lead position.', 'Maria is a valuable team member with excellent work ethic. Training investment will yield great returns.', 'completed', '2025-01-18 11:00:00', '2025-01-25 16:00:00'),
 (95003, 35791, 'Michael Lee', 'Dr. Chemistry Head', 'Annual 2024', 5, 3, 3, 4, 5, 4.00, 'Exceptional technical knowledge and analytical skills. Produces high-quality work consistently.', 'Communication and teamwork skills need development. Sometimes works in isolation without consulting team.', 'Participate in more team projects. Improve collaboration skills. Share knowledge through internal presentations.', 'Michael is technically brilliant but needs to work on soft skills. Consider pairing with a mentor for collaboration improvement.', 'completed', '2025-01-10 08:30:00', '2025-01-17 12:00:00');
+
+-- Attendance records (sample data)
+INSERT INTO attendance_records (id, employee_id, employee_name, attendance_date, attendance_time, attendance_type, notes) VALUES
+(96001, 13579, 'Williiam Searl', '2025-10-02', '08:45:00', 'check_in', 'Early arrival'),
+(96002, 24680, 'Maria Garcia', '2025-10-02', '09:00:00', 'check_in', NULL),
+(96003, 35791, 'Michael Lee', '2025-10-02', '08:30:00', 'check_in', NULL),
+(96004, 46802, 'Emily Davis', '2025-10-02', '09:05:00', 'check_in', 'Slight delay due to traffic'),
+(96005, 13579, 'Williiam Searl', '2025-10-02', '17:15:00', 'check_out', 'Completed daily tasks'),
+(96006, 24680, 'Maria Garcia', '2025-10-02', '18:00:00', 'check_out', NULL);

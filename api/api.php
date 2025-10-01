@@ -88,8 +88,11 @@ switch ($endpoint) {
     case 'employee-evaluations':
         handleEvaluations($conn, $method);
         break;
+    case 'attendance':
+        handleAttendance($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'evaluations', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'evaluations', 'attendance', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -1102,6 +1105,156 @@ function handleEvaluations($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to delete evaluation', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Attendance tracking
+function handleAttendance($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get attendance records, optionally filtered by date
+            $date = isset($_GET['date']) ? $_GET['date'] : null;
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            
+            $query = "SELECT * FROM attendance_records";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($date) {
+                $conditions[] = "attendance_date = ?";
+                $params[] = $date;
+                $types .= "s";
+            }
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY attendance_date DESC, attendance_time DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $records = [];
+            while ($row = $result->fetch_assoc()) {
+                $records[] = $row;
+            }
+            sendJsonResponse($records);
+            break;
+
+        case 'POST':
+            // Record new attendance
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            if (!isset($input['employee_name'], $input['employee_id'], $input['attendance_date'], $input['attendance_type'], $input['attendance_time'])) {
+                sendJsonResponse(['error' => 'Missing required fields: employee_name, employee_id, attendance_date, attendance_type, attendance_time'], 400);
+                break;
+            }
+
+            // Validate attendance type
+            $validTypes = ['check_in', 'check_out'];
+            if (!in_array($input['attendance_type'], $validTypes)) {
+                sendJsonResponse(['error' => 'Invalid attendance type. Must be: check_in or check_out'], 400);
+                break;
+            }
+
+            // Validate employee_id
+            $employeeId = intval($input['employee_id']);
+            if ($employeeId < 10000 || $employeeId > 99999) {
+                sendJsonResponse(['error' => 'Employee ID must be a 5-digit number'], 400);
+                break;
+            }
+
+            // Validate employee exists in activerecords
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if (!$result || $result->num_rows === 0) {
+                sendJsonResponse(['error' => 'Employee ID not found in active records'], 404);
+                break;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM attendance_records WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Prepare variables for bind_param
+            $notes = isset($input['notes']) ? $input['notes'] : null;
+            
+            // Insert attendance record
+            $stmt = $conn->prepare("
+                INSERT INTO attendance_records 
+                (id, employee_id, employee_name, attendance_date, attendance_time, attendance_type, notes) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->bind_param(
+                "iisssss", 
+                $randomId,
+                $employeeId,
+                $input['employee_name'],
+                $input['attendance_date'],
+                $input['attendance_time'],
+                $input['attendance_type'],
+                $notes
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'attendance' => [
+                        'id' => $randomId,
+                        'employee_name' => $input['employee_name'],
+                        'employee_id' => $employeeId,
+                        'attendance_date' => $input['attendance_date'],
+                        'attendance_time' => $input['attendance_time'],
+                        'attendance_type' => $input['attendance_type'],
+                        'notes' => $notes
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to record attendance', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete attendance record
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Attendance record ID is required'], 400);
+                break;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM attendance_records WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete attendance record', 'details' => $conn->error], 500);
             }
             break;
     }

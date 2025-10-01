@@ -21,7 +21,8 @@ const NavigationComponent = {
         {
           title: "HR Management",
           items: [
-            { href: "evaluation-form.html", icon: "🧾", text: "Employee Evaluation" }
+            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
+            { href: "attendance.html", icon: "📋", text: "Attendance Tracking" }
           ]
         },
         {
@@ -38,7 +39,8 @@ const NavigationComponent = {
         {
           title: "Dashboard",
           items: [
-            { href: "dashboard.html", icon: "👥", text: "Employee Records" }
+            { href: "dashboard.html", icon: "👥", text: "Employee Records" },
+            { href: "attendance.html", icon: "📋", text: "My Attendance" }
           ]
         },
         {
