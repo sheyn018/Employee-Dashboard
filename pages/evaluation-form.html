@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Employee Evaluation - HR Connect</title>
   <link rel="stylesheet" href="../css/evaluation-form.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
   <link rel="stylesheet" href="../components/navigation.css"/>
 </head>
 <body>
@@ -35,15 +36,6 @@
               </div>
 
               <div class="form-group">
-                <label for="employeeId">Employee ID <span class="required">*</span></label>
-                <input type="number" id="employeeId" name="employee_id" required 
-                       placeholder="Enter employee ID (5-digit number)" min="10000" max="99999">
-                <div class="error-message" id="employeeIdError"></div>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
                 <label for="evaluatorName">Evaluator Name <span class="required">*</span></label>
                 <input type="text" id="evaluatorName" name="evaluator_name" required 
                        placeholder="Enter your full name">
@@ -51,18 +43,29 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="evaluationPeriod">Evaluation Period <span class="required">*</span></label>
-              <select id="evaluationPeriod" name="evaluation_period" required>
-                <option value="">-- Select Evaluation Period --</option>
-                <option value="Annual 2025">Annual 2025</option>
-                <option value="Annual 2024">Annual 2024</option>
-                <option value="Q4 2025">Q4 2025</option>
-                <option value="Q3 2025">Q3 2025</option>
-                <option value="Q2 2025">Q2 2025</option>
-                <option value="Q1 2025">Q1 2025</option>
-              </select>
-              <div class="error-message" id="evaluationPeriodError"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeId">Employee ID <span class="required">*</span></label>
+                <input type="text" id="employeeId" name="employee_id" required 
+                       placeholder="Enter employee ID (5-digit number)" 
+                       pattern="[0-9]{5}" maxlength="5" 
+                       title="Please enter a 5-digit employee ID">
+                <div class="error-message" id="employeeIdError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="evaluationPeriod">Evaluation Period <span class="required">*</span></label>
+                <select id="evaluationPeriod" name="evaluation_period" required>
+                  <option value="">-- Select Evaluation Period --</option>
+                  <option value="Annual 2025">Annual 2025</option>
+                  <option value="Annual 2024">Annual 2024</option>
+                  <option value="Q4 2025">Q4 2025</option>
+                  <option value="Q3 2025">Q3 2025</option>
+                  <option value="Q2 2025">Q2 2025</option>
+                  <option value="Q1 2025">Q1 2025</option>
+                </select>
+                <div class="error-message" id="evaluationPeriodError"></div>
+              </div>
             </div>
           </div>
 
@@ -292,9 +295,13 @@
       if (!id || id.toString().trim() === '') {
         return "Employee ID is required";
       }
-      const numId = parseInt(id);
-      if (isNaN(numId) || numId < 10000 || numId > 99999) {
-        return "Employee ID must be a 5-digit number (10000-99999)";
+      const idStr = id.toString().trim();
+      if (!/^\d{5}$/.test(idStr)) {
+        return "Employee ID must be exactly 5 digits (10000-99999)";
+      }
+      const numId = parseInt(idStr);
+      if (numId < 10000 || numId > 99999) {
+        return "Employee ID must be between 10000 and 99999";
       }
       return null;
     }

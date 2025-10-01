@@ -15,15 +15,20 @@ const NavigationComponent = {
           title: "Add New",
           items: [
             { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
-            { href: "add-payslip.html", icon: "💰📄", text: "Add Payslip" }
+            { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" }
+          ]
+        },
+        {
+          title: "HR Management",
+          items: [
+            { href: "evaluation-form.html", icon: "🧾", text: "Employee Evaluation" }
           ]
         },
         {
           title: "Employee Requests",
           items: [
-            { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" },
-            { href: "leave-request.html", icon: "📅", text: "Request Leave" },
-            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" }
+            { href: "salary-request.html", icon: "💰📝", text: "Submit Salary Request" },
+            { href: "leave-request.html", icon: "🏖️📝", text: "Request Leave" }
           ]
         }
       ]
@@ -37,9 +42,16 @@ const NavigationComponent = {
           ]
         },
         {
+          title: "My Requests",
+          items: [
+            { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" },
+            { href: "leave-request.html", icon: "📅", text: "Request Leave" }
+          ]
+        },
+        {
           title: "Payroll",
           items: [
-            { href: "payslips.html", icon: "💰", text: "My Payslips" }
+            { href: "payslip.html", icon: "💰", text: "My Payslips" }
           ]
         }
       ]
