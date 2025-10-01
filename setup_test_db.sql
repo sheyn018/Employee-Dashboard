@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS attendance_records (
 
 -- Active employees
 INSERT INTO activerecords (id, name, position, work_date, time_in, time_out, earnings, actions) VALUES
-(13579, 'Williiam Searl', 'Software Developer', '2025-09-01', '09:00:00', '17:00:00', 50000.00, NULL),
+(13579, 'William Searl', 'Software Developer', '2025-09-01', '09:00:00', '17:00:00', 50000.00, NULL),
 (24680, 'Maria Garcia', 'Waitress',         '2025-09-03', '10:00:00', '18:00:00', 12000.00, NULL),
 (35791, 'Michael Lee',   'Chemist',          '2025-09-05', '08:30:00', '16:30:00', 45000.00, NULL),
 (46802, 'Emily Davis',   'HR Specialist',    '2025-09-06', '09:00:00', '17:00:00', 38000.00, NULL);

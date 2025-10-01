@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Training and Development</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../css/modules.css">
+</head>
+<body>
+    <!-- Nav Component -->
+  <div id="navigation-container"></div>
+<div class="container">
+  <h2>🎓 Training and Development</h2>
+  <form id="trainingForm">
+    <label>Employee ID</label>
+    <input type="number" name="employee_id" required>
+    <label>Program Name</label>
+    <input type="text" name="program_name" required>
+    <label>Start Date</label>
+    <input type="date" name="start_date" required>
+    <label>End Date</label>
+    <input type="date" name="end_date">
+    <label>Status</label>
+    <select name="status">
+      <option value="Enrolled">Enrolled</option>
+      <option value="Completed">Completed</option>
+      <option value="Ongoing">Ongoing</option>
+    </select>
+    <button type="submit">Save Training</button>
+  </form>
+
+  <h3>Training Records</h3>
+  <table id="trainingTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Employee</th>
+        <th>Program</th>
+        <th>Status</th>
+        <th>Duration</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+  <script src="../components/navigation.js"></script>
+<script>
+document.getElementById("trainingForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  let formData = new FormData(this);
+  let res = await fetch("../api/api.php?action=add_training", { method: "POST", body: formData });
+  let data = await res.json();
+  alert(data.message);
+  loadData();
+});
+
+async function loadData(){
+  let res = await fetch("../api/api.php?action=get_training");
+  let data = await res.json();
+  let tbody = document.querySelector("#trainingTable tbody");
+  tbody.innerHTML = "";
+  data.data.forEach(row => {
+    tbody.innerHTML += `<tr>
+      <td>${row.id}</td>
+      <td>${row.employee_id}</td>
+      <td>${row.program_name}</td>
+      <td>${row.status}</td>
+      <td>${row.start_date} to ${row.end_date}</td>
+    </tr>`;
+  });
+}
+loadData();
+</script>
+</body>
+</html>

@@ -8,28 +8,39 @@ const NavigationComponent = {
           title: "Records & Dashboard",
           items: [
             { href: "dashboard.html", icon: "📊", text: "Employee Records" },
-            { href: "payslip.html", icon: "💰", text: "Payslip Management" }
+            { href: "reports.html", icon: "�", text: "Reports" },
+            { href: "budget.html", icon: "💼", text: "Budget Management" }
           ]
         },
         {
-          title: "Add New",
+          title: "Employee Management",
           items: [
             { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
-            { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" }
+            { href: "attendance.html", icon: "�", text: "Attendance Tracking" },
+            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
+            { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
           ]
         },
         {
-          title: "HR Management",
+          title: "Payroll & Benefits",
           items: [
-            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
-            { href: "attendance.html", icon: "📋", text: "Attendance Tracking" }
+            { href: "payslip.html", icon: "💰", text: "Payslip Management" },
+            { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" },
+            { href: "benefits.html", icon: "🎁", text: "Employee Benefits" },
+            { href: "overtime.html", icon: "⏰", text: "Overtime Management" }
           ]
         },
         {
           title: "Employee Requests",
           items: [
-            { href: "salary-request.html", icon: "💰📝", text: "Submit Salary Request" },
-            { href: "leave-request.html", icon: "🏖️📝", text: "Request Leave" }
+            { href: "salary-request.html", icon: "💰📝", text: "Salary Requests" },
+            { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" }
+          ]
+        },
+        {
+          title: "Training & Development",
+          items: [
+            { href: "training.html", icon: "🎓", text: "Training Programs" }
           ]
         }
       ]
@@ -39,7 +50,7 @@ const NavigationComponent = {
         {
           title: "Dashboard",
           items: [
-            { href: "dashboard.html", icon: "👥", text: "Employee Records" },
+            { href: "dashboard.html", icon: "👥", text: "My Dashboard" },
             { href: "attendance.html", icon: "📋", text: "My Attendance" }
           ]
         },
@@ -51,9 +62,25 @@ const NavigationComponent = {
           ]
         },
         {
-          title: "Payroll",
+          title: "Payroll & Benefits",
           items: [
-            { href: "payslip.html", icon: "💰", text: "My Payslips" }
+            { href: "payslip.html", icon: "💰", text: "My Payslips" },
+            { href: "benefits.html", icon: "🎁", text: "My Benefits" },
+            { href: "overtime.html", icon: "⏰", text: "Overtime Records" }
+          ]
+        },
+        {
+          title: "Training & Development",
+          items: [
+            { href: "training.html", icon: "🎓", text: "Training Programs" },
+            { href: "evaluation-form.html", icon: "📊", text: "Self Evaluation" }
+          ]
+        },
+        {
+          title: "Company Info",
+          items: [
+            { href: "service.html", icon: "🔧", text: "Services" },
+            { href: "contact.html", icon: "📞", text: "Contact Information" }
           ]
         }
       ]

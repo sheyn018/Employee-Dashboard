@@ -1,0 +1,83 @@
+/* ==================================================
+   Global Styles for HRM Modules (Attendance, Leave,
+   Overtime, Training, Disciplinary, Benefits,
+   Performance, Reports, Budget)
+   ================================================== */
+
+/* Body and Layout */
+body {
+    background: #f5fdf5;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 900px;
+    margin: 30px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  
+  /* Headings */
+  h2, h3 {
+    color: #2a7b2a;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+  
+  /* Forms */
+  form label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+  button {
+    background: #2a7b2a;
+    color: #fff;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover {
+    background: #226622;
+  }
+  
+  /* Tables */
+  table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    font-size: 14px;
+  }
+  th {
+    background: #e5ffe5;
+  }
+  
+  /* Cards (for Reports) */
+  .card {
+    background: #e5ffe5;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+  }
+  

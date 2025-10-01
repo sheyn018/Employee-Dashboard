@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reports & Analytics</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../css/modules.css">
+</head>
+<body>
+    <!-- Nav Component -->
+  <div id="navigation-container"></div>
+<div class="container">
+  <h2>📊 Reports & Analytics</h2>
+  <div id="reportCards"></div>
+</div>
+
+  <script src="../components/navigation.js"></script>
+<script>
+async function loadReports(){
+  let res = await fetch("../api/api.php?action=get_reports");
+  let data = await res.json();
+  let r = data.data;
+  document.getElementById("reportCards").innerHTML = `
+    <div class="card">👨‍💼 Employees: ${r.total_employees}</div>
+    <div class="card">🕒 Attendance Logs: ${r.total_attendance}</div>
+    <div class="card">🏖️ Leaves: ${r.total_leaves}</div>
+    <div class="card">💰 Total Payroll: ${r.total_payroll}</div>
+  `;
+}
+loadReports();
+</script>
+</body>
+</html>
