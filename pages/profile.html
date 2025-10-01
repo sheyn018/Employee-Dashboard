@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Profile - HR Connect</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      animation: rainbowBackground 10s ease infinite;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+
+    @keyframes rainbowBackground {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .sidebar {
+      height: 100%;
+      width: 0;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      overflow-x: hidden;
+      transition: 0.5s;
+      padding-top: 60px;
+    }
+
+    .sidebar a {
+      padding: 15px 25px;
+      text-decoration: none;
+      font-size: 18px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+      white-space: nowrap;
+    }
+
+    .sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar .closebtn {
+      position: absolute;
+      top: 0;
+      right: 25px;
+      font-size: 36px;
+      margin-left: 50px;
+    }
+
+    .menu-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-size: 24px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .menu-btn:hover {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+
+    header {
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(0, 0, 0, 0.3);
+      margin-top: 60px;
+    }
+
+    .profile-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .profile-card {
+      background: linear-gradient(45deg, #ff6f61, #6a5acd);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-info {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .profile-info label {
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .profile-info span {
+      color: white;
+    }
+
+    .stats-card {
+      background: linear-gradient(45deg, #6a5acd, #ff6f61);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-item h3 {
+      margin: 0;
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .stat-item p {
+      margin: 10px 0 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .btn-logout {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #f44336;
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .btn-logout:hover {
+      background-color: #e53935;
+    }
+
+    #payslip-section {
+      display: none;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .payslip-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 240, 240, 0.95));
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      color: #333;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .payslip-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .payslip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      color: #1a237e;
+      font-size: 1.8em;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid rgba(26, 35, 126, 0.1);
+    }
+
+    .month-section {
+      background: #ffffff;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .month-section:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .month-header {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      padding: 18px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1em;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .month-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .month-header:hover::before {
+      transform: translateX(100%);
+    }
+
+    .month-details {
+      display: none;
+      padding: 0;
+      background: #ffffff;
+      transform-origin: top;
+      transition: all 0.3s ease;
+    }
+
+    .month-details.active {
+      display: block;
+      animation: slideDown 0.3s ease forwards;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .month-total {
+      background: linear-gradient(to right, #f8fafc, #f1f5f9);
+      padding: 20px 25px;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #e2e8f0;
+      color: #334155;
+      font-weight: 600;
+      font-size: 1.05em;
+    }
+
+    .payslip-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 0;
+      background: white;
+      color: #334155;
+    }
+
+    .payslip-table th {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      padding: 18px 25px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 1.05em;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .payslip-table td {
+      padding: 16px 25px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 1em;
+      transition: all 0.2s ease;
+    }
+
+    .payslip-table tr:hover td {
+      background-color: #f8fafc;
+      color: #2563eb;
+    }
+
+    .toggle-details {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px;
+      transition: transform 0.3s ease;
+      opacity: 0.9;
+    }
+
+    .toggle-details:hover {
+      transform: rotate(180deg);
+      opacity: 1;
+    }
+
+    .toggle-btn {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .toggle-btn:hover {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .no-records {
+      text-align: center;
+      padding: 25px;
+      color: #64748b;
+      font-style: italic;
+      background: linear-gradient(to right, #f8fafc, #f1f5f9);
+      font-size: 1.05em;
+    }
+
+    /* Add smooth scrolling to the whole page */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Add these styles for the profile photo */
+    .profile-photo-section {
+      text-align: center;
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .profile-photo {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      object-fit: cover;
+      margin: 0 auto;
+      display: block;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .photo-upload-btn {
+      position: absolute;
+      bottom: 0;
+      right: calc(50% - 75px);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .photo-upload-btn:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+
+    #photoInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <button class="menu-btn" onclick="openNav()">☰</button>
+  <button class="btn-logout" onclick="logout()">Logout</button>
+
+  <div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="profile.html">👤 Profile</a>
+    <a href="workpage.html">💼 Work Page</a>
+    <a href="javascript:void(0)" onclick="togglePayslipSection()">📝 Payslip Records</a>
+  </div>
+
+  <header>
+    <h1>Employee Profile</h1>
+  </header>
+
+  <div class="profile-container">
+    <div class="profile-card">
+      <h2>Personal Information</h2>
+      
+      <div class="profile-photo-section">
+        <img id="profilePhoto" src="default-avatar.png" alt="Profile Photo" class="profile-photo">
+        <button class="photo-upload-btn" onclick="document.getElementById('photoInput').click()">
+          Change Photo
+        </button>
+        <input type="file" id="photoInput" accept="image/*" onchange="updateProfilePhoto(this)">
+      </div>
+
+      <div class="profile-info">
+        <label>Name:</label>
+        <span id="employeeName">Loading...</span>
+        <label>Position:</label>
+        <span id="employeePosition">Loading...</span>
+        <label>Email:</label>
+        <span id="employeeEmail">Loading...</span>
+        <label>Status:</label>
+        <span id="employeeStatus">Active</span>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <h2>Performance Statistics</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <h3>Total Earnings</h3>
+          <p>₱<span id="earnings">0</span></p>
+        </div>
+        <div class="stat-item">
+          <h3>Words Written</h3>
+          <p><span id="wordCount">0</span></p>
+        </div>
+        <div class="stat-item">
+          <h3>Tasks Completed</h3>
+          <p><span id="tasksCompleted">0</span></p>
+        </div>
+        <div class="stat-item">
+          <h3>Average Speed</h3>
+          <p><span id="avgSpeed">0</span> WPM</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="payslip-section">
+    <div class="payslip-card">
+      <div class="payslip-header">
+        <h2>Payslip History</h2>
+        <button class="toggle-btn" onclick="togglePayslipSection()">Hide Payslip Records</button>
+      </div>
+      <table class="payslip-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="payslipTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    const employee = JSON.parse(localStorage.getItem("loggedInEmployee"));
+    if (!employee) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("employeeName").textContent = employee.name;
+      document.getElementById("employeePosition").textContent = employee.position?.trim() || "New Employee";
+      document.getElementById("employeeEmail").textContent = employee.username + "@hrconnect.com";
+    }
+
+    const employeeData = JSON.parse(localStorage.getItem(`${employee.name}_data`)) || { 
+      earnings: 0, 
+      wordCount: 0,
+      tasksCompleted: 0,
+      avgSpeed: 0
+    };
+
+    document.getElementById("earnings").textContent = employeeData.earnings;
+    document.getElementById("wordCount").textContent = employeeData.wordCount;
+    document.getElementById("tasksCompleted").textContent = employeeData.tasksCompleted || 0;
+    document.getElementById("avgSpeed").textContent = employeeData.avgSpeed || 0;
+
+    function logout() {
+      const logoutTime = new Date().toLocaleTimeString();
+      const employeeName = employee.name;
+      const today = new Date().toLocaleDateString();
+
+      let employeeRecords = JSON.parse(localStorage.getItem("employeeRecords")) || [];
+      const recordIndex = employeeRecords.findIndex(r =>
+        r.name === employeeName && r.date === today && r.timeOut === "N/A"
+      );
+
+      if (recordIndex !== -1) {
+        employeeRecords[recordIndex].timeOut = logoutTime;
+        localStorage.setItem("employeeRecords", JSON.stringify(employeeRecords));
+      }
+
+      localStorage.removeItem("isEmployee");
+      localStorage.removeItem("loggedInEmployee");
+      localStorage.removeItem("currentEmployeeName");
+      window.location.href = "index.html";
+    }
+
+    function openNav() {
+      document.getElementById("mySidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+      document.getElementById("mySidebar").style.width = "0";
+    }
+
+    function togglePayslipSection() {
+      const section = document.getElementById('payslip-section');
+      if (section.style.display === 'none' || section.style.display === '') {
+        section.style.display = 'block';
+        loadPayslipTable();
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    function loadPayslipTable() {
+      const employee = JSON.parse(localStorage.getItem("loggedInEmployee"));
+      const payslipHistory = JSON.parse(localStorage.getItem("payslipHistory")) || [];
+      const tableBody = document.getElementById("payslipTableBody");
+
+      tableBody.innerHTML = "";
+
+      const myPayslips = payslipHistory.filter(p => p.name === employee.name);
+
+      if (myPayslips.length === 0) {
+        tableBody.innerHTML = `<tr><td style="text-align:center;">No payslips available.</td></tr>`;
+        return;
+      }
+
+      // Group payslips by month
+      const payslipsByMonth = {};
+      
+      // Create an array of months from May 2025 to December 2025
+      const months = [];
+      const startDate = new Date(2025, 4, 1); // May 2025 (months are 0-based)
+      const endDate = new Date(2025, 11, 31); // December 2025
+      
+      for (let date = new Date(startDate); date <= endDate; date.setMonth(date.getMonth() + 1)) {
+        const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        months.push(monthYear);
+      }
+
+      // Initialize all months with empty data
+      months.forEach(monthYear => {
+        payslipsByMonth[monthYear] = {
+          payslips: [],
+          totalEarnings: 0,
+          totalTasks: 0
+        };
+      });
+
+      // Populate months with actual payslip data
+      myPayslips.forEach(payslip => {
+        const date = new Date(payslip.date);
+        const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        
+        if (payslipsByMonth[monthYear]) {
+          payslipsByMonth[monthYear].payslips.push(payslip);
+          payslipsByMonth[monthYear].totalEarnings += parseFloat(payslip.earnings) || 0;
+          payslipsByMonth[monthYear].totalTasks += parseInt(payslip.tasksCompleted) || 0;
+        }
+      });
+
+      // Sort months in chronological order (May to December)
+      const sortedMonths = Object.keys(payslipsByMonth).sort((a, b) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA - dateB;
+      });
+
+      // Create HTML for each month
+      sortedMonths.forEach(month => {
+        const monthData = payslipsByMonth[month];
+        const monthSection = document.createElement('div');
+        monthSection.className = 'month-section';
+        
+        const monthId = month.replace(/\s+/g, '-').toLowerCase();
+        
+        monthSection.innerHTML = `
+          <div class="month-header" onclick="toggleMonthDetails('${monthId}')">
+            <span>${month}</span>
+            <button class="toggle-details">⌄</button>
+          </div>
+          <div id="${monthId}" class="month-details">
+            <table class="payslip-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%; border-radius: 8px 0 0 0">Date</th>
+                  <th style="width: 25%">Position</th>
+                  <th style="width: 25%">Tasks Completed</th>
+                  <th style="width: 25%; border-radius: 0 8px 0 0">Total Earnings</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${monthData.payslips.length > 0 ? 
+                  monthData.payslips.map(p => `
+                    <tr>
+                      <td>${new Date(p.date).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}</td>
+                      <td>${p.position}</td>
+                      <td>${p.tasksCompleted || 0} tasks</td>
+                      <td>₱${parseFloat(p.earnings).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}</td>
+                    </tr>
+                  `).join('') : 
+                  '<tr><td colspan="4" class="no-records">No records available for this month</td></tr>'
+                }
+              </tbody>
+            </table>
+            ${monthData.payslips.length > 0 ? `
+              <div class="month-total">
+                <span>Monthly Summary</span>
+                <span>
+                  <span style="margin-right: 20px">Tasks: ${monthData.totalTasks}</span>
+                  <span>Total: ₱${monthData.totalEarnings.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}</span>
+                </span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        tableBody.appendChild(monthSection);
+      });
+    }
+
+    function toggleMonthDetails(monthId) {
+      const monthDetails = document.getElementById(monthId);
+      const allDetails = document.getElementsByClassName('month-details');
+      const button = monthDetails.previousElementSibling.querySelector('.toggle-details');
+      
+      // Close all other month details
+      Array.from(allDetails).forEach(detail => {
+        if (detail.id !== monthId && detail.classList.contains('active')) {
+          detail.classList.remove('active');
+          detail.previousElementSibling.querySelector('.toggle-details').textContent = '⌄';
+        }
+      });
+      
+      // Toggle current month details
+      if (monthDetails.classList.contains('active')) {
+        monthDetails.classList.remove('active');
+        button.textContent = '⌄';
+      } else {
+        monthDetails.classList.add('active');
+        button.textContent = '▲';
+      }
+    }
+
+    function updateProfilePhoto(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('profilePhoto').src = e.target.result;
+          // Save to localStorage
+          localStorage.setItem('profilePhoto_' + employee.name, e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Initialize when page loads
+    window.onload = function() {
+      document.getElementById('payslip-section').style.display = 'none';
+      loadPayslipTable();
+
+      // Load saved profile photo if exists
+      const savedPhoto = localStorage.getItem('profilePhoto_' + employee.name);
+      if (savedPhoto) {
+        document.getElementById('profilePhoto').src = savedPhoto;
+      }
+    };
+  </script>
+</body>
+</html>
