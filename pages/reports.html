@@ -14,8 +14,71 @@
   <!-- Main Content -->
   <div class="container">
     <h2>📊 Reports & Analytics</h2>
+    
+    <!-- Overview Cards -->
     <div id="reportCards" class="report-cards-container">
       <div class="loading">Loading reports...</div>
+    </div>
+
+    <!-- Detailed Analytics Sections -->
+    <div id="detailedAnalytics" style="display: none;">
+      
+      <!-- Leave Management Analytics -->
+      <section class="analytics-section">
+        <h3>🏖️ Leave Management</h3>
+        <div class="analytics-grid">
+          <div id="leaveAnalytics"></div>
+        </div>
+      </section>
+
+      <!-- Overtime Analytics -->
+      <section class="analytics-section">
+        <h3>⏰ Overtime Management</h3>
+        <div class="analytics-grid">
+          <div id="overtimeAnalytics"></div>
+        </div>
+      </section>
+
+      <!-- Training & Development -->
+      <section class="analytics-section">
+        <h3>📚 Training & Development</h3>
+        <div class="analytics-grid">
+          <div id="trainingAnalytics"></div>
+        </div>
+      </section>
+
+      <!-- Budget Overview -->
+      <section class="analytics-section">
+        <h3>💰 Budget Overview</h3>
+        <div class="analytics-grid">
+          <div id="budgetAnalytics"></div>
+        </div>
+      </section>
+
+      <!-- Performance & Evaluations -->
+      <section class="analytics-section">
+        <h3>⭐ Performance & Evaluations</h3>
+        <div class="analytics-grid">
+          <div id="performanceAnalytics"></div>
+        </div>
+      </section>
+
+      <!-- Employee Distribution -->
+      <section class="analytics-section">
+        <h3>👥 Employee Distribution</h3>
+        <div class="analytics-grid">
+          <div id="employeeDistribution"></div>
+        </div>
+      </section>
+
+      <!-- HR Issues & Concerns -->
+      <section class="analytics-section">
+        <h3>⚠️ HR Issues & Concerns</h3>
+        <div class="analytics-grid">
+          <div id="hrIssues"></div>
+        </div>
+      </section>
+
     </div>
   </div>
 
@@ -41,53 +104,321 @@
     // Load reports function
     async function loadReports() {
       try {
-        const response = await fetch("../api/api.php?action=get_reports");
-        const data = await response.json();
+        console.log('Fetching reports data...');
+        const response = await fetch("http://localhost:3000/api/api.php?action=get_reports");
+        console.log('Response status:', response.status);
         
-        if (data && data.data) {
-          const reports = data.data;
-          document.getElementById("reportCards").innerHTML = `
-            <div class="card">
-              <div class="card-icon">👨‍💼</div>
-              <div class="card-content">
-                <h3>Total Employees</h3>
-                <p class="card-number">${reports.total_employees || 0}</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-icon">🕒</div>
-              <div class="card-content">
-                <h3>Attendance Logs</h3>
-                <p class="card-number">${reports.total_attendance || 0}</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-icon">🏖️</div>
-              <div class="card-content">
-                <h3>Leave Requests</h3>
-                <p class="card-number">${reports.total_leaves || 0}</p>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-icon">💰</div>
-              <div class="card-content">
-                <h3>Total Payroll</h3>
-                <p class="card-number">$${reports.total_payroll || 0}</p>
-              </div>
-            </div>
-          `;
+        const result = await response.json();
+        console.log('Response data:', result);
+        
+        if (result && result.success && result.data) {
+          const data = result.data;
+          
+          // Display main overview cards
+          displayOverviewCards(data);
+          
+          // Display detailed analytics
+          displayLeaveAnalytics(data);
+          displayOvertimeAnalytics(data);
+          displayTrainingAnalytics(data);
+          displayBudgetAnalytics(data);
+          displayPerformanceAnalytics(data);
+          displayEmployeeDistribution(data);
+          displayHRIssues(data);
+          
+          // Show detailed analytics section
+          document.getElementById('detailedAnalytics').style.display = 'block';
         } else {
-          throw new Error('Invalid data format');
+          throw new Error(result.message || result.error || 'Invalid data format');
         }
       } catch (error) {
         console.error('Error loading reports:', error);
         document.getElementById("reportCards").innerHTML = `
           <div class="error-message">
             <p>⚠️ Error loading reports data</p>
+            <p>${error.message}</p>
             <p>Please check your connection and try again.</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">Check the browser console for more details.</p>
           </div>
         `;
       }
+    }
+
+    // Display main overview cards
+    function displayOverviewCards(data) {
+      document.getElementById("reportCards").innerHTML = `
+        <div class="card">
+          <div class="card-icon">👨‍💼</div>
+          <div class="card-content">
+            <h3>Total Employees</h3>
+            <p class="card-number">${data.total_employees || 0}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🕒</div>
+          <div class="card-content">
+            <h3>Attendance Logs</h3>
+            <p class="card-number">${data.total_attendance || 0}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏖️</div>
+          <div class="card-content">
+            <h3>Leave Requests</h3>
+            <p class="card-number">${data.total_leaves || 0}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">💰</div>
+          <div class="card-content">
+            <h3>Total Payroll</h3>
+            <p class="card-number">$${data.total_payroll || 0}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📚</div>
+          <div class="card-content">
+            <h3>Training Programs</h3>
+            <p class="card-number">${data.total_training_programs || 0}</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⭐</div>
+          <div class="card-content">
+            <h3>Avg Evaluation Score</h3>
+            <p class="card-number">${data.average_evaluation_score || 0}/5.00</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Display leave analytics
+    function displayLeaveAnalytics(data) {
+      const leaveByType = data.leave_by_type || {};
+      const leaveTypesList = Object.entries(leaveByType)
+        .map(([type, count]) => `<li>${formatLeaveType(type)}: <strong>${count}</strong></li>`)
+        .join('');
+
+      document.getElementById('leaveAnalytics').innerHTML = `
+        <div class="analytics-card">
+          <h4>Total Leave Requests</h4>
+          <p class="big-number">${data.total_leaves || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Pending</h4>
+          <p class="big-number status-pending">${data.pending_leaves || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Approved</h4>
+          <p class="big-number status-approved">${data.approved_leaves || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Rejected</h4>
+          <p class="big-number status-rejected">${data.rejected_leaves || 0}</p>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Leave Requests by Type</h4>
+          <ul class="details-list">${leaveTypesList || '<li>No data available</li>'}</ul>
+        </div>
+      `;
+    }
+
+    // Display overtime analytics
+    function displayOvertimeAnalytics(data) {
+      document.getElementById('overtimeAnalytics').innerHTML = `
+        <div class="analytics-card">
+          <h4>Total OT Requests</h4>
+          <p class="big-number">${data.total_overtime_requests || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Pending OT Requests</h4>
+          <p class="big-number status-pending">${data.pending_overtime || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Approved OT Hours</h4>
+          <p class="big-number">${data.total_overtime_hours || 0} hrs</p>
+        </div>
+      `;
+    }
+
+    // Display training analytics
+    function displayTrainingAnalytics(data) {
+      const trainingByType = data.training_by_type || {};
+      const trainingTypesList = Object.entries(trainingByType)
+        .map(([type, count]) => `<li>${type || 'Not specified'}: <strong>${count}</strong></li>`)
+        .join('');
+
+      document.getElementById('trainingAnalytics').innerHTML = `
+        <div class="analytics-card">
+          <h4>Total Programs</h4>
+          <p class="big-number">${data.total_training_programs || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Completed</h4>
+          <p class="big-number status-approved">${data.completed_training_programs || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Ongoing</h4>
+          <p class="big-number status-pending">${data.ongoing_training_programs || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Certifications Earned</h4>
+          <p class="big-number">${data.total_certifications || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Total Training Cost</h4>
+          <p class="big-number">$${data.total_training_cost || 0}</p>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Programs by Type</h4>
+          <ul class="details-list">${trainingTypesList || '<li>No data available</li>'}</ul>
+        </div>
+      `;
+    }
+
+    // Display budget analytics
+    function displayBudgetAnalytics(data) {
+      const departments = data.department_budgets || [];
+      const deptTable = departments.map(dept => `
+        <tr>
+          <td>${dept.department}</td>
+          <td>$${dept.allocated}</td>
+          <td>$${dept.spent}</td>
+          <td>$${dept.remaining}</td>
+          <td><span class="progress-badge">${dept.percentage_spent}%</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('budgetAnalytics').innerHTML = `
+        <div class="analytics-card">
+          <h4>Total Allocated</h4>
+          <p class="big-number">$${data.total_budget_allocated || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Total Spent</h4>
+          <p class="big-number">$${data.total_budget_spent || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Remaining Budget</h4>
+          <p class="big-number status-approved">$${data.total_budget_remaining || 0}</p>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Department Budget Breakdown</h4>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Allocated</th>
+                  <th>Spent</th>
+                  <th>Remaining</th>
+                  <th>% Spent</th>
+                </tr>
+              </thead>
+              <tbody>${deptTable || '<tr><td colspan="5">No data available</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // Display performance analytics
+    function displayPerformanceAnalytics(data) {
+      const topPerformers = data.top_performers || [];
+      const performersList = topPerformers.slice(0, 5).map(emp => `
+        <li>${emp.employee_name} - <strong>${emp.overall_score}</strong> (${emp.evaluation_period})</li>
+      `).join('');
+
+      document.getElementById('performanceAnalytics').innerHTML = `
+        <div class="analytics-card">
+          <h4>Total Evaluations</h4>
+          <p class="big-number">${data.total_evaluations || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Completed Evaluations</h4>
+          <p class="big-number status-approved">${data.completed_evaluations || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Average Score</h4>
+          <p class="big-number">${data.average_evaluation_score || 0}/5.00</p>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Top 5 Performers</h4>
+          <ul class="details-list">${performersList || '<li>No data available</li>'}</ul>
+        </div>
+      `;
+    }
+
+    // Display employee distribution
+    function displayEmployeeDistribution(data) {
+      const positions = data.employee_by_position || [];
+      const positionsList = positions.map(pos => `
+        <li>${pos.position}: <strong>${pos.count}</strong> employee${pos.count !== 1 ? 's' : ''}</li>
+      `).join('');
+
+      document.getElementById('employeeDistribution').innerHTML = `
+        <div class="analytics-card full-width">
+          <h4>Employees by Position</h4>
+          <ul class="details-list">${positionsList || '<li>No data available</li>'}</ul>
+        </div>
+      `;
+    }
+
+    // Display HR issues
+    function displayHRIssues(data) {
+      const disciplinaryBySeverity = data.disciplinary_by_severity || {};
+      const severityList = Object.entries(disciplinaryBySeverity)
+        .map(([severity, count]) => `<li>${capitalizeFirst(severity)}: <strong>${count}</strong></li>`)
+        .join('');
+
+      const grievancesByPriority = data.grievances_by_priority || {};
+      const priorityList = Object.entries(grievancesByPriority)
+        .map(([priority, count]) => `<li>${capitalizeFirst(priority)}: <strong>${count}</strong></li>`)
+        .join('');
+
+      document.getElementById('hrIssues').innerHTML = `
+        <div class="analytics-card">
+          <h4>Disciplinary Actions</h4>
+          <p class="big-number">${data.total_disciplinary_actions || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Open Cases</h4>
+          <p class="big-number status-pending">${data.open_disciplinary_actions || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Total Grievances</h4>
+          <p class="big-number">${data.total_grievances || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Active Grievances</h4>
+          <p class="big-number status-pending">${data.active_grievances || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Resolved Grievances</h4>
+          <p class="big-number status-approved">${data.resolved_grievances || 0}</p>
+        </div>
+        <div class="analytics-card">
+          <h4>Pending Salary Requests</h4>
+          <p class="big-number status-pending">${data.pending_salary_requests || 0}</p>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Disciplinary Actions by Severity</h4>
+          <ul class="details-list">${severityList || '<li>No data available</li>'}</ul>
+        </div>
+        <div class="analytics-card full-width">
+          <h4>Active Grievances by Priority</h4>
+          <ul class="details-list">${priorityList || '<li>No data available</li>'}</ul>
+        </div>
+      `;
+    }
+
+    // Utility functions
+    function formatLeaveType(type) {
+      return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
     }
   </script>
 </body>

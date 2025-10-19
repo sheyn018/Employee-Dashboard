@@ -1,4 +1,12 @@
 <?php
+// Start output buffering to prevent any accidental output
+ob_start();
+
+// Suppress display errors in production (errors should be logged, not displayed)
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -209,6 +217,10 @@ if ($action) {
                 sendJsonResponse(['success' => false, 'error' => 'Failed to delete budget record', 'details' => $conn->error], 500);
             }
             break;
+        
+        case 'get_reports':
+            handleReportsAnalytics($conn, $method);
+            break;
             
         default:
             // Action not recognized, continue to path-based routing
@@ -267,8 +279,12 @@ switch ($endpoint) {
     case 'grievances':
         handleGrievances($conn, $method);
         break;
+    case 'reports':
+    case 'analytics':
+        handleReportsAnalytics($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'disciplinary', 'disciplinary-actions', 'grievances', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'disciplinary', 'disciplinary-actions', 'grievances', 'reports', 'analytics', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -2868,11 +2884,327 @@ function handleGrievances($conn, $method) {
     }
 }
 
+// Reports & Analytics
+function handleReportsAnalytics($conn, $method = 'GET') {
+    if ($method !== 'GET') {
+        sendJsonResponse(['error' => 'Only GET method allowed for reports'], 405);
+    }
+
+    try {
+        // Initialize response array
+        $analytics = [];
+
+        // 1. Total Employees (Active)
+        $result = $conn->query("SELECT COUNT(*) as count FROM activerecords");
+        $row = $result->fetch_assoc();
+        $analytics['total_employees'] = intval($row['count']);
+
+        // 2. Total Attendance Logs
+        $result = $conn->query("SELECT COUNT(*) as count FROM attendance_records");
+        $row = $result->fetch_assoc();
+        $analytics['total_attendance'] = intval($row['count']);
+
+        // 3. Total Leave Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM leave_requests");
+        $row = $result->fetch_assoc();
+        $analytics['total_leaves'] = intval($row['count']);
+
+        // 4. Total Payroll (sum of all payslips)
+        $result = $conn->query("SELECT COALESCE(SUM(earnings), 0) as total FROM payslip_history");
+        $row = $result->fetch_assoc();
+        $analytics['total_payroll'] = number_format(floatval($row['total']), 2, '.', '');
+
+        // 5. Pending Leave Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'pending'");
+        $row = $result->fetch_assoc();
+        $analytics['pending_leaves'] = intval($row['count']);
+
+        // 6. Approved Leave Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'approved'");
+        $row = $result->fetch_assoc();
+        $analytics['approved_leaves'] = intval($row['count']);
+
+        // 7. Rejected Leave Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'rejected'");
+        $row = $result->fetch_assoc();
+        $analytics['rejected_leaves'] = intval($row['count']);
+
+        // 8. Total Overtime Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM overtime_requests");
+        $row = $result->fetch_assoc();
+        $analytics['total_overtime_requests'] = intval($row['count']);
+
+        // 9. Pending Overtime Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM overtime_requests WHERE status = 'pending'");
+        $row = $result->fetch_assoc();
+        $analytics['pending_overtime'] = intval($row['count']);
+
+        // 10. Total Overtime Hours (Approved)
+        $result = $conn->query("SELECT COALESCE(SUM(hours), 0) as total FROM overtime_requests WHERE status = 'approved'");
+        $row = $result->fetch_assoc();
+        $analytics['total_overtime_hours'] = number_format(floatval($row['total']), 2, '.', '');
+
+        // 11. Training Programs Statistics
+        $result = $conn->query("SELECT COUNT(*) as count FROM training_programs");
+        $row = $result->fetch_assoc();
+        $analytics['total_training_programs'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM training_programs WHERE status = 'completed'");
+        $row = $result->fetch_assoc();
+        $analytics['completed_training_programs'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM training_programs WHERE status = 'ongoing'");
+        $row = $result->fetch_assoc();
+        $analytics['ongoing_training_programs'] = intval($row['count']);
+
+        // 12. Total Training Cost
+        $result = $conn->query("SELECT COALESCE(SUM(cost), 0) as total FROM training_programs");
+        $row = $result->fetch_assoc();
+        $analytics['total_training_cost'] = number_format(floatval($row['total']), 2, '.', '');
+
+        // 13. Certifications Obtained
+        $result = $conn->query("SELECT COUNT(*) as count FROM training_programs WHERE certification_obtained = 1");
+        $row = $result->fetch_assoc();
+        $analytics['total_certifications'] = intval($row['count']);
+
+        // 14. Employee Evaluations
+        $result = $conn->query("SELECT COUNT(*) as count FROM employee_evaluations");
+        $row = $result->fetch_assoc();
+        $analytics['total_evaluations'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM employee_evaluations WHERE status = 'completed'");
+        $row = $result->fetch_assoc();
+        $analytics['completed_evaluations'] = intval($row['count']);
+
+        // 15. Average Evaluation Score
+        $result = $conn->query("SELECT COALESCE(AVG(overall_score), 0) as avg FROM employee_evaluations WHERE status = 'completed'");
+        $row = $result->fetch_assoc();
+        $analytics['average_evaluation_score'] = number_format(floatval($row['avg']), 2, '.', '');
+
+        // 16. Budget Overview
+        $result = $conn->query("SELECT COALESCE(SUM(allocated_amount), 0) as total FROM budget");
+        $row = $result->fetch_assoc();
+        $analytics['total_budget_allocated'] = number_format(floatval($row['total']), 2, '.', '');
+
+        $result = $conn->query("SELECT COALESCE(SUM(spent_amount), 0) as total FROM budget");
+        $row = $result->fetch_assoc();
+        $analytics['total_budget_spent'] = number_format(floatval($row['total']), 2, '.', '');
+
+        $result = $conn->query("SELECT COALESCE(SUM(remaining_amount), 0) as total FROM budget");
+        $row = $result->fetch_assoc();
+        $analytics['total_budget_remaining'] = number_format(floatval($row['total']), 2, '.', '');
+
+        // 17. Department Budget Breakdown
+        $result = $conn->query("
+            SELECT department, allocated_amount, spent_amount, remaining_amount, percentage_spent 
+            FROM budget 
+            ORDER BY allocated_amount DESC
+        ");
+        $departments = [];
+        while ($row = $result->fetch_assoc()) {
+            $departments[] = [
+                'department' => $row['department'],
+                'allocated' => number_format(floatval($row['allocated_amount']), 2, '.', ''),
+                'spent' => number_format(floatval($row['spent_amount']), 2, '.', ''),
+                'remaining' => number_format(floatval($row['remaining_amount']), 2, '.', ''),
+                'percentage_spent' => number_format(floatval($row['percentage_spent']), 2, '.', '')
+            ];
+        }
+        $analytics['department_budgets'] = $departments;
+
+        // 18. Disciplinary Actions
+        $result = $conn->query("SELECT COUNT(*) as count FROM disciplinary_actions");
+        $row = $result->fetch_assoc();
+        $analytics['total_disciplinary_actions'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM disciplinary_actions WHERE status = 'open'");
+        $row = $result->fetch_assoc();
+        $analytics['open_disciplinary_actions'] = intval($row['count']);
+
+        // 19. Disciplinary Actions by Severity
+        $result = $conn->query("
+            SELECT severity, COUNT(*) as count 
+            FROM disciplinary_actions 
+            GROUP BY severity
+        ");
+        $disciplinarySeverity = [];
+        while ($row = $result->fetch_assoc()) {
+            $disciplinarySeverity[$row['severity']] = intval($row['count']);
+        }
+        $analytics['disciplinary_by_severity'] = $disciplinarySeverity;
+
+        // 20. Grievances
+        $result = $conn->query("SELECT COUNT(*) as count FROM grievances");
+        $row = $result->fetch_assoc();
+        $analytics['total_grievances'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM grievances WHERE status IN ('submitted', 'under_review', 'investigation')");
+        $row = $result->fetch_assoc();
+        $analytics['active_grievances'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM grievances WHERE status = 'resolved'");
+        $row = $result->fetch_assoc();
+        $analytics['resolved_grievances'] = intval($row['count']);
+
+        // 21. Grievances by Priority
+        $result = $conn->query("
+            SELECT priority, COUNT(*) as count 
+            FROM grievances 
+            WHERE status NOT IN ('resolved', 'closed', 'rejected')
+            GROUP BY priority
+        ");
+        $grievancesPriority = [];
+        while ($row = $result->fetch_assoc()) {
+            $grievancesPriority[$row['priority']] = intval($row['count']);
+        }
+        $analytics['grievances_by_priority'] = $grievancesPriority;
+
+        // 22. Salary Requests
+        $result = $conn->query("SELECT COUNT(*) as count FROM employeesalaryrequests");
+        $row = $result->fetch_assoc();
+        $analytics['total_salary_requests'] = intval($row['count']);
+
+        $result = $conn->query("SELECT COUNT(*) as count FROM employeesalaryrequests WHERE status = 'Pending'");
+        $row = $result->fetch_assoc();
+        $analytics['pending_salary_requests'] = intval($row['count']);
+
+        // 23. Employee Distribution by Position
+        $result = $conn->query("
+            SELECT position, COUNT(*) as count 
+            FROM activerecords 
+            GROUP BY position 
+            ORDER BY count DESC
+        ");
+        $positionDistribution = [];
+        while ($row = $result->fetch_assoc()) {
+            $positionDistribution[] = [
+                'position' => $row['position'],
+                'count' => intval($row['count'])
+            ];
+        }
+        $analytics['employee_by_position'] = $positionDistribution;
+
+        // 24. Recent Attendance Summary (Last 30 days)
+        $result = $conn->query("
+            SELECT 
+                COUNT(DISTINCT employee_id) as unique_employees,
+                COUNT(*) as total_logs,
+                DATE(attendance_date) as date
+            FROM attendance_records 
+            WHERE attendance_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(attendance_date)
+            ORDER BY date DESC
+            LIMIT 7
+        ");
+        $recentAttendance = [];
+        while ($row = $result->fetch_assoc()) {
+            $recentAttendance[] = [
+                'date' => $row['date'],
+                'unique_employees' => intval($row['unique_employees']),
+                'total_logs' => intval($row['total_logs'])
+            ];
+        }
+        $analytics['recent_attendance_summary'] = $recentAttendance;
+
+        // 25. Leave Requests by Type
+        $result = $conn->query("
+            SELECT leave_type, COUNT(*) as count 
+            FROM leave_requests 
+            GROUP BY leave_type
+        ");
+        $leaveTypes = [];
+        while ($row = $result->fetch_assoc()) {
+            $leaveTypes[$row['leave_type']] = intval($row['count']);
+        }
+        $analytics['leave_by_type'] = $leaveTypes;
+
+        // 26. Monthly Payroll Trend (Last 6 months)
+        $result = $conn->query("
+            SELECT 
+                DATE_FORMAT(date_generated, '%Y-%m') as month,
+                COUNT(*) as payslips_count,
+                SUM(earnings) as total_earnings
+            FROM payslip_history 
+            WHERE date_generated >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+            GROUP BY DATE_FORMAT(date_generated, '%Y-%m')
+            ORDER BY month DESC
+        ");
+        $payrollTrend = [];
+        while ($row = $result->fetch_assoc()) {
+            $payrollTrend[] = [
+                'month' => $row['month'],
+                'payslips_count' => intval($row['payslips_count']),
+                'total_earnings' => number_format(floatval($row['total_earnings']), 2, '.', '')
+            ];
+        }
+        $analytics['payroll_trend'] = $payrollTrend;
+
+        // 27. Training Programs by Type
+        $result = $conn->query("
+            SELECT program_type, COUNT(*) as count 
+            FROM training_programs 
+            WHERE program_type IS NOT NULL
+            GROUP BY program_type
+        ");
+        $trainingByType = [];
+        while ($row = $result->fetch_assoc()) {
+            $trainingByType[$row['program_type']] = intval($row['count']);
+        }
+        $analytics['training_by_type'] = $trainingByType;
+
+        // 28. Top Performers (Based on Evaluation Scores)
+        $result = $conn->query("
+            SELECT employee_name, overall_score, evaluation_period
+            FROM employee_evaluations 
+            WHERE status = 'completed'
+            ORDER BY overall_score DESC
+            LIMIT 10
+        ");
+        $topPerformers = [];
+        while ($row = $result->fetch_assoc()) {
+            $topPerformers[] = [
+                'employee_name' => $row['employee_name'],
+                'overall_score' => number_format(floatval($row['overall_score']), 2, '.', ''),
+                'evaluation_period' => $row['evaluation_period']
+            ];
+        }
+        $analytics['top_performers'] = $topPerformers;
+
+        // 29. System Statistics
+        $analytics['report_generated_at'] = date('Y-m-d H:i:s');
+        $analytics['fiscal_year'] = date('Y');
+
+        // Send response
+        sendJsonResponse([
+            'success' => true,
+            'data' => $analytics,
+            'message' => 'Reports analytics generated successfully'
+        ]);
+
+    } catch (Exception $e) {
+        sendJsonResponse([
+            'success' => false,
+            'error' => 'Failed to generate reports analytics',
+            'details' => $e->getMessage()
+        ], 500);
+    }
+}
+
 // JSON response helper
 function sendJsonResponse($data, $statusCode = 200) {
+    // Clean any output that might have been buffered
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    
     http_response_code($statusCode);
     header('Content-Type: application/json');
     echo json_encode($data);
+    
+    if (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    
     exit();
 }
 ?>
