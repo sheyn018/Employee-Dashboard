@@ -59,6 +59,23 @@
         <tbody id="deletedRecordsTableBody"></tbody>
       </table>
 
+      <h3>⭐ Performance Evaluations</h3>
+      <div style="margin-bottom: 15px;">
+        <a href="evaluations-view.html" class="btn" style="text-decoration: none; display: inline-block;">View All Evaluations</a>
+      </div>
+      <table class="table-4">
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Evaluator</th>
+            <th>Period</th>
+            <th>Overall Score</th>
+            <th>Date Created</th>
+          </tr>
+        </thead>
+        <tbody id="evaluationsTableBody"></tbody>
+      </table>
+
       <center><a href="index.html" class="btn">Back to Home</a></center>
       <center><button class="btn-logout" onclick="NavigationComponent.logout()">Log Out</button></center>
     </div>
@@ -94,6 +111,7 @@
     let employeeRecords = [];
     let deletedRecords = [];
     let salaryRequests = [];
+    let evaluations = [];
 
     // Fetch data from API
     async function fetchData() {
@@ -115,6 +133,12 @@
         deletedRecords = await deletedResponse.json();
 
         console.log('Deleted Records:', deletedRecords); // Debugging log
+
+        // Fetch evaluations
+        const evaluationsResponse = await fetch(`${API_BASE}/evaluations`);
+        evaluations = await evaluationsResponse.json();
+
+        console.log('Evaluations:', evaluations); // Debugging log
 
         renderTables();
       } catch (error) {
@@ -149,6 +173,7 @@
 
       renderSalaryRequests();
       renderDeletedRecords();
+      renderEvaluations();
     }
 
     // Render Salary Requests
@@ -320,6 +345,61 @@
           alert('Error permanently deleting record');
         }
       }
+    }
+
+    // Render Evaluations
+    function renderEvaluations() {
+      const tbody = document.getElementById("evaluationsTableBody");
+      tbody.innerHTML = "";
+
+      if (!evaluations || evaluations.length === 0) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td colspan="5" style="text-align: center; color: #999;">No evaluations found</td>`;
+        tbody.appendChild(row);
+        return;
+      }
+
+      // Show only the 5 most recent evaluations
+      const recentEvaluations = evaluations.slice(0, 5);
+
+      recentEvaluations.forEach((evaluation) => {
+        const score = parseFloat(evaluation.overall_score);
+        let scoreClass = '';
+        let scoreLabel = '';
+        
+        if (score >= 4.5) {
+          scoreClass = 'background: #4caf50; color: white;';
+          scoreLabel = 'Excellent';
+        } else if (score >= 3.5) {
+          scoreClass = 'background: #8bc34a; color: white;';
+          scoreLabel = 'Good';
+        } else if (score >= 2.5) {
+          scoreClass = 'background: #ffc107; color: #333;';
+          scoreLabel = 'Average';
+        } else if (score >= 1.5) {
+          scoreClass = 'background: #ff9800; color: white;';
+          scoreLabel = 'Below Average';
+        } else {
+          scoreClass = 'background: #f44336; color: white;';
+          scoreLabel = 'Poor';
+        }
+
+        const dateCreated = new Date(evaluation.date_created).toLocaleDateString();
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `  
+          <td>${evaluation.employee_name}</td>
+          <td>${evaluation.evaluator_name}</td>
+          <td>${evaluation.evaluation_period}</td>
+          <td>
+            <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 13px; ${scoreClass}">
+              ${score.toFixed(2)} - ${scoreLabel}
+            </span>
+          </td>
+          <td>${dateCreated}</td>
+        `;
+        tbody.appendChild(row);
+      });
     }
 
     // Initial data fetch and render

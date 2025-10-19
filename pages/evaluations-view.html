@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Evaluations - HR Connect</title>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+  <style>
+    .evaluations-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .filters-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #2e7d32;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: #2e7d32;
+    }
+
+    .btn-filter {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-filter:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    }
+
+    .evaluations-table {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .evaluations-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .evaluations-table thead {
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+    }
+
+    .evaluations-table th {
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .evaluations-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+
+    .evaluations-table tbody tr:hover {
+      background-color: #f5f5f5;
+    }
+
+    .score-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .score-excellent {
+      background: #4caf50;
+      color: white;
+    }
+
+    .score-good {
+      background: #8bc34a;
+      color: white;
+    }
+
+    .score-average {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .score-below-average {
+      background: #ff9800;
+      color: white;
+    }
+
+    .score-poor {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-view {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #1976d2, #2196f3);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-view:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 16px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      overflow: auto;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 3% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .close {
+      color: white;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .close:hover {
+      transform: scale(1.2);
+    }
+
+    .modal-body {
+      padding: 30px;
+    }
+
+    .eval-section {
+      margin-bottom: 25px;
+    }
+
+    .eval-section h3 {
+      color: #2e7d32;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .eval-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .eval-item {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .eval-item label {
+      display: block;
+      font-weight: 600;
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .eval-item .value {
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .rating-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .rating-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f44336, #ff9800, #ffc107, #8bc34a, #4caf50);
+      transition: width 0.3s ease;
+    }
+
+    .text-content {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #2e7d32;
+      margin-top: 10px;
+      line-height: 1.6;
+      color: #555;
+    }
+
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+      padding: 20px;
+      background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+      border-radius: 12px;
+    }
+
+    .stat-box {
+      text-align: center;
+    }
+
+    .stat-box .number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    .stat-box .label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>Employee Performance Evaluations</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <div class="evaluations-container">
+    <!-- Statistics Summary -->
+    <div class="stats-summary">
+      <div class="stat-box">
+        <div class="number" id="totalEvaluations">0</div>
+        <div class="label">Total Evaluations</div>
+      </div>
+      <div class="stat-box">
+        <div class="number" id="avgOverallScore">0.00</div>
+        <div class="label">Avg Overall Score</div>
+      </div>
+      <div class="stat-box">
+        <div class="number" id="excellentCount">0</div>
+        <div class="label">Excellent (≥4.5)</div>
+      </div>
+      <div class="stat-box">
+        <div class="number" id="goodCount">0</div>
+        <div class="label">Good (≥3.5)</div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label for="filterEmployee">Employee Name</label>
+        <input type="text" id="filterEmployee" placeholder="Search by name...">
+      </div>
+      <div class="filter-group">
+        <label for="filterPeriod">Evaluation Period</label>
+        <select id="filterPeriod">
+          <option value="">All Periods</option>
+          <option value="Annual 2025">Annual 2025</option>
+          <option value="Annual 2024">Annual 2024</option>
+          <option value="Q4 2025">Q4 2025</option>
+          <option value="Q3 2025">Q3 2025</option>
+          <option value="Q2 2025">Q2 2025</option>
+          <option value="Q1 2025">Q1 2025</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterMinScore">Min Score</label>
+        <input type="number" id="filterMinScore" min="1" max="5" step="0.1" placeholder="1.0">
+      </div>
+      <button class="btn-filter" onclick="applyFilters()">Apply Filters</button>
+      <button class="btn-filter" onclick="resetFilters()">Reset</button>
+    </div>
+
+    <!-- Evaluations Table -->
+    <div class="evaluations-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee Name</th>
+            <th>Evaluator</th>
+            <th>Period</th>
+            <th>Overall Score</th>
+            <th>Date Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="evaluationsTableBody">
+          <tr>
+            <td colspan="6" class="no-data">Loading evaluations...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal for Viewing Evaluation Details -->
+  <div id="evaluationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Evaluation Details</h2>
+        <span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false
+    });
+
+    NavigationComponent.setActiveNavItem('evaluations-view.html');
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Global variables
+    let allEvaluations = [];
+    let filteredEvaluations = [];
+
+    // Fetch evaluations from API
+    async function fetchEvaluations() {
+      try {
+        const response = await fetch(`${API_BASE}/evaluations`);
+        if (!response.ok) throw new Error('Failed to fetch evaluations');
+        
+        allEvaluations = await response.json();
+        filteredEvaluations = [...allEvaluations];
+        
+        updateStatistics();
+        renderEvaluations();
+      } catch (error) {
+        console.error('Error fetching evaluations:', error);
+        document.getElementById('evaluationsTableBody').innerHTML = 
+          '<tr><td colspan="6" class="no-data">Error loading evaluations. Please check your connection.</td></tr>';
+      }
+    }
+
+    // Update statistics
+    function updateStatistics() {
+      const total = allEvaluations.length;
+      document.getElementById('totalEvaluations').textContent = total;
+
+      if (total === 0) {
+        document.getElementById('avgOverallScore').textContent = '0.00';
+        document.getElementById('excellentCount').textContent = '0';
+        document.getElementById('goodCount').textContent = '0';
+        return;
+      }
+
+      const totalScore = allEvaluations.reduce((sum, eval) => sum + parseFloat(eval.overall_score || 0), 0);
+      const avgScore = (totalScore / total).toFixed(2);
+      document.getElementById('avgOverallScore').textContent = avgScore;
+
+      const excellentCount = allEvaluations.filter(e => parseFloat(e.overall_score) >= 4.5).length;
+      const goodCount = allEvaluations.filter(e => parseFloat(e.overall_score) >= 3.5 && parseFloat(e.overall_score) < 4.5).length;
+      
+      document.getElementById('excellentCount').textContent = excellentCount;
+      document.getElementById('goodCount').textContent = goodCount;
+    }
+
+    // Render evaluations table
+    function renderEvaluations() {
+      const tbody = document.getElementById('evaluationsTableBody');
+      
+      if (filteredEvaluations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No evaluations found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      filteredEvaluations.forEach(evaluation => {
+        const score = parseFloat(evaluation.overall_score);
+        const scoreClass = getScoreClass(score);
+        const scoreLabel = getScoreLabel(score);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>${evaluation.employee_name}</strong></td>
+          <td>${evaluation.evaluator_name}</td>
+          <td>${evaluation.evaluation_period}</td>
+          <td>
+            <span class="score-badge ${scoreClass}">${score.toFixed(2)} - ${scoreLabel}</span>
+          </td>
+          <td>${new Date(evaluation.date_created).toLocaleDateString()}</td>
+          <td>
+            <button class="btn-view" onclick="viewEvaluation(${evaluation.id})">View Details</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Get score class for styling
+    function getScoreClass(score) {
+      if (score >= 4.5) return 'score-excellent';
+      if (score >= 3.5) return 'score-good';
+      if (score >= 2.5) return 'score-average';
+      if (score >= 1.5) return 'score-below-average';
+      return 'score-poor';
+    }
+
+    // Get score label
+    function getScoreLabel(score) {
+      if (score >= 4.5) return 'Excellent';
+      if (score >= 3.5) return 'Good';
+      if (score >= 2.5) return 'Average';
+      if (score >= 1.5) return 'Below Average';
+      return 'Poor';
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const employeeName = document.getElementById('filterEmployee').value.toLowerCase();
+      const period = document.getElementById('filterPeriod').value;
+      const minScore = parseFloat(document.getElementById('filterMinScore').value) || 0;
+
+      filteredEvaluations = allEvaluations.filter(evaluation => {
+        const nameMatch = evaluation.employee_name.toLowerCase().includes(employeeName);
+        const periodMatch = !period || evaluation.evaluation_period === period;
+        const scoreMatch = parseFloat(evaluation.overall_score) >= minScore;
+        
+        return nameMatch && periodMatch && scoreMatch;
+      });
+
+      renderEvaluations();
+    }
+
+    // Reset filters
+    function resetFilters() {
+      document.getElementById('filterEmployee').value = '';
+      document.getElementById('filterPeriod').value = '';
+      document.getElementById('filterMinScore').value = '';
+      filteredEvaluations = [...allEvaluations];
+      renderEvaluations();
+    }
+
+    // View evaluation details in modal
+    function viewEvaluation(id) {
+      const evaluation = allEvaluations.find(e => e.id === id);
+      if (!evaluation) return;
+
+      const modalBody = document.getElementById('modalBody');
+      const score = parseFloat(evaluation.overall_score);
+      
+      modalBody.innerHTML = `
+        <div class="eval-section">
+          <h3>📋 Employee Information</h3>
+          <div class="eval-grid">
+            <div class="eval-item">
+              <label>Employee Name</label>
+              <div class="value">${evaluation.employee_name}</div>
+            </div>
+            <div class="eval-item">
+              <label>Evaluator</label>
+              <div class="value">${evaluation.evaluator_name}</div>
+            </div>
+            <div class="eval-item">
+              <label>Evaluation Period</label>
+              <div class="value">${evaluation.evaluation_period}</div>
+            </div>
+            <div class="eval-item">
+              <label>Overall Score</label>
+              <div class="value">
+                <span class="score-badge ${getScoreClass(score)}">${score.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="eval-section">
+          <h3>⭐ Performance Ratings</h3>
+          <div class="eval-grid">
+            ${createRatingItem('Technical Skills', evaluation.technical_skills)}
+            ${createRatingItem('Communication', evaluation.communication)}
+            ${createRatingItem('Teamwork', evaluation.teamwork)}
+            ${createRatingItem('Reliability', evaluation.reliability)}
+            ${createRatingItem('Problem Solving', evaluation.problem_solving)}
+          </div>
+        </div>
+
+        ${evaluation.strengths ? `
+        <div class="eval-section">
+          <h3>💪 Strengths & Accomplishments</h3>
+          <div class="text-content">${evaluation.strengths}</div>
+        </div>
+        ` : ''}
+
+        ${evaluation.areas_for_improvement ? `
+        <div class="eval-section">
+          <h3>📈 Areas for Improvement</h3>
+          <div class="text-content">${evaluation.areas_for_improvement}</div>
+        </div>
+        ` : ''}
+
+        ${evaluation.goals_next_period ? `
+        <div class="eval-section">
+          <h3>🎯 Goals for Next Period</h3>
+          <div class="text-content">${evaluation.goals_next_period}</div>
+        </div>
+        ` : ''}
+
+        ${evaluation.additional_comments ? `
+        <div class="eval-section">
+          <h3>💬 Additional Comments</h3>
+          <div class="text-content">${evaluation.additional_comments}</div>
+        </div>
+        ` : ''}
+
+        <div class="eval-section">
+          <h3>📅 Timeline</h3>
+          <div class="eval-grid">
+            <div class="eval-item">
+              <label>Created</label>
+              <div class="value">${new Date(evaluation.date_created).toLocaleString()}</div>
+            </div>
+            ${evaluation.date_completed ? `
+            <div class="eval-item">
+              <label>Completed</label>
+              <div class="value">${new Date(evaluation.date_completed).toLocaleString()}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('evaluationModal').style.display = 'block';
+    }
+
+    // Create rating item HTML
+    function createRatingItem(label, value) {
+      const percentage = (value / 5) * 100;
+      return `
+        <div class="eval-item">
+          <label>${label}</label>
+          <div class="value">${value} / 5</div>
+          <div class="rating-bar">
+            <div class="rating-fill" style="width: ${percentage}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('evaluationModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('evaluationModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+
+    // Initial load
+    fetchEvaluations();
+  </script>
+</body>
+</html>

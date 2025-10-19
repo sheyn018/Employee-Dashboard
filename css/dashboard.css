@@ -226,6 +226,13 @@
     .table-3 th:nth-child(5), .table-3 td:nth-child(5) { width: 12%; text-align: center; }
     .table-3 th:nth-child(6), .table-3 td:nth-child(6) { width: 26%; text-align: center; }
 
+    /* Evaluations Table */
+    .table-4 th:nth-child(1), .table-4 td:nth-child(1) { width: 22%; }
+    .table-4 th:nth-child(2), .table-4 td:nth-child(2) { width: 20%; }
+    .table-4 th:nth-child(3), .table-4 td:nth-child(3) { width: 18%; }
+    .table-4 th:nth-child(4), .table-4 td:nth-child(4) { width: 22%; text-align: center; }
+    .table-4 th:nth-child(5), .table-4 td:nth-child(5) { width: 18%; text-align: center; }
+
     tbody tr:hover {
       background: linear-gradient(135deg, #f8fffe 0%, #f0f7f0 100%);
       transform: translateY(-1px);
