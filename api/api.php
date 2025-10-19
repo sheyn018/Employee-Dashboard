@@ -49,7 +49,7 @@ if (($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoin
     $connectionStatus['all_tables_in_current_db'] = $allTables;
     
     // Test if required tables exist
-    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history', 'leave_requests', 'employee_evaluations'];
+    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history', 'leave_requests', 'employee_evaluations', 'attendance_records', 'budget', 'overtime_requests', 'training_programs', 'disciplinary_actions', 'grievances'];
     $tableStatus = [];
     foreach ($requiredTables as $table) {
         $result = $conn->query("SHOW TABLES LIKE '$table'");
@@ -260,8 +260,15 @@ switch ($endpoint) {
     case 'training-programs':
         handleTrainingPrograms($conn, $method);
         break;
+    case 'disciplinary':
+    case 'disciplinary-actions':
+        handleDisciplinaryActions($conn, $method);
+        break;
+    case 'grievances':
+        handleGrievances($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'disciplinary', 'disciplinary-actions', 'grievances', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -2212,6 +2219,650 @@ function handleTrainingPrograms($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to delete training program', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Disciplinary Actions
+function handleDisciplinaryActions($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all disciplinary actions, optionally filtered
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $actionType = isset($_GET['action_type']) ? $_GET['action_type'] : null;
+            $severity = isset($_GET['severity']) ? $_GET['severity'] : null;
+            
+            $query = "SELECT * FROM disciplinary_actions";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if ($actionType) {
+                $conditions[] = "action_type = ?";
+                $params[] = $actionType;
+                $types .= "s";
+            }
+            
+            if ($severity) {
+                $conditions[] = "severity = ?";
+                $params[] = $severity;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY incident_date DESC, date_created DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $actions = [];
+            while ($row = $result->fetch_assoc()) {
+                $actions[] = $row;
+            }
+            sendJsonResponse($actions);
+            break;
+
+        case 'POST':
+            // Create new disciplinary action
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            $requiredFields = ['employee_name', 'action_type', 'incident_date', 'description', 'action_taken', 'reported_by'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field]) || empty($input[$field])) {
+                    sendJsonResponse(['error' => "Missing required field: $field"], 400);
+                    return;
+                }
+            }
+
+            // Validate action_type
+            $validActionTypes = ['verbal_warning', 'written_warning', 'suspension', 'termination', 'other'];
+            if (!in_array($input['action_type'], $validActionTypes)) {
+                sendJsonResponse(['error' => 'Invalid action_type. Must be: verbal_warning, written_warning, suspension, termination, or other'], 400);
+                return;
+            }
+
+            // Validate severity if provided
+            $severity = isset($input['severity']) ? $input['severity'] : 'minor';
+            $validSeverities = ['minor', 'moderate', 'major', 'critical'];
+            if (!in_array($severity, $validSeverities)) {
+                sendJsonResponse(['error' => 'Invalid severity. Must be: minor, moderate, major, or critical'], 400);
+                return;
+            }
+
+            // Validate date
+            $incidentDate = $input['incident_date'];
+            if (!strtotime($incidentDate)) {
+                sendJsonResponse(['error' => 'Invalid incident date format'], 400);
+                return;
+            }
+
+            // Validate status if provided
+            $status = isset($input['status']) ? $input['status'] : 'open';
+            $validStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+            if (!in_array($status, $validStatuses)) {
+                sendJsonResponse(['error' => 'Invalid status. Must be: open, in_progress, resolved, or closed'], 400);
+                return;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM disciplinary_actions WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Try to get employee_id from activerecords
+            $employeeId = null;
+            if (isset($input['employee_id']) && !empty($input['employee_id'])) {
+                $employeeId = intval($input['employee_id']);
+            } else {
+                $stmt = $conn->prepare("SELECT id FROM activerecords WHERE name = ? LIMIT 1");
+                $stmt->bind_param("s", $input['employee_name']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($row = $result->fetch_assoc()) {
+                    $employeeId = $row['id'];
+                }
+            }
+
+            // Prepare optional fields
+            $violationType = isset($input['violation_type']) ? $input['violation_type'] : null;
+            $witnessNames = isset($input['witness_names']) ? $input['witness_names'] : null;
+            $followUpRequired = isset($input['follow_up_required']) ? ($input['follow_up_required'] ? 1 : 0) : 0;
+            $followUpDate = isset($input['follow_up_date']) && !empty($input['follow_up_date']) ? $input['follow_up_date'] : null;
+            $followUpNotes = isset($input['follow_up_notes']) ? $input['follow_up_notes'] : null;
+            $resolutionNotes = isset($input['resolution_notes']) ? $input['resolution_notes'] : null;
+            $createdBy = isset($input['created_by']) ? $input['created_by'] : null;
+
+            // Insert disciplinary action
+            $stmt = $conn->prepare("
+                INSERT INTO disciplinary_actions 
+                (id, employee_id, employee_name, action_type, severity, violation_type, 
+                 incident_date, description, action_taken, reported_by, witness_names, 
+                 follow_up_required, follow_up_date, follow_up_notes, status, 
+                 resolution_notes, created_by) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->bind_param(
+                "iisssssssssisssss", 
+                $randomId,
+                $employeeId,
+                $input['employee_name'],
+                $input['action_type'],
+                $severity,
+                $violationType,
+                $incidentDate,
+                $input['description'],
+                $input['action_taken'],
+                $input['reported_by'],
+                $witnessNames,
+                $followUpRequired,
+                $followUpDate,
+                $followUpNotes,
+                $status,
+                $resolutionNotes,
+                $createdBy
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'disciplinary_action' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $input['employee_name'],
+                        'action_type' => $input['action_type'],
+                        'severity' => $severity,
+                        'incident_date' => $incidentDate,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create disciplinary action', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update disciplinary action
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Disciplinary action ID is required'], 400);
+                return;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    return;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+            }
+
+            if (isset($input['severity'])) {
+                $validSeverities = ['minor', 'moderate', 'major', 'critical'];
+                if (!in_array($input['severity'], $validSeverities)) {
+                    sendJsonResponse(['error' => 'Invalid severity'], 400);
+                    return;
+                }
+                $updates[] = "severity = ?";
+                $params[] = $input['severity'];
+                $types .= "s";
+            }
+
+            if (isset($input['action_type'])) {
+                $validActionTypes = ['verbal_warning', 'written_warning', 'suspension', 'termination', 'other'];
+                if (!in_array($input['action_type'], $validActionTypes)) {
+                    sendJsonResponse(['error' => 'Invalid action_type'], 400);
+                    return;
+                }
+                $updates[] = "action_type = ?";
+                $params[] = $input['action_type'];
+                $types .= "s";
+            }
+
+            // Text fields
+            $textFields = ['description', 'action_taken', 'violation_type', 'witness_names', 
+                          'follow_up_notes', 'resolution_notes', 'reported_by', 'created_by'];
+            foreach ($textFields as $field) {
+                if (isset($input[$field])) {
+                    $updates[] = "$field = ?";
+                    $params[] = $input[$field];
+                    $types .= "s";
+                }
+            }
+
+            // Date fields
+            if (isset($input['incident_date'])) {
+                $updates[] = "incident_date = ?";
+                $params[] = $input['incident_date'];
+                $types .= "s";
+            }
+
+            if (isset($input['follow_up_date'])) {
+                $updates[] = "follow_up_date = ?";
+                $params[] = $input['follow_up_date'];
+                $types .= "s";
+            }
+
+            // Boolean field
+            if (isset($input['follow_up_required'])) {
+                $updates[] = "follow_up_required = ?";
+                $params[] = $input['follow_up_required'] ? 1 : 0;
+                $types .= "i";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                return;
+            }
+
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE disciplinary_actions SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update disciplinary action', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete disciplinary action
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Disciplinary action ID is required'], 400);
+                return;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM disciplinary_actions WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete disciplinary action', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Grievances
+function handleGrievances($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all grievances, optionally filtered
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $grievanceType = isset($_GET['grievance_type']) ? $_GET['grievance_type'] : null;
+            $priority = isset($_GET['priority']) ? $_GET['priority'] : null;
+            $assignedTo = isset($_GET['assigned_to']) ? $_GET['assigned_to'] : null;
+            
+            $query = "SELECT * FROM grievances";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if ($grievanceType) {
+                $conditions[] = "grievance_type = ?";
+                $params[] = $grievanceType;
+                $types .= "s";
+            }
+            
+            if ($priority) {
+                $conditions[] = "priority = ?";
+                $params[] = $priority;
+                $types .= "s";
+            }
+            
+            if ($assignedTo) {
+                $conditions[] = "assigned_to = ?";
+                $params[] = $assignedTo;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY priority DESC, date_filed DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $grievances = [];
+            while ($row = $result->fetch_assoc()) {
+                $grievances[] = $row;
+            }
+            sendJsonResponse($grievances);
+            break;
+
+        case 'POST':
+            // Create new grievance
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            $requiredFields = ['employee_name', 'grievance_type', 'subject', 'description', 'date_filed'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field]) || empty($input[$field])) {
+                    sendJsonResponse(['error' => "Missing required field: $field"], 400);
+                    return;
+                }
+            }
+
+            // Validate grievance_type
+            $validGrievanceTypes = ['harassment', 'discrimination', 'workplace_safety', 'compensation', 
+                                    'workload', 'management_issue', 'other'];
+            if (!in_array($input['grievance_type'], $validGrievanceTypes)) {
+                sendJsonResponse(['error' => 'Invalid grievance_type. Must be: harassment, discrimination, workplace_safety, compensation, workload, management_issue, or other'], 400);
+                return;
+            }
+
+            // Validate priority if provided
+            $priority = isset($input['priority']) ? $input['priority'] : 'medium';
+            $validPriorities = ['low', 'medium', 'high', 'urgent'];
+            if (!in_array($priority, $validPriorities)) {
+                sendJsonResponse(['error' => 'Invalid priority. Must be: low, medium, high, or urgent'], 400);
+                return;
+            }
+
+            // Validate date
+            $dateFiled = $input['date_filed'];
+            if (!strtotime($dateFiled)) {
+                sendJsonResponse(['error' => 'Invalid date_filed format'], 400);
+                return;
+            }
+
+            // Validate status if provided
+            $status = isset($input['status']) ? $input['status'] : 'submitted';
+            $validStatuses = ['submitted', 'under_review', 'investigation', 'mediation', 'resolved', 'closed', 'rejected'];
+            if (!in_array($status, $validStatuses)) {
+                sendJsonResponse(['error' => 'Invalid status. Must be: submitted, under_review, investigation, mediation, resolved, closed, or rejected'], 400);
+                return;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM grievances WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Try to get employee_id from activerecords
+            $employeeId = null;
+            if (isset($input['employee_id']) && !empty($input['employee_id'])) {
+                $employeeId = intval($input['employee_id']);
+            } else if (!isset($input['is_anonymous']) || !$input['is_anonymous']) {
+                // Only lookup employee_id if not anonymous
+                $stmt = $conn->prepare("SELECT id FROM activerecords WHERE name = ? LIMIT 1");
+                $stmt->bind_param("s", $input['employee_name']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($row = $result->fetch_assoc()) {
+                    $employeeId = $row['id'];
+                }
+            }
+
+            // Prepare optional fields
+            $desiredOutcome = isset($input['desired_outcome']) ? $input['desired_outcome'] : null;
+            $againstPerson = isset($input['against_person']) ? $input['against_person'] : null;
+            $againstDepartment = isset($input['against_department']) ? $input['against_department'] : null;
+            $witnesses = isset($input['witnesses']) ? $input['witnesses'] : null;
+            $supportingDocuments = isset($input['supporting_documents']) ? $input['supporting_documents'] : null;
+            $assignedTo = isset($input['assigned_to']) ? $input['assigned_to'] : null;
+            $investigationNotes = isset($input['investigation_notes']) ? $input['investigation_notes'] : null;
+            $resolutionDetails = isset($input['resolution_details']) ? $input['resolution_details'] : null;
+            $resolutionDate = isset($input['resolution_date']) && !empty($input['resolution_date']) ? $input['resolution_date'] : null;
+            $isAnonymous = isset($input['is_anonymous']) ? ($input['is_anonymous'] ? 1 : 0) : 0;
+            $confidential = isset($input['confidential']) ? ($input['confidential'] ? 1 : 0) : 1;
+
+            // Insert grievance
+            $stmt = $conn->prepare("
+                INSERT INTO grievances 
+                (id, employee_id, employee_name, grievance_type, priority, subject, 
+                 description, date_filed, desired_outcome, against_person, against_department, 
+                 witnesses, supporting_documents, status, assigned_to, investigation_notes, 
+                 resolution_details, resolution_date, is_anonymous, confidential) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->bind_param(
+                "iisssssssssssssssii", 
+                $randomId,
+                $employeeId,
+                $input['employee_name'],
+                $input['grievance_type'],
+                $priority,
+                $input['subject'],
+                $input['description'],
+                $dateFiled,
+                $desiredOutcome,
+                $againstPerson,
+                $againstDepartment,
+                $witnesses,
+                $supportingDocuments,
+                $status,
+                $assignedTo,
+                $investigationNotes,
+                $resolutionDetails,
+                $resolutionDate,
+                $isAnonymous,
+                $confidential
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'grievance' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $input['employee_name'],
+                        'grievance_type' => $input['grievance_type'],
+                        'priority' => $priority,
+                        'subject' => $input['subject'],
+                        'date_filed' => $dateFiled,
+                        'status' => $status,
+                        'is_anonymous' => $isAnonymous,
+                        'confidential' => $confidential
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create grievance', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update grievance
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Grievance ID is required'], 400);
+                return;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['submitted', 'under_review', 'investigation', 'mediation', 'resolved', 'closed', 'rejected'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    return;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+                
+                // Auto-set resolution_date when status is resolved or closed
+                if (($input['status'] === 'resolved' || $input['status'] === 'closed') && !isset($input['resolution_date'])) {
+                    $updates[] = "resolution_date = CURDATE()";
+                }
+            }
+
+            if (isset($input['priority'])) {
+                $validPriorities = ['low', 'medium', 'high', 'urgent'];
+                if (!in_array($input['priority'], $validPriorities)) {
+                    sendJsonResponse(['error' => 'Invalid priority'], 400);
+                    return;
+                }
+                $updates[] = "priority = ?";
+                $params[] = $input['priority'];
+                $types .= "s";
+            }
+
+            if (isset($input['grievance_type'])) {
+                $validGrievanceTypes = ['harassment', 'discrimination', 'workplace_safety', 'compensation', 
+                                        'workload', 'management_issue', 'other'];
+                if (!in_array($input['grievance_type'], $validGrievanceTypes)) {
+                    sendJsonResponse(['error' => 'Invalid grievance_type'], 400);
+                    return;
+                }
+                $updates[] = "grievance_type = ?";
+                $params[] = $input['grievance_type'];
+                $types .= "s";
+            }
+
+            // Text fields
+            $textFields = ['subject', 'description', 'desired_outcome', 'against_person', 
+                          'against_department', 'witnesses', 'supporting_documents', 
+                          'assigned_to', 'investigation_notes', 'resolution_details'];
+            foreach ($textFields as $field) {
+                if (isset($input[$field])) {
+                    $updates[] = "$field = ?";
+                    $params[] = $input[$field];
+                    $types .= "s";
+                }
+            }
+
+            // Date fields
+            if (isset($input['date_filed'])) {
+                $updates[] = "date_filed = ?";
+                $params[] = $input['date_filed'];
+                $types .= "s";
+            }
+
+            if (isset($input['resolution_date'])) {
+                $updates[] = "resolution_date = ?";
+                $params[] = $input['resolution_date'];
+                $types .= "s";
+            }
+
+            // Boolean fields
+            if (isset($input['is_anonymous'])) {
+                $updates[] = "is_anonymous = ?";
+                $params[] = $input['is_anonymous'] ? 1 : 0;
+                $types .= "i";
+            }
+
+            if (isset($input['confidential'])) {
+                $updates[] = "confidential = ?";
+                $params[] = $input['confidential'] ? 1 : 0;
+                $types .= "i";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                return;
+            }
+
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE grievances SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update grievance', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete grievance
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Grievance ID is required'], 400);
+                return;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM grievances WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete grievance', 'details' => $conn->error], 500);
             }
             break;
     }

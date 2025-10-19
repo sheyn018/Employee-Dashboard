@@ -51,8 +51,12 @@
   <!-- Scripts -->
   <script src="../components/navigation.js"></script>
   <script>
+    const API_BASE = 'http://localhost:3000/api/api.php';
+    
     // Initialize navigation
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('🟢 Disciplinary page loaded');
+      
       NavigationComponent.init({
         containerId: 'navigation-container',
         menuType: 'admin',
@@ -69,44 +73,95 @@
 
     document.getElementById("disciplinaryForm").addEventListener("submit", async function(e) {
       e.preventDefault();
+      console.log('📤 Submitting disciplinary form...');
+      
       try {
         const formData = new FormData(this);
-        const response = await fetch("../api/api.php?action=add_disciplinary", { 
-          method: "POST", 
-          body: formData 
+        const jsonData = {
+          employee_id: formData.get('employee_id'),
+          employee_name: 'Employee ' + formData.get('employee_id'), // You'll need to fetch this
+          action_type: formData.get('case_type') || 'other',
+          severity: 'minor',
+          violation_type: formData.get('case_type'),
+          incident_date: formData.get('date_reported'),
+          description: formData.get('description'),
+          action_taken: formData.get('action_taken') || 'Under review',
+          reported_by: 'Admin',
+          status: formData.get('status').toLowerCase(),
+          created_by: 'Admin'
+        };
+        
+        console.log('📝 Request data:', jsonData);
+        
+        const response = await fetch(`${API_BASE}/disciplinary-actions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(jsonData)
         });
+        
+        console.log('📨 Response status:', response.status);
         const data = await response.json();
-        alert(data.message);
-        this.reset();
-        loadData();
+        console.log('📨 Response data:', data);
+        
+        if (data.success) {
+          alert('Disciplinary record saved successfully!');
+          this.reset();
+          loadData();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to save record'));
+        }
       } catch (error) {
-        console.error('Error submitting form:', error);
+        console.error('❌ Error submitting form:', error);
         alert('Error saving disciplinary record');
       }
     });
 
     async function loadData() {
+      console.log('🔄 Loading disciplinary actions...');
+      
       try {
-        const response = await fetch("../api/api.php?action=get_disciplinary");
+        const url = `${API_BASE}/disciplinary-actions`;
+        console.log('📡 Fetching from:', url);
+        
+        const response = await fetch(url);
+        console.log('📨 Response status:', response.status);
+        
         const data = await response.json();
+        console.log('📨 Response data:', data);
+        console.log('📊 Number of records:', Array.isArray(data) ? data.length : 'Not an array');
+        
         const tbody = document.querySelector("#disciplinaryTable tbody");
         tbody.innerHTML = "";
         
-        if (data.data && Array.isArray(data.data)) {
-          data.data.forEach(row => {
-            tbody.innerHTML += `<tr>
-              <td>${row.id || ''}</td>
-              <td>${row.employee_id || ''}</td>
-              <td>${row.case_type || ''}</td>
-              <td>${row.status || ''}</td>
-              <td>${row.date_reported || ''}</td>
-            </tr>`;
-          });
+        if (Array.isArray(data)) {
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">⚠️ No disciplinary actions found. Run setup_test_db.sql to add sample data.</td></tr>';
+            console.log('⚠️ No data returned from API');
+          } else {
+            console.log('✅ Loading', data.length, 'records');
+            data.forEach(row => {
+              tbody.innerHTML += `<tr>
+                <td>${row.id || ''}</td>
+                <td>${row.employee_name || row.employee_id || ''}</td>
+                <td>${row.action_type || row.case_type || ''}</td>
+                <td>${row.status || ''}</td>
+                <td>${row.incident_date || row.date_reported || ''}</td>
+              </tr>`;
+            });
+          }
+        } else if (data.error) {
+          console.error('❌ API Error:', data.error);
+          tbody.innerHTML = `<tr><td colspan="5">❌ Error: ${data.error}</td></tr>`;
+        } else {
+          console.error('❌ Unexpected response format:', data);
+          tbody.innerHTML = '<tr><td colspan="5">❌ Unexpected response format</td></tr>';
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('❌ Error loading data:', error);
         const tbody = document.querySelector("#disciplinaryTable tbody");
-        tbody.innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">❌ Error loading data. Check console for details.</td></tr>';
       }
     }
   </script>

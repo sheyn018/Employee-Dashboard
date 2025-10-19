@@ -209,6 +209,73 @@ CREATE TABLE IF NOT EXISTS training_programs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+-- disciplinary_actions
+
+CREATE TABLE IF NOT EXISTS disciplinary_actions (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit disciplinary action id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  action_type ENUM('verbal_warning', 'written_warning', 'suspension', 'termination', 'other') NOT NULL,
+  severity ENUM('minor', 'moderate', 'major', 'critical') DEFAULT 'minor',
+  violation_type VARCHAR(100), -- e.g., 'Attendance', 'Conduct', 'Performance', 'Policy Violation'
+  incident_date DATE NOT NULL,
+  description TEXT NOT NULL,
+  action_taken TEXT NOT NULL,
+  reported_by VARCHAR(100) NOT NULL,
+  witness_names TEXT, -- Comma-separated list or JSON
+  follow_up_required BOOLEAN DEFAULT FALSE,
+  follow_up_date DATE NULL,
+  follow_up_notes TEXT,
+  status ENUM('open', 'in_progress', 'resolved', 'closed') DEFAULT 'open',
+  resolution_notes TEXT,
+  date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  created_by VARCHAR(100), -- Admin or HR personnel who created the record
+  CONSTRAINT fk_disciplinary_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  KEY idx_action_type (action_type),
+  KEY idx_status (status),
+  KEY idx_incident_date (incident_date),
+  KEY idx_severity (severity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- grievances
+
+CREATE TABLE IF NOT EXISTS grievances (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit grievance id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  grievance_type ENUM('harassment', 'discrimination', 'workplace_safety', 'compensation', 'workload', 'management_issue', 'other') NOT NULL,
+  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+  subject VARCHAR(200) NOT NULL,
+  description TEXT NOT NULL,
+  date_filed DATE NOT NULL,
+  desired_outcome TEXT, -- What resolution the employee is seeking
+  against_person VARCHAR(100), -- Name of person the grievance is against (if applicable)
+  against_department VARCHAR(100), -- Department the grievance is against (if applicable)
+  witnesses TEXT, -- Comma-separated list or JSON
+  supporting_documents VARCHAR(255), -- File paths or references
+  status ENUM('submitted', 'under_review', 'investigation', 'mediation', 'resolved', 'closed', 'rejected') DEFAULT 'submitted',
+  assigned_to VARCHAR(100), -- HR personnel or manager assigned to handle
+  investigation_notes TEXT,
+  resolution_details TEXT,
+  resolution_date DATE NULL,
+  is_anonymous BOOLEAN DEFAULT FALSE,
+  confidential BOOLEAN DEFAULT TRUE,
+  date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_grievance_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  KEY idx_grievance_type (grievance_type),
+  KEY idx_status (status),
+  KEY idx_priority (priority),
+  KEY idx_date_filed (date_filed)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 -- Sample Data
 
 
@@ -283,4 +350,16 @@ INSERT INTO training_programs (id, employee_id, employee_name, program_name, pro
 (98005, 35791, 'Michael Lee', 'Leadership Development Program', 'Leadership', '2025-07-01', '2025-12-31', 100, 'ongoing', 50, 'Executive Coach Linda', 'Hybrid', 1500.00, FALSE, 'Certified Team Leader', 'Showing good leadership potential, needs more practice in team dynamics', '2025-06-25 09:00:00', NULL),
 (98006, 46802, 'Emily Davis', 'HR Analytics and Data-Driven Decisions', 'Technical', '2025-09-01', '2025-10-30', 32, 'ongoing', 75, 'Data Scientist John', 'Online', 699.00, FALSE, NULL, 'Applying learnings immediately to current projects', '2025-08-28 14:00:00', NULL),
 (98007, 46802, 'Emily Davis', 'Diversity and Inclusion Training', 'Compliance', '2025-06-15', '2025-07-01', 8, 'completed', 100, 'DEI Consultant Maria', 'Main Office', 149.00, TRUE, 'DEI Champion Certificate', 'Excellent insights and immediate implementation of best practices', '2025-06-10 13:00:00', '2025-07-01 12:00:00');
+
+-- Disciplinary actions (sample data)
+INSERT INTO disciplinary_actions (id, employee_id, employee_name, action_type, severity, violation_type, incident_date, description, action_taken, reported_by, witness_names, follow_up_required, follow_up_date, status, created_by, date_created) VALUES
+(99001, 24680, 'Maria Garcia', 'verbal_warning', 'minor', 'Attendance', '2025-09-15', 'Employee arrived 45 minutes late without prior notification. This is the second occurrence this month.', 'Verbal warning issued. Employee counseled about importance of punctuality and proper notification procedures.', 'Sarah Supervisor', NULL, TRUE, '2025-10-15', 'resolved', 'Emily Davis', '2025-09-15 14:30:00'),
+(99002, 35791, 'Michael Lee', 'written_warning', 'moderate', 'Policy Violation', '2025-08-20', 'Employee found using laboratory equipment for unauthorized personal project after hours. Potential safety hazard.', 'Written warning issued. Employee required to review lab safety protocols and sign acknowledgment. Mandatory retraining scheduled.', 'Dr. Chemistry Head', 'Lab Technician Jane', TRUE, '2025-09-20', 'closed', 'Emily Davis', '2025-08-21 09:00:00'),
+(99003, 13579, 'William Searl', 'verbal_warning', 'minor', 'Performance', '2025-10-01', 'Missed project deadline without communication. Client deliverable delayed by 2 days.', 'Verbal counseling provided. Discussed time management and communication expectations. Employee committed to improved project tracking.', 'John Manager', NULL, FALSE, NULL, 'closed', 'Emily Davis', '2025-10-01 16:00:00');
+
+-- Grievances (sample data)
+INSERT INTO grievances (id, employee_id, employee_name, grievance_type, priority, subject, description, date_filed, desired_outcome, against_person, against_department, status, assigned_to, investigation_notes, resolution_details, date_created) VALUES
+(99101, 24680, 'Maria Garcia', 'workload', 'high', 'Excessive overtime requirements without adequate compensation', 'Over the past 3 months, I have been consistently required to work 10-15 hours of overtime per week. While overtime requests are being tracked, the compensation does not match the actual hours worked. This is affecting my work-life balance and health.', '2025-09-25', 'Fair compensation for all overtime hours worked, and a review of staffing levels to reduce excessive overtime requirements.', NULL, 'Restaurant Operations', 'under_review', 'Emily Davis', 'Initial review conducted. Time records being audited for the past 3 months. Manager interview scheduled.', NULL, '2025-09-25 10:15:00'),
+(99102, 35791, 'Michael Lee', 'management_issue', 'medium', 'Lack of communication and unclear performance expectations', 'My supervisor has not provided clear performance objectives for this quarter. Multiple requests for one-on-one meetings have been declined or rescheduled. I am uncertain about project priorities and feel unsupported in my role.', '2025-10-05', 'Regular one-on-one meetings with supervisor, clear written performance objectives, and improved communication channels.', 'Dr. Chemistry Head', 'Research & Development', 'investigation', 'Emily Davis', 'Met with employee. Concerns appear valid. Scheduling meeting with supervisor to address communication breakdown. Will implement structured check-in schedule.', NULL, '2025-10-05 14:00:00'),
+(99103, 46802, 'Emily Davis', 'workplace_safety', 'urgent', 'Inadequate ergonomic setup causing physical strain', 'Current desk setup does not meet ergonomic standards. Despite multiple requests for an adjustable chair and monitor stand, no action has been taken. Experiencing back and neck pain that is worsening.', '2025-10-10', 'Immediate provision of ergonomic office furniture including adjustable chair, monitor stand, and keyboard tray. Ergonomic assessment of workstation.', NULL, 'HR Department', 'resolved', 'John Manager', 'Urgent priority due to health concerns. Ergonomic assessment completed. New furniture ordered and installed within 48 hours.', 'Ergonomic workstation setup completed. Employee reports significant improvement. Follow-up scheduled in 2 weeks to ensure continued comfort.', '2025-10-10 09:00:00');
 
