@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Attendance - HR Connect</title>
+  <link rel="stylesheet" href="../css/attendance.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <header><h1>Employee Attendance</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <section class="attendance-section">
+    <div class="container">
+      <div class="attendance-header">
+        <h2>📋 Daily Attendance</h2>
+        <p>Record employee check-ins and check-outs for today.</p>
+      </div>
+
+      <div class="attendance-container">
+        <!-- Attendance Form -->
+        <form id="attendanceForm">
+          <div class="form-section">
+            <h3>👤 Employee Information</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeName">Employee Name <span class="required">*</span></label>
+                <input type="text" id="employeeName" name="employee_name" required 
+                       placeholder="Enter employee's full name">
+                <div class="error-message" id="employeeNameError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="employeeId">Employee ID <span class="required">*</span></label>
+                <input type="text" id="employeeId" name="employee_id" required 
+                       placeholder="Enter employee ID (5-digit number)" 
+                       pattern="[0-9]{5}" maxlength="5">
+                <div class="error-message" id="employeeIdError"></div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="attendanceDate">Date <span class="required">*</span></label>
+                <input type="date" id="attendanceDate" name="attendance_date" required>
+                <div class="error-message" id="dateError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="attendanceType">Action <span class="required">*</span></label>
+                <select id="attendanceType" name="attendance_type" required>
+                  <option value="">-- Select Action --</option>
+                  <option value="check_in">Check In</option>
+                  <option value="check_out">Check Out</option>
+                </select>
+                <div class="error-message" id="typeError"></div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="attendanceTime">Time <span class="required">*</span></label>
+                <input type="time" id="attendanceTime" name="attendance_time" required>
+                <div class="error-message" id="timeError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="notes">Notes (Optional)</label>
+                <input type="text" id="notes" name="notes" 
+                       placeholder="Late arrival, early departure, etc.">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Reset</button>
+            <button type="submit" class="btn-primary">Record Attendance</button>
+          </div>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="successMessage" class="message success-message" style="display: none;">
+          <div class="message-icon">✅</div>
+          <div class="message-content">
+            <h3>Attendance Recorded Successfully!</h3>
+            <p>Employee attendance has been saved to the system.</p>
+          </div>
+        </div>
+
+        <div id="errorMessage" class="message error-message" style="display: none;">
+          <div class="message-icon">❌</div>
+          <div class="message-content">
+            <h3>Recording Failed</h3>
+            <p id="errorText">Please try again or contact IT support if the problem persists.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Attendance List -->
+      <div class="attendance-list">
+        <h3>📅 Today's Attendance Records</h3>
+        <div id="attendanceRecords">
+          <p class="loading">Loading today's attendance...</p>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <center>
+          <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+        </center>
+      </div>
+    </div>
+  </section>
+
+  <!-- JavaScript -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Navigation setup
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin === "true") {
+      NavigationComponent.init({
+        containerId: 'navigation-container',
+        menuType: 'admin',
+        includeLogout: true,
+        authCheck: false
+      });
+    } else {
+      NavigationComponent.init({
+        containerId: 'navigation-container',
+        menuType: 'employee',
+        includeLogout: true,
+        authCheck: false
+      });
+    }
+
+    NavigationComponent.setActiveNavItem('attendance.html');
+
+    // Set today's date as default
+    document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+    
+    // Set current time as default
+    const now = new Date();
+    const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                      now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('attendanceTime').value = timeString;
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Validation functions
+    function validateEmployeeName(name) {
+      if (!name || name.trim().length < 2) {
+        return "Employee name must be at least 2 characters long";
+      }
+      return null;
+    }
+
+    function validateEmployeeId(id) {
+      if (!id || id.trim() === '') {
+        return "Employee ID is required";
+      }
+      if (!/^\d{5}$/.test(id.trim())) {
+        return "Employee ID must be exactly 5 digits";
+      }
+      return null;
+    }
+
+    function validateDate(date) {
+      if (!date) {
+        return "Date is required";
+      }
+      return null;
+    }
+
+    function validateTime(time) {
+      if (!time) {
+        return "Time is required";
+      }
+      return null;
+    }
+
+    function validateType(type) {
+      if (!type) {
+        return "Please select an action (Check In/Check Out)";
+      }
+      return null;
+    }
+
+    // Utility functions
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+    }
+
+    function hideError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      if (errorElement) {
+        errorElement.style.display = 'none';
+      }
+    }
+
+    function hideAllErrors() {
+      ['employeeNameError', 'employeeIdError', 'dateError', 'timeError', 'typeError'].forEach(hideError);
+    }
+
+    function hideMessages() {
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showSuccessMessage() {
+      hideMessages();
+      document.getElementById('successMessage').style.display = 'block';
+      document.getElementById('successMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function showErrorMessage(message = null) {
+      hideMessages();
+      if (message) {
+        document.getElementById('errorText').textContent = message;
+      }
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('attendanceForm').reset();
+      // Reset to today's date and current time
+      document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                        now.getMinutes().toString().padStart(2, '0');
+      document.getElementById('attendanceTime').value = timeString;
+      hideAllErrors();
+      hideMessages();
+    }
+
+    // Form submission
+    document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      hideAllErrors();
+      hideMessages();
+
+      // Get form data
+      const formData = new FormData(e.target);
+      const data = {
+        employee_name: formData.get('employee_name').trim(),
+        employee_id: parseInt(formData.get('employee_id')),
+        attendance_date: formData.get('attendance_date'),
+        attendance_type: formData.get('attendance_type'),
+        attendance_time: formData.get('attendance_time'),
+        notes: formData.get('notes') ? formData.get('notes').trim() : null
+      };
+
+      // Validate form data
+      let hasErrors = false;
+
+      const employeeNameError = validateEmployeeName(data.employee_name);
+      if (employeeNameError) {
+        showError('employeeNameError', employeeNameError);
+        hasErrors = true;
+      }
+
+      const employeeIdError = validateEmployeeId(formData.get('employee_id'));
+      if (employeeIdError) {
+        showError('employeeIdError', employeeIdError);
+        hasErrors = true;
+      }
+
+      const dateError = validateDate(data.attendance_date);
+      if (dateError) {
+        showError('dateError', dateError);
+        hasErrors = true;
+      }
+
+      const timeError = validateTime(data.attendance_time);
+      if (timeError) {
+        showError('timeError', timeError);
+        hasErrors = true;
+      }
+
+      const typeError = validateType(data.attendance_type);
+      if (typeError) {
+        showError('typeError', typeError);
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        return;
+      }
+
+      // Submit attendance record
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Recording...';
+
+      try {
+        console.log('Submitting attendance:', data);
+        
+        const response = await fetch(`${API_BASE}/attendance`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('Server response:', result);
+
+        if (response.ok && result.success) {
+          showSuccessMessage();
+          loadTodaysAttendance(); // Refresh the list
+          setTimeout(() => {
+            resetForm();
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Failed to record attendance');
+        }
+
+      } catch (error) {
+        console.error('Error recording attendance:', error);
+        showErrorMessage(`Error: ${error.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Load today's attendance records
+    async function loadTodaysAttendance() {
+      const today = new Date().toISOString().split('T')[0];
+      try {
+        const response = await fetch(`${API_BASE}/attendance?date=${today}`);
+        const records = await response.json();
+        
+        const container = document.getElementById('attendanceRecords');
+        
+        if (records.length === 0) {
+          container.innerHTML = '<p class="no-records">No attendance records for today.</p>';
+          return;
+        }
+
+        let html = '<div class="records-grid">';
+        records.forEach(record => {
+          const timeFormatted = record.attendance_time ? 
+            new Date(`2000-01-01T${record.attendance_time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 
+            'N/A';
+          
+          html += `
+            <div class="record-card ${record.attendance_type}">
+              <div class="record-header">
+                <strong>${record.employee_name}</strong>
+                <span class="employee-id">#${record.employee_id}</span>
+              </div>
+              <div class="record-details">
+                <div class="action-type ${record.attendance_type}">
+                  ${record.attendance_type === 'check_in' ? '🟢 Check In' : '🔴 Check Out'}
+                </div>
+                <div class="time">${timeFormatted}</div>
+                ${record.notes ? `<div class="notes">${record.notes}</div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        
+        container.innerHTML = html;
+      } catch (error) {
+        console.error('Error loading attendance records:', error);
+        document.getElementById('attendanceRecords').innerHTML = 
+          '<p class="error">Failed to load attendance records.</p>';
+      }
+    }
+
+    // Load today's attendance on page load
+    loadTodaysAttendance();
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overtime Management</title>
+  <link rel="stylesheet" href="../css/modules.css">
+  <link rel="stylesheet" href="../components/navigation.css">
+</head>
+<body>
+  <!-- Navigation Component -->
+  <div id="navigation-container"></div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h2>⏰ Overtime Requests</h2>
+    <form id="overtimeForm">
+      <label>Employee ID</label>
+      <input type="number" name="employee_id" required>
+      <label>Date</label>
+      <input type="date" name="ot_date" required>
+      <label>Hours</label>
+      <input type="number" name="hours" required>
+      <label>Reason</label>
+      <textarea name="reason"></textarea>
+      <button type="submit">Submit Overtime</button>
+    </form>
+
+    <h3>Overtime Records</h3>
+    <table id="overtimeTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Employee</th>
+          <th>Date</th>
+          <th>Hours</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Initialize navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      NavigationComponent.init({
+        containerId: 'navigation-container',
+        menuType: 'admin',
+        includeLogout: true,
+        authCheck: true
+      });
+      
+      // Set active navigation item
+      NavigationComponent.setActiveNavItem('overtime.html');
+      
+      // Load data
+      loadData();
+    });
+
+    document.getElementById("overtimeForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      try {
+        const formData = new FormData(this);
+        const response = await fetch("../api/api.php?action=add_overtime", { 
+          method: "POST", 
+          body: formData 
+        });
+        const data = await response.json();
+        alert(data.message);
+        this.reset();
+        loadData();
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        alert('Error saving overtime record');
+      }
+    });
+
+    async function loadData() {
+      try {
+        const response = await fetch("../api/api.php?action=get_overtime");
+        const data = await response.json();
+        const tbody = document.querySelector("#overtimeTable tbody");
+        tbody.innerHTML = "";
+        
+        if (data.data && Array.isArray(data.data)) {
+          data.data.forEach(row => {
+            tbody.innerHTML += `<tr>
+              <td>${row.id || ''}</td>
+              <td>${row.employee_id || ''}</td>
+              <td>${row.ot_date || ''}</td>
+              <td>${row.hours || ''}</td>
+              <td>${row.status || ''}</td>
+            </tr>`;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        const tbody = document.querySelector("#overtimeTable tbody");
+        tbody.innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
+      }
+    }
+  </script>
+</body>
+</html>

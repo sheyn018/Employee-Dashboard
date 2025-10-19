@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add New Payslip</title>
+  <link rel="stylesheet" href="../css/add-payslip.css">
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <!-- Content -->
+  <div class="content">
+    <header>
+      <h1>Add New Payslip</h1>
+    </header>
+
+    <div class="form-container">
+      <form id="payslipForm">
+        <!-- Employee Information Section -->
+        <div class="form-section">
+          <h3>Employee Information</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="employee_name">Employee Name</label>
+              <input type="text" id="employee_name" name="employee_name" required>
+            </div>
+            <div class="form-group">
+              <label for="employee_id">Employee ID</label>
+              <input type="number" id="employee_id" name="employee_id" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="position">Position</label>
+              <input type="text" id="position" name="position" required>
+            </div>
+            <div class="form-group">
+              <label for="date_generated">Date Generated (Optional)</label>
+              <input type="date" id="date_generated" name="date_generated">
+              <small style="color: #666; font-size: 12px;">Leave empty to use current date and time</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings and Deductions Section -->
+        <div class="form-section">
+          <div class="earnings-deductions-container">
+            <!-- Earnings Column -->
+            <div class="earnings-column">
+              <h3>Earnings</h3>
+              <div class="form-group">
+                <label for="earnings">Base Earnings</label>
+                <input type="number" step="0.01" id="earnings" name="earnings" required min="0">
+              </div>
+              <div class="form-group">
+                <label for="overtime_hours">Overtime Hours (Optional)</label>
+                <input type="number" step="0.1" id="overtime_hours" name="overtime_hours" min="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="overtime_pay">Overtime Pay (Optional)</label>
+                <input type="number" step="0.01" id="overtime_pay" name="overtime_pay" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group total-field">
+                <label for="total_earnings">Total Earnings</label>
+                <input type="number" step="0.01" id="total_earnings" name="total_earnings" readonly>
+              </div>
+            </div>
+
+            <!-- Deductions Column -->
+            <div class="deductions-column">
+              <h3>Deductions</h3>
+              <div class="form-group">
+                <label for="sss_deduction">SSS Contribution</label>
+                <input type="number" step="0.01" id="sss_deduction" name="sss_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="philhealth_deduction">PhilHealth Contribution</label>
+                <input type="number" step="0.01" id="philhealth_deduction" name="philhealth_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="pagibig_deduction">PAG-IBIG Contribution</label>
+                <input type="number" step="0.01" id="pagibig_deduction" name="pagibig_deduction" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="withholding_tax">Withholding Tax</label>
+                <input type="number" step="0.01" id="withholding_tax" name="withholding_tax" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label for="other_deductions">Other Deductions</label>
+                <input type="number" step="0.01" id="other_deductions" name="other_deductions" min="0" placeholder="0.00">
+              </div>
+              <div class="form-group total-field">
+                <label for="total_deductions">Total Deductions</label>
+                <input type="number" step="0.01" id="total_deductions" name="total_deductions" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Pay Section -->
+        <div class="form-section">
+          <div class="net-pay-section">
+            <h3>Summary</h3>
+            <div class="form-group net-pay-field">
+              <label for="net_pay">Net Pay</label>
+              <input type="number" step="0.01" id="net_pay" name="net_pay" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="generate-btn">Add Payslip</button>
+          <button type="reset" class="reset-btn">Reset</button>
+        </div>
+      </form>
+
+      <div id="responseMessage" class="response"></div>
+    </div>
+  </div>
+
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    // API Configuration
+    const API_BASE_URL = 'http://localhost:3000/api/api.php';
+    
+    // API Helper Functions
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      const url = `${API_BASE_URL}/${endpoint}`;
+      console.log('Making API call to:', url); // Debug log
+      
+      const config = {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+      
+      if (data && method !== 'GET') {
+        config.body = JSON.stringify(data);
+      }
+      
+      try {
+        const response = await fetch(url, config);
+        const result = await response.json();
+        
+        console.log('API Response:', result); // Debug log
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'API request failed');
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    }
+    
+    // Check admin authentication
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('add-payslip.html');
+
+    function openNav() {
+      document.getElementById("mySidebar").style.width = "250px";
+    }
+    function closeNav() {
+      document.getElementById("mySidebar").style.width = "0";
+    }
+
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date_generated').value = today;
+      
+      // Add event listeners to calculate total earnings
+      const baseEarningsInput = document.getElementById('earnings');
+      const overtimePayInput = document.getElementById('overtime_pay');
+      const totalEarningsInput = document.getElementById('total_earnings');
+      
+      // Deduction inputs
+      const sssInput = document.getElementById('sss_deduction');
+      const philhealthInput = document.getElementById('philhealth_deduction');
+      const pagibigInput = document.getElementById('pagibig_deduction');
+      const withholdingTaxInput = document.getElementById('withholding_tax');
+      const otherDeductionsInput = document.getElementById('other_deductions');
+      const totalDeductionsInput = document.getElementById('total_deductions');
+      const netPayInput = document.getElementById('net_pay');
+      
+      function calculateTotalEarnings() {
+        const baseEarnings = parseFloat(baseEarningsInput.value) || 0;
+        const overtimePay = parseFloat(overtimePayInput.value) || 0;
+        const total = baseEarnings + overtimePay;
+        totalEarningsInput.value = total.toFixed(2);
+        calculateNetPay(); // Recalculate net pay when earnings change
+      }
+      
+      function calculateTotalDeductions() {
+        const sss = parseFloat(sssInput.value) || 0;
+        const philhealth = parseFloat(philhealthInput.value) || 0;
+        const pagibig = parseFloat(pagibigInput.value) || 0;
+        const tax = parseFloat(withholdingTaxInput.value) || 0;
+        const other = parseFloat(otherDeductionsInput.value) || 0;
+        const total = sss + philhealth + pagibig + tax + other;
+        totalDeductionsInput.value = total.toFixed(2);
+        calculateNetPay(); // Recalculate net pay when deductions change
+      }
+      
+      function calculateNetPay() {
+        const totalEarnings = parseFloat(totalEarningsInput.value) || 0;
+        const totalDeductions = parseFloat(totalDeductionsInput.value) || 0;
+        const netPay = totalEarnings - totalDeductions;
+        netPayInput.value = netPay.toFixed(2);
+      }
+      
+      // Add event listeners for earnings calculation
+      baseEarningsInput.addEventListener('input', calculateTotalEarnings);
+      overtimePayInput.addEventListener('input', calculateTotalEarnings);
+      
+      // Add event listeners for deductions calculation
+      sssInput.addEventListener('input', calculateTotalDeductions);
+      philhealthInput.addEventListener('input', calculateTotalDeductions);
+      pagibigInput.addEventListener('input', calculateTotalDeductions);
+      withholdingTaxInput.addEventListener('input', calculateTotalDeductions);
+      otherDeductionsInput.addEventListener('input', calculateTotalDeductions);
+      
+      // Initial calculations
+      calculateTotalEarnings();
+      calculateTotalDeductions();
+    });
+
+    document.getElementById("payslipForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      // Calculate total earnings (base + overtime)
+      const baseEarnings = parseFloat(document.getElementById("earnings").value) || 0;
+      const overtimePay = parseFloat(document.getElementById("overtime_pay").value) || 0;
+      const totalEarnings = baseEarnings + overtimePay;
+
+      // Calculate total deductions
+      const sssDeduction = parseFloat(document.getElementById("sss_deduction").value) || 0;
+      const philhealthDeduction = parseFloat(document.getElementById("philhealth_deduction").value) || 0;
+      const pagibigDeduction = parseFloat(document.getElementById("pagibig_deduction").value) || 0;
+      const withholdingTax = parseFloat(document.getElementById("withholding_tax").value) || 0;
+      const otherDeductions = parseFloat(document.getElementById("other_deductions").value) || 0;
+      const totalDeductions = sssDeduction + philhealthDeduction + pagibigDeduction + withholdingTax + otherDeductions;
+
+      // Calculate net pay
+      const netPay = totalEarnings - totalDeductions;
+
+      const data = {
+        employee_name: document.getElementById("employee_name").value,
+        employee_id: parseInt(document.getElementById("employee_id").value),
+        position: document.getElementById("position").value,
+        earnings: netPay, // Send the final net pay (with overtime and after deductions)
+        date_generated: document.getElementById("date_generated").value
+      };
+
+      try {
+        const result = await apiCall('add-payslip', 'POST', data);
+        const messageDiv = document.getElementById("responseMessage");
+
+        if (result.success) {
+          let successMessage = `<p class="success">✅ Payslip added successfully (ID: ${result.id})<br>
+            Employee: ${result.payslip_data.employee_name}<br>`;
+          
+          if (result.payslip_data.employee_id) {
+            successMessage += `Employee ID: ${result.payslip_data.employee_id}<br>`;
+          }
+          
+          successMessage += `Position: ${result.payslip_data.position}<br>
+            Earnings: ₱${parseFloat(result.payslip_data.earnings).toLocaleString()}<br>
+            Date: ${new Date(result.payslip_data.date_generated).toLocaleDateString()}</p>`;
+            
+          messageDiv.innerHTML = successMessage;
+          
+          // Generate HTML payslip in new tab
+          generatePayslipHTML({
+            employee_name: document.getElementById("employee_name").value,
+            employee_id: document.getElementById("employee_id").value,
+            position: document.getElementById("position").value,
+            base_earnings: parseFloat(document.getElementById("earnings").value) || 0,
+            overtime_hours: parseFloat(document.getElementById("overtime_hours").value) || 0,
+            overtime_pay: parseFloat(document.getElementById("overtime_pay").value) || 0,
+            sss_deduction: parseFloat(document.getElementById("sss_deduction").value) || 0,
+            philhealth_deduction: parseFloat(document.getElementById("philhealth_deduction").value) || 0,
+            pagibig_deduction: parseFloat(document.getElementById("pagibig_deduction").value) || 0,
+            withholding_tax: parseFloat(document.getElementById("withholding_tax").value) || 0,
+            other_deductions: parseFloat(document.getElementById("other_deductions").value) || 0,
+            total_earnings: baseEarnings + overtimePay,
+            total_deductions: totalDeductions,
+            net_pay: netPay,
+            date_generated: document.getElementById("date_generated").value || new Date().toISOString().split('T')[0]
+          });
+          
+          document.getElementById("payslipForm").reset();
+          // Reset date to today after form reset
+          const today = new Date().toISOString().split('T')[0];
+          document.getElementById('date_generated').value = today;
+        } else {
+          messageDiv.innerHTML = `<p class="error">❌ Error: ${result.error || 'Something went wrong'}</p>`;
+        }
+      } catch (err) {
+        console.error('Form submission error:', err);
+        document.getElementById("responseMessage").innerHTML = `<p class="error">⚠️ Error: ${err.message}</p>`;
+      }
+    });
+
+    // Function to generate HTML payslip in new tab
+    function generatePayslipHTML(data) {
+      // Build URL with parameters
+      const params = new URLSearchParams({
+        employee_name: data.employee_name,
+        employee_id: data.employee_id,
+        position: data.position,
+        base_earnings: data.base_earnings,
+        overtime_hours: data.overtime_hours,
+        overtime_pay: data.overtime_pay,
+        sss_deduction: data.sss_deduction,
+        philhealth_deduction: data.philhealth_deduction,
+        pagibig_deduction: data.pagibig_deduction,
+        withholding_tax: data.withholding_tax,
+        other_deductions: data.other_deductions,
+        total_earnings: data.total_earnings,
+        total_deductions: data.total_deductions,
+        net_pay: data.net_pay,
+        date_generated: data.date_generated
+      });
+
+      // Open payslip template in new tab with data
+      const payslipUrl = `payslip-template.html?${params.toString()}`;
+      window.open(payslipUrl, '_blank');
+    }
+  </script>
+</body>
+</html>

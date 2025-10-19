@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports & Analytics</title>
+  <link rel="stylesheet" href="../css/modules.css">
+  <link rel="stylesheet" href="../components/navigation.css">
+</head>
+<body>
+  <!-- Navigation Component -->
+  <div id="navigation-container"></div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h2>📊 Reports & Analytics</h2>
+    <div id="reportCards" class="report-cards-container">
+      <div class="loading">Loading reports...</div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Initialize navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      NavigationComponent.init({
+        containerId: 'navigation-container',
+        menuType: 'admin',
+        includeLogout: true,
+        authCheck: true
+      });
+      
+      // Set active navigation item
+      NavigationComponent.setActiveNavItem('reports.html');
+      
+      // Load reports data
+      loadReports();
+    });
+
+    // Load reports function
+    async function loadReports() {
+      try {
+        const response = await fetch("../api/api.php?action=get_reports");
+        const data = await response.json();
+        
+        if (data && data.data) {
+          const reports = data.data;
+          document.getElementById("reportCards").innerHTML = `
+            <div class="card">
+              <div class="card-icon">👨‍💼</div>
+              <div class="card-content">
+                <h3>Total Employees</h3>
+                <p class="card-number">${reports.total_employees || 0}</p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-icon">🕒</div>
+              <div class="card-content">
+                <h3>Attendance Logs</h3>
+                <p class="card-number">${reports.total_attendance || 0}</p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-icon">🏖️</div>
+              <div class="card-content">
+                <h3>Leave Requests</h3>
+                <p class="card-number">${reports.total_leaves || 0}</p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-icon">💰</div>
+              <div class="card-content">
+                <h3>Total Payroll</h3>
+                <p class="card-number">$${reports.total_payroll || 0}</p>
+              </div>
+            </div>
+          `;
+        } else {
+          throw new Error('Invalid data format');
+        }
+      } catch (error) {
+        console.error('Error loading reports:', error);
+        document.getElementById("reportCards").innerHTML = `
+          <div class="error-message">
+            <p>⚠️ Error loading reports data</p>
+            <p>Please check your connection and try again.</p>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

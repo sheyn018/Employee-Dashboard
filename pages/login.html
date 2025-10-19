@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Login - HR Connect</title>
+  <style>
+    * {margin:0; padding:0; box-sizing:border-box;}
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #27ae60, #2ecc71, #58d68d);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {max-width:1200px; margin:0 auto; padding:0 20px;}
+
+    /* Header */
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 4px solid #27ae60;
+    }
+    header .container {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:20px 20px;
+    }
+    .logo-container {
+      display:flex; align-items:center; gap:20px; padding:5px;
+    }
+    .logo-image {
+      width: 70px;
+      height: 70px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.15),
+        0 0 0 3px rgba(39, 174, 96, 0.2);
+      overflow: hidden;
+      border: 3px solid #27ae60;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .logo-image:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 12px 35px rgba(0, 0, 0, 0.2),
+        0 0 0 3px rgba(39, 174, 96, 0.4);
+    }
+    .logo-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+    .brand-info {display: flex; flex-direction: column; gap: 5px;}
+    .logo {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #27ae60, #16a085);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tagline {
+      font-size: 14px;
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Login Section */
+    .login-section {
+      display:flex; justify-content:center; align-items:center;
+      flex:1; padding-top:120px; padding-bottom:60px;
+    }
+    .login-card {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      padding:40px 30px;
+      border-radius:20px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.2);
+      width:100%; max-width:420px;
+      text-align:center;
+    }
+    .login-card h2 {
+      margin-bottom:20px;
+      font-size:28px;
+      color:#2c3e50;
+    }
+    .login-card input {
+      width:100%;
+      padding:12px 14px;
+      margin:12px 0;
+      border:1px solid #ccc;
+      border-radius:10px;
+      font-size:16px;
+    }
+    .login-card button {
+      width:100%;
+      padding:14px;
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      border:none;
+      border-radius:10px;
+      color:white;
+      font-weight:600;
+      font-size:16px;
+      cursor:pointer;
+      transition:all 0.3s ease;
+    }
+    .login-card button:hover {
+      background: linear-gradient(135deg, #219150, #27ae60);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(39,174,96,0.3);
+    }
+    #loginError {color:red; font-size:14px; margin-top:10px;}
+
+    /* Back Home Button */
+    .back-home { margin-top: 15px; }
+    .back-home a {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 12px;
+      background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .back-home a:hover {
+      background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(149,165,166,0.4);
+    }
+
+    /* Modal */
+    .modal {
+      display:none;
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,0.6);
+      justify-content:center; align-items:center;
+      z-index:2000;
+    }
+    .modal-content {
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(12px);
+      padding:30px;
+      border-radius:20px;
+      width:90%; max-width:480px;
+      box-shadow:0 8px 30px rgba(0,0,0,0.3);
+      text-align:center;
+    }
+    .modal-content h3 {
+      margin-bottom:15px;
+      font-size:22px;
+      color:#2c3e50;
+    }
+    .password-requirements {
+      text-align:left;
+      font-size:14px;
+      color:#555;
+      margin:10px 0;
+    }
+    .password-requirements ul {padding-left:18px;}
+    .error-message {color:red; font-size:14px; margin:8px 0;}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo-container">
+        <div class="logo-image">
+          <img src="logo.jpg" alt="SmartPath Logo">
+        </div>
+        <div class="brand-info">
+          <h1 class="logo">SmartPath</h1>
+          <div class="tagline">HR Solutions</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="login-section">
+    <div class="login-card">
+      <h2>Employee Login</h2>
+      <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p id="loginError"></p>
+
+      <!-- Back Home Button -->
+      <div class="back-home">
+        <a href="index.html">Back Home</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal -->
+  <div id="passwordChangeModal" class="modal">
+    <div class="modal-content">
+      <h3>Change Password</h3>
+      <p>Please update your password to continue.</p>
+      <div class="password-requirements">
+        <strong>Password must:</strong>
+        <ul>
+          <li>Be at least 8 characters</li>
+          <li>Include uppercase & lowercase letters</li>
+          <li>Have at least one number</li>
+          <li>Contain one special character</li>
+        </ul>
+      </div>
+      <form id="passwordChangeForm">
+        <input type="password" id="newPassword" placeholder="New Password" required />
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required />
+        <p id="passwordError" class="error-message"></p>
+        <button type="submit">Change Password</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const defaultEmployees = [
+      { username: "employee1", password: "cross", name: "Gerardo", position: "Software Developer/Manager" },
+      { username: "employee2", password: "pedico", name: "John Michael Pedico", position: "HR Assistant" },
+      { username: "employee3", password: "isip", name: "Aldrin Isip", position: "UI/UX Designer" },
+      { username: "employee4", password: "montecina", name: "Khyle Jero Montecina", position: "Accountant" },
+    ];
+  
+    const storedEmployees = JSON.parse(localStorage.getItem("employeeAccounts")) || [];
+    const allEmployees = [...defaultEmployees];
+    
+    storedEmployees.forEach(storedEmp => {
+      const index = allEmployees.findIndex(emp => emp.username === storedEmp.username);
+      if (index !== -1) {
+        allEmployees[index] = storedEmp;
+      } else {
+        allEmployees.push(storedEmp);
+      }
+    });
+    
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      
+      const employee = allEmployees.find(emp => emp.username === username && emp.password === password);
+  
+      if (employee) {
+        if (employee.isFirstLogin) {
+          document.getElementById("passwordChangeModal").style.display = "flex";
+          sessionStorage.setItem("tempEmployee", JSON.stringify(employee));
+        } else {
+          loginSuccess(employee);
+        }
+      } else {
+        document.getElementById("loginError").textContent = "Invalid username or password!";
+      }
+    });
+
+    document.getElementById("passwordChangeForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const newPassword = document.getElementById("newPassword").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const passwordError = document.getElementById("passwordError");
+
+      if (newPassword !== confirmPassword) {
+        passwordError.textContent = "Passwords do not match!";
+        return;
+      }
+      if (!isPasswordValid(newPassword)) {
+        passwordError.textContent = "Password does not meet requirements!";
+        return;
+      }
+
+      const employee = JSON.parse(sessionStorage.getItem("tempEmployee"));
+      
+      const updatedEmployees = allEmployees.map(emp => {
+        if (emp.username === employee.username) {
+          return { ...emp, password: newPassword, isFirstLogin: false };
+        }
+        return emp;
+      });
+
+      const nonDefaultEmployees = updatedEmployees.filter(emp => 
+        !defaultEmployees.some(defaultEmp => defaultEmp.username === emp.username)
+      );
+      localStorage.setItem("employeeAccounts", JSON.stringify(nonDefaultEmployees));
+
+      sessionStorage.removeItem("tempEmployee");
+      document.getElementById("passwordChangeModal").style.display = "none";
+
+      loginSuccess({ ...employee, password: newPassword, isFirstLogin: false });
+    });
+
+    function isPasswordValid(password) {
+      return password.length >= 8 && 
+             /[A-Z]/.test(password) && 
+             /[a-z]/.test(password) && 
+             /\d/.test(password) && 
+             /[!@#$%^&*]/.test(password);
+    }
+
+    function loginSuccess(employee) {
+      const loginTime = new Date().toLocaleTimeString();
+      const today = new Date().toLocaleDateString();
+      let employeeRecords = JSON.parse(localStorage.getItem("employeeRecords")) || [];
+  
+      employeeRecords.push({
+        name: employee.name,
+        position: employee.position,
+        date: today,
+        timeIn: loginTime,
+        timeOut: "N/A"
+      });
+  
+      localStorage.setItem("employeeRecords", JSON.stringify(employeeRecords));
+      localStorage.setItem("loggedInEmployee", JSON.stringify(employee));
+      localStorage.setItem("currentEmployeeName", employee.name);
+      localStorage.setItem("loginTime", loginTime);
+      localStorage.setItem("isEmployee", "true");
+
+      const employeeDataKey = `${employee.name}_data`;
+      let initialData = { earnings: 0, wordCount: 0, tasksCompleted: 0, avgSpeed: 0 };
+
+      if (employee.username === "employee1") initialData = { earnings: 15000, wordCount: 50000, tasksCompleted: 25, avgSpeed: 300 };
+      if (employee.username === "employee2") initialData = { earnings: 12000, wordCount: 35000, tasksCompleted: 20, avgSpeed: 250 };
+      if (employee.username === "employee3") initialData = { earnings: 18000, wordCount: 60000, tasksCompleted: 30, avgSpeed: 280 };
+      if (employee.username === "employee4") initialData = { earnings: 14000, wordCount: 40000, tasksCompleted: 22, avgSpeed: 270 };
+      if (employee.username === "employee6") initialData = { earnings: 13000, wordCount: 30000, tasksCompleted: 18, avgSpeed: 220 };
+      if (employee.username === "employee7") initialData = { earnings: 16000, wordCount: 45000, tasksCompleted: 28, avgSpeed: 260 };
+
+      localStorage.setItem(employeeDataKey, JSON.stringify(initialData));
+
+      const profilePhotoKey = `profilePhoto_${employee.name}`;
+      if (!localStorage.getItem(profilePhotoKey)) localStorage.setItem(profilePhotoKey, "");
+  
+      window.location.href = "profile.html";
+    }
+  </script>
+</body>
+</html>

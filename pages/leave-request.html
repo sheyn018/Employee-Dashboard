@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leave Request - HR Connect</title>
+  <link rel="stylesheet" href="../css/leave-request.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <header><h1>Leave Request Form</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <section class="form-section">
+    <div class="container">
+      <div class="form-header">
+        <h2>📅 Submit Leave Request</h2>
+        <p>Please fill out the form below to submit your leave request.</p>
+      </div>
+
+      <div class="form-container">
+        <form id="leaveRequestForm">
+          <div class="form-group">
+            <label for="employeeName">Employee Name <span class="required">*</span></label>
+            <input type="text" id="employeeName" name="employee_name" required 
+                   placeholder="Enter your full name">
+            <div class="error-message" id="nameError"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="leaveType">Type of Leave <span class="required">*</span></label>
+            <select id="leaveType" name="leave_type" required>
+              <option value="">-- Select Leave Type --</option>
+              <option value="sick_leave">Sick Leave</option>
+              <option value="vacation_leave">Vacation Leave (VL)</option>
+              <option value="personal_leave">Personal Leave</option>
+              <option value="emergency_leave">Emergency Leave</option>
+              <option value="maternity_leave">Maternity Leave</option>
+              <option value="paternity_leave">Paternity Leave</option>
+            </select>
+            <div class="error-message" id="leaveTypeError"></div>
+            <div class="helper-text">Select the type of leave you are requesting</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="startDate">Start Date <span class="required">*</span></label>
+              <input type="date" id="startDate" name="start_date" required>
+              <div class="error-message" id="startDateError"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="endDate">End Date <span class="required">*</span></label>
+              <input type="date" id="endDate" name="end_date" required>
+              <div class="error-message" id="endDateError"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reason">Reason for Leave</label>
+            <textarea id="reason" name="reason" rows="4" 
+                      placeholder="Briefly explain the reason for your leave request (optional)"></textarea>
+            <div class="helper-text">Optional: Provide additional details about your leave request</div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Reset Form</button>
+            <button type="submit" class="btn-primary">Submit Request</button>
+          </div>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="successMessage" class="message success-message" style="display: none;">
+          <div class="message-icon">✅</div>
+          <div class="message-content">
+            <h3>Request Submitted Successfully!</h3>
+            <p>Your leave request has been submitted and is pending review by HR.</p>
+          </div>
+        </div>
+
+        <div id="errorMessage" class="message error-message" style="display: none;">
+          <div class="message-icon">❌</div>
+          <div class="message-content">
+            <h3>Submission Failed</h3>
+            <p id="errorText">Please try again or contact IT support if the problem persists.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <center>
+          <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+        </center>
+      </div>
+    </div>
+  </section>
+
+  <!-- JavaScript for form handling -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('leave-request.html');
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Form validation functions
+    function validateEmployeeName(name) {
+      if (!name || name.trim().length < 2) {
+        return "Employee name must be at least 2 characters long";
+      }
+      if (name.trim().length > 100) {
+        return "Employee name cannot exceed 100 characters";
+      }
+      return null;
+    }
+
+    function validateLeaveType(leaveType) {
+      const validTypes = ['sick_leave', 'vacation_leave', 'personal_leave', 'emergency_leave', 'maternity_leave', 'paternity_leave'];
+      if (!leaveType || !validTypes.includes(leaveType)) {
+        return "Please select a valid leave type";
+      }
+      return null;
+    }
+
+    function validateDates(startDate, endDate) {
+      if (!startDate || !endDate) {
+        return "Both start and end dates are required";
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (start < today) {
+        return "Start date cannot be in the past";
+      }
+
+      if (end < start) {
+        return "End date cannot be before start date";
+      }
+
+      // Check if the date range is reasonable (not more than 1 year)
+      const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
+      if (daysDiff > 365) {
+        return "Leave duration cannot exceed 1 year";
+      }
+
+      return null;
+    }
+
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    function hideError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.style.display = 'none';
+    }
+
+    function hideAllErrors() {
+      hideError('nameError');
+      hideError('leaveTypeError');
+      hideError('startDateError');
+      hideError('endDateError');
+    }
+
+    function hideMessages() {
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showSuccessMessage() {
+      hideMessages();
+      document.getElementById('successMessage').style.display = 'block';
+      // Scroll to message
+      document.getElementById('successMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function showErrorMessage(message = null) {
+      hideMessages();
+      if (message) {
+        document.getElementById('errorText').textContent = message;
+      }
+      document.getElementById('errorMessage').style.display = 'block';
+      // Scroll to message
+      document.getElementById('errorMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    // Reset form function
+    function resetForm() {
+      document.getElementById('leaveRequestForm').reset();
+      hideAllErrors();
+      hideMessages();
+    }
+
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').setAttribute('min', today);
+      document.getElementById('endDate').setAttribute('min', today);
+    });
+
+    // Real-time validation
+    document.getElementById('employeeName').addEventListener('blur', function() {
+      const error = validateEmployeeName(this.value);
+      if (error) {
+        showError('nameError', error);
+      } else {
+        hideError('nameError');
+      }
+    });
+
+    document.getElementById('leaveType').addEventListener('change', function() {
+      const error = validateLeaveType(this.value);
+      if (error) {
+        showError('leaveTypeError', error);
+      } else {
+        hideError('leaveTypeError');
+      }
+    });
+
+    document.getElementById('startDate').addEventListener('change', function() {
+      const startDate = this.value;
+      const endDate = document.getElementById('endDate').value;
+      
+      if (startDate) {
+        // Update minimum end date to start date
+        document.getElementById('endDate').setAttribute('min', startDate);
+        
+        // Validate if both dates are selected
+        if (endDate) {
+          const error = validateDates(startDate, endDate);
+          if (error) {
+            showError('startDateError', error);
+          } else {
+            hideError('startDateError');
+            hideError('endDateError');
+          }
+        }
+      }
+    });
+
+    document.getElementById('endDate').addEventListener('change', function() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = this.value;
+      
+      if (startDate && endDate) {
+        const error = validateDates(startDate, endDate);
+        if (error) {
+          showError('endDateError', error);
+        } else {
+          hideError('startDateError');
+          hideError('endDateError');
+        }
+      }
+    });
+
+    // Form submission
+    document.getElementById('leaveRequestForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      hideAllErrors();
+      hideMessages();
+
+      // Get form data
+      const formData = new FormData(e.target);
+      const data = {
+        employee_name: formData.get('employee_name').trim(),
+        leave_type: formData.get('leave_type'),
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date'),
+        reason: formData.get('reason').trim() || null,
+        status: 'pending'
+      };
+
+      // Validate form data
+      let hasErrors = false;
+
+      const nameError = validateEmployeeName(data.employee_name);
+      if (nameError) {
+        showError('nameError', nameError);
+        hasErrors = true;
+      }
+
+      const leaveTypeError = validateLeaveType(data.leave_type);
+      if (leaveTypeError) {
+        showError('leaveTypeError', leaveTypeError);
+        hasErrors = true;
+      }
+
+      const dateError = validateDates(data.start_date, data.end_date);
+      if (dateError) {
+        showError('startDateError', dateError);
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        return;
+      }
+
+      // Disable submit button during submission
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        console.log('Submitting leave request:', data);
+        
+        const response = await fetch(`${API_BASE}/leave-requests`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('Server response:', result);
+
+        if (response.ok && result.success) {
+          showSuccessMessage();
+          // Reset form after successful submission
+          setTimeout(() => {
+            resetForm();
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Failed to submit leave request');
+        }
+
+      } catch (error) {
+        console.error('Error submitting leave request:', error);
+        showErrorMessage(`Error: ${error.message}`);
+      } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Auto-hide messages after 10 seconds
+    function autoHideMessage(messageId) {
+      setTimeout(() => {
+        const message = document.getElementById(messageId);
+        if (message.style.display !== 'none') {
+          message.style.display = 'none';
+        }
+      }, 10000);
+    }
+
+    // Show messages will trigger auto-hide
+    const originalShowSuccess = showSuccessMessage;
+    const originalShowError = showErrorMessage;
+
+    showSuccessMessage = function() {
+      originalShowSuccess();
+      autoHideMessage('successMessage');
+    };
+
+    showErrorMessage = function(message) {
+      originalShowError(message);
+      autoHideMessage('errorMessage');
+    };
+  </script>
+</body>
+</html>

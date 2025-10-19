@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Employee Evaluation - HR Connect</title>
+  <link rel="stylesheet" href="../css/evaluation-form.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <header><h1>Employee Evaluation Form</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <section class="form-section">
+    <div class="container">
+      <div class="form-header">
+        <h2>📊 Employee Performance Evaluation</h2>
+        <p>Complete this evaluation form to assess employee performance and provide constructive feedback.</p>
+      </div>
+
+      <div class="form-container">
+        <form id="evaluationForm">
+          <!-- Employee Information Section -->
+          <div class="section">
+            <h3>👤 Employee Information</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeName">Employee Name <span class="required">*</span></label>
+                <input type="text" id="employeeName" name="employee_name" required 
+                       placeholder="Enter employee's full name">
+                <div class="error-message" id="employeeNameError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="evaluatorName">Evaluator Name <span class="required">*</span></label>
+                <input type="text" id="evaluatorName" name="evaluator_name" required 
+                       placeholder="Enter your full name">
+                <div class="error-message" id="evaluatorNameError"></div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="employeeId">Employee ID <span class="required">*</span></label>
+                <input type="text" id="employeeId" name="employee_id" required 
+                       placeholder="Enter employee ID (5-digit number)" 
+                       pattern="[0-9]{5}" maxlength="5" 
+                       title="Please enter a 5-digit employee ID">
+                <div class="error-message" id="employeeIdError"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="evaluationPeriod">Evaluation Period <span class="required">*</span></label>
+                <select id="evaluationPeriod" name="evaluation_period" required>
+                  <option value="">-- Select Evaluation Period --</option>
+                  <option value="Annual 2025">Annual 2025</option>
+                  <option value="Annual 2024">Annual 2024</option>
+                  <option value="Q4 2025">Q4 2025</option>
+                  <option value="Q3 2025">Q3 2025</option>
+                  <option value="Q2 2025">Q2 2025</option>
+                  <option value="Q1 2025">Q1 2025</option>
+                </select>
+                <div class="error-message" id="evaluationPeriodError"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Ratings Section -->
+          <div class="section">
+            <h3>⭐ Performance Ratings</h3>
+            <p class="section-subtitle">Rate each area on a scale of 1-5 (1 = Poor, 2 = Below Average, 3 = Average, 4 = Good, 5 = Excellent)</p>
+            
+            <div class="rating-grid">
+              <div class="rating-item">
+                <label for="technicalSkills">Technical Skills <span class="required">*</span></label>
+                <div class="rating-input">
+                  <input type="range" id="technicalSkills" name="technical_skills" min="1" max="5" value="3" required>
+                  <div class="rating-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                  </div>
+                  <div class="rating-value" id="technicalSkillsValue">3</div>
+                </div>
+                <div class="helper-text">Job-specific skills and competencies</div>
+              </div>
+
+              <div class="rating-item">
+                <label for="communication">Communication <span class="required">*</span></label>
+                <div class="rating-input">
+                  <input type="range" id="communication" name="communication" min="1" max="5" value="3" required>
+                  <div class="rating-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                  </div>
+                  <div class="rating-value" id="communicationValue">3</div>
+                </div>
+                <div class="helper-text">Written and verbal communication skills</div>
+              </div>
+
+              <div class="rating-item">
+                <label for="teamwork">Teamwork <span class="required">*</span></label>
+                <div class="rating-input">
+                  <input type="range" id="teamwork" name="teamwork" min="1" max="5" value="3" required>
+                  <div class="rating-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                  </div>
+                  <div class="rating-value" id="teamworkValue">3</div>
+                </div>
+                <div class="helper-text">Collaboration and cooperation with colleagues</div>
+              </div>
+
+              <div class="rating-item">
+                <label for="reliability">Reliability <span class="required">*</span></label>
+                <div class="rating-input">
+                  <input type="range" id="reliability" name="reliability" min="1" max="5" value="3" required>
+                  <div class="rating-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                  </div>
+                  <div class="rating-value" id="reliabilityValue">3</div>
+                </div>
+                <div class="helper-text">Punctuality, dependability, and consistency</div>
+              </div>
+
+              <div class="rating-item">
+                <label for="problemSolving">Problem Solving <span class="required">*</span></label>
+                <div class="rating-input">
+                  <input type="range" id="problemSolving" name="problem_solving" min="1" max="5" value="3" required>
+                  <div class="rating-labels">
+                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                  </div>
+                  <div class="rating-value" id="problemSolvingValue">3</div>
+                </div>
+                <div class="helper-text">Analytical thinking and creative solutions</div>
+              </div>
+            </div>
+
+            <div class="overall-score">
+              <label>Overall Score:</label>
+              <div class="score-display" id="overallScore">3.00</div>
+              <div class="score-description" id="scoreDescription">Average Performance</div>
+            </div>
+          </div>
+
+          <!-- Comments Section -->
+          <div class="section">
+            <h3>💬 Detailed Feedback</h3>
+            
+            <div class="form-group">
+              <label for="strengths">Strengths & Accomplishments</label>
+              <textarea id="strengths" name="strengths" rows="4" 
+                        placeholder="Highlight the employee's key strengths, achievements, and positive contributions..."></textarea>
+              <div class="helper-text">What does this employee do well? What achievements should be recognized?</div>
+            </div>
+
+            <div class="form-group">
+              <label for="areasForImprovement">Areas for Improvement</label>
+              <textarea id="areasForImprovement" name="areas_for_improvement" rows="4" 
+                        placeholder="Identify specific areas where the employee can improve and grow..."></textarea>
+              <div class="helper-text">What skills or behaviors could be developed further?</div>
+            </div>
+
+            <div class="form-group">
+              <label for="goalsNextPeriod">Goals for Next Period</label>
+              <textarea id="goalsNextPeriod" name="goals_next_period" rows="4" 
+                        placeholder="Set specific, measurable goals for the upcoming evaluation period..."></textarea>
+              <div class="helper-text">What should the employee focus on achieving in the next period?</div>
+            </div>
+
+            <div class="form-group">
+              <label for="additionalComments">Additional Comments</label>
+              <textarea id="additionalComments" name="additional_comments" rows="3" 
+                        placeholder="Any other feedback, observations, or notes..."></textarea>
+              <div class="helper-text">Optional: Any other relevant information or feedback</div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Reset Form</button>
+            <button type="submit" class="btn-primary">Submit Evaluation</button>
+          </div>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="successMessage" class="message success-message" style="display: none;">
+          <div class="message-icon">✅</div>
+          <div class="message-content">
+            <h3>Evaluation Submitted Successfully!</h3>
+            <p>The employee evaluation has been completed and saved to the system.</p>
+          </div>
+        </div>
+
+        <div id="errorMessage" class="message error-message" style="display: none;">
+          <div class="message-icon">❌</div>
+          <div class="message-content">
+            <h3>Submission Failed</h3>
+            <p id="errorText">Please try again or contact IT support if the problem persists.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <center>
+          <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+        </center>
+      </div>
+    </div>
+  </section>
+
+  <!-- JavaScript for form handling -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('evaluation-form.html');
+
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Rating sliders and score calculation
+    const ratingSliders = ['technicalSkills', 'communication', 'teamwork', 'reliability', 'problemSolving'];
+    
+    // Update rating display and calculate overall score
+    function updateRatings() {
+      let total = 0;
+      let count = 0;
+      
+      ratingSliders.forEach(sliderId => {
+        const slider = document.getElementById(sliderId);
+        const valueDisplay = document.getElementById(sliderId + 'Value');
+        
+        if (slider && valueDisplay) {
+          const value = parseInt(slider.value);
+          valueDisplay.textContent = value;
+          total += value;
+          count++;
+        }
+      });
+      
+      const overallScore = count > 0 ? (total / count).toFixed(2) : 0;
+      document.getElementById('overallScore').textContent = overallScore;
+      
+      // Update score description
+      const score = parseFloat(overallScore);
+      let description = '';
+      if (score >= 4.5) description = 'Excellent Performance';
+      else if (score >= 3.5) description = 'Good Performance';
+      else if (score >= 2.5) description = 'Average Performance';
+      else if (score >= 1.5) description = 'Below Average Performance';
+      else description = 'Poor Performance';
+      
+      document.getElementById('scoreDescription').textContent = description;
+    }
+
+    // Add event listeners to rating sliders
+    ratingSliders.forEach(sliderId => {
+      const slider = document.getElementById(sliderId);
+      if (slider) {
+        slider.addEventListener('input', updateRatings);
+      }
+    });
+
+    // Initialize ratings display
+    updateRatings();
+
+    // Form validation functions
+    function validateEmployeeName(name) {
+      if (!name || name.trim().length < 2) {
+        return "Employee name must be at least 2 characters long";
+      }
+      if (name.trim().length > 100) {
+        return "Employee name cannot exceed 100 characters";
+      }
+      return null;
+    }
+
+    function validateEmployeeId(id) {
+      if (!id || id.toString().trim() === '') {
+        return "Employee ID is required";
+      }
+      const idStr = id.toString().trim();
+      if (!/^\d{5}$/.test(idStr)) {
+        return "Employee ID must be exactly 5 digits (10000-99999)";
+      }
+      const numId = parseInt(idStr);
+      if (numId < 10000 || numId > 99999) {
+        return "Employee ID must be between 10000 and 99999";
+      }
+      return null;
+    }
+
+    function validateEvaluatorName(name) {
+      if (!name || name.trim().length < 2) {
+        return "Evaluator name must be at least 2 characters long";
+      }
+      if (name.trim().length > 100) {
+        return "Evaluator name cannot exceed 100 characters";
+      }
+      return null;
+    }
+
+    function validateEvaluationPeriod(period) {
+      if (!period) {
+        return "Please select an evaluation period";
+      }
+      return null;
+    }
+
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+      }
+    }
+
+    function hideError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      if (errorElement) {
+        errorElement.style.display = 'none';
+      }
+    }
+
+    function hideAllErrors() {
+      hideError('employeeNameError');
+      hideError('employeeIdError');
+      hideError('evaluatorNameError');
+      hideError('evaluationPeriodError');
+    }
+
+    function hideMessages() {
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showSuccessMessage() {
+      hideMessages();
+      document.getElementById('successMessage').style.display = 'block';
+      document.getElementById('successMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function showErrorMessage(message = null) {
+      hideMessages();
+      if (message) {
+        document.getElementById('errorText').textContent = message;
+      }
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    // Reset form function
+    function resetForm() {
+      document.getElementById('evaluationForm').reset();
+      ratingSliders.forEach(sliderId => {
+        const slider = document.getElementById(sliderId);
+        if (slider) {
+          slider.value = 3;
+        }
+      });
+      updateRatings();
+      hideAllErrors();
+      hideMessages();
+    }
+
+    // Form submission
+    document.getElementById('evaluationForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      hideAllErrors();
+      hideMessages();
+
+      // Get form data
+      const formData = new FormData(e.target);
+      const data = {
+        employee_name: formData.get('employee_name').trim(),
+        employee_id: parseInt(formData.get('employee_id')),
+        evaluator_name: formData.get('evaluator_name').trim(),
+        evaluation_period: formData.get('evaluation_period'),
+        technical_skills: parseInt(formData.get('technical_skills')),
+        communication: parseInt(formData.get('communication')),
+        teamwork: parseInt(formData.get('teamwork')),
+        reliability: parseInt(formData.get('reliability')),
+        problem_solving: parseInt(formData.get('problem_solving')),
+        strengths: formData.get('strengths').trim() || null,
+        areas_for_improvement: formData.get('areas_for_improvement').trim() || null,
+        goals_next_period: formData.get('goals_next_period').trim() || null,
+        additional_comments: formData.get('additional_comments').trim() || null
+      };
+
+      // Calculate overall score
+      const scores = [data.technical_skills, data.communication, data.teamwork, data.reliability, data.problem_solving];
+      data.overall_score = parseFloat((scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(2));
+
+      // Validate form data
+      let hasErrors = false;
+
+      const employeeNameError = validateEmployeeName(data.employee_name);
+      if (employeeNameError) {
+        showError('employeeNameError', employeeNameError);
+        hasErrors = true;
+      }
+
+      const employeeIdError = validateEmployeeId(data.employee_id);
+      if (employeeIdError) {
+        showError('employeeIdError', employeeIdError);
+        hasErrors = true;
+      }
+
+      const evaluatorNameError = validateEvaluatorName(data.evaluator_name);
+      if (evaluatorNameError) {
+        showError('evaluatorNameError', evaluatorNameError);
+        hasErrors = true;
+      }
+
+      const evaluationPeriodError = validateEvaluationPeriod(data.evaluation_period);
+      if (evaluationPeriodError) {
+        showError('evaluationPeriodError', evaluationPeriodError);
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        return;
+      }
+
+      // Submit the evaluation
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        console.log('Submitting evaluation:', data);
+        
+        const response = await fetch(`${API_BASE}/evaluations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('Server response:', result);
+
+        if (response.ok && result.success) {
+          showSuccessMessage();
+          setTimeout(() => {
+            resetForm();
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Failed to submit evaluation');
+        }
+
+      } catch (error) {
+        console.error('Error submitting evaluation:', error);
+        showErrorMessage(`Error: ${error.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Real-time validation
+    document.getElementById('employeeName').addEventListener('blur', function() {
+      const error = validateEmployeeName(this.value);
+      if (error) {
+        showError('employeeNameError', error);
+      } else {
+        hideError('employeeNameError');
+      }
+    });
+
+    document.getElementById('employeeId').addEventListener('blur', function() {
+      const error = validateEmployeeId(this.value);
+      if (error) {
+        showError('employeeIdError', error);
+      } else {
+        hideError('employeeIdError');
+      }
+    });
+
+    document.getElementById('evaluatorName').addEventListener('blur', function() {
+      const error = validateEvaluatorName(this.value);
+      if (error) {
+        showError('evaluatorNameError', error);
+      } else {
+        hideError('evaluatorNameError');
+      }
+    });
+
+    document.getElementById('evaluationPeriod').addEventListener('change', function() {
+      const error = validateEvaluationPeriod(this.value);
+      if (error) {
+        showError('evaluationPeriodError', error);
+      } else {
+        hideError('evaluationPeriodError');
+      }
+    });
+  </script>
+</body>
+</html>

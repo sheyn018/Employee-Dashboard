@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add New Employee</title>
+  <link rel="stylesheet" href="../css/add-employee.css">
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <!-- Content -->
+  <div class="content">
+    <header>
+      <h1>Add New Employee</h1>
+    </header>
+
+    <div class="form-container">
+      <form id="employeeForm">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="position">Position</label>
+          <input type="text" id="position" name="position" required>
+        </div>
+
+        <div class="form-group">
+          <label for="work_date">Work Date</label>
+          <input type="date" id="work_date" name="work_date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="time_in">Time In</label>
+          <input type="time" id="time_in" name="time_in" required>
+        </div>
+
+        <div class="form-group">
+          <label for="time_out">Time Out</label>
+          <input type="time" id="time_out" name="time_out" required>
+        </div>
+
+        <div class="form-group">
+          <label for="earnings">Earnings</label>
+          <input type="number" step="0.01" id="earnings" name="earnings" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="generate-btn">Save Employee</button>
+          <button type="reset" class="reset-btn">Reset</button>
+        </div>
+      </form>
+
+      <div id="responseMessage" class="response"></div>
+    </div>
+  </div>
+
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    // Check admin authentication
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('add-employee.html');
+
+    function openNav() {
+      document.getElementById("mySidebar").style.width = "250px";
+    }
+    function closeNav() {
+      document.getElementById("mySidebar").style.width = "0";
+    }
+
+    document.getElementById("employeeForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const data = {
+        name: document.getElementById("name").value,
+        position: document.getElementById("position").value,
+        work_date: document.getElementById("work_date").value,
+        time_in: document.getElementById("time_in").value,
+        time_out: document.getElementById("time_out").value,
+        earnings: parseFloat(document.getElementById("earnings").value)
+      };
+
+      try {
+        const response = await fetch("http://localhost:3000/api/api.php/new-employee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        const messageDiv = document.getElementById("responseMessage");
+
+        if (result.success) {
+          messageDiv.innerHTML = `<p class="success">✅ Employee added successfully (ID: ${result.id})</p>`;
+          document.getElementById("employeeForm").reset();
+        } else {
+          messageDiv.innerHTML = `<p class="error">❌ Error: ${result.error || 'Something went wrong'}</p>`;
+        }
+      } catch (err) {
+        document.getElementById("responseMessage").innerHTML = `<p class="error">⚠️ Failed to connect to server</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Planning</title>
+  <link rel="stylesheet" href="../css/modules.css">
+  <link rel="stylesheet" href="../components/navigation.css">
+</head>
+<body>
+  <!-- Navigation Component -->
+  <div id="navigation-container"></div>
+  
+  <!-- Main Content -->
+  <div class="container">
+    <h2>💵 Budget Planning</h2>
+    <form id="budgetForm">
+      <label>Department</label>
+      <input type="text" name="department" required placeholder="e.g., IT Department">
+      
+      <label>Allocated Amount</label>
+      <input type="number" step="0.01" name="allocated_amount" required placeholder="0.00">
+      
+      <label>Spent Amount</label>
+      <input type="number" step="0.01" name="spent_amount" value="0" placeholder="0.00">
+      
+      <label>Fiscal Year</label>
+      <input type="text" name="fiscal_year" placeholder="2025" required pattern="\d{4}" title="Please enter a 4-digit year">
+      
+      <label>Notes (Optional)</label>
+      <textarea name="notes" rows="3" placeholder="Additional notes about this budget..."></textarea>
+      
+      <button type="submit">Save Budget</button>
+    </form>
+
+    <h3>Budget Records</h3>
+    <table id="budgetTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Department</th>
+          <th>Allocated</th>
+          <th>Spent</th>
+          <th>Remaining</th>
+          <th>% Spent</th>
+          <th>Year</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Initialize navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      NavigationComponent.init({
+        containerId: 'navigation-container',
+        menuType: 'admin',
+        includeLogout: true,
+        authCheck: true
+      });
+      
+      // Set active navigation item
+      NavigationComponent.setActiveNavItem('budget.html');
+      
+      // Load data
+      loadData();
+    });
+
+    document.getElementById("budgetForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      console.log('=== Budget Form Submit ===');
+      
+      try {
+        const formData = new FormData(this);
+        
+        // Log form data
+        console.log('Form Data:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}: ${value}`);
+        }
+        
+        const apiUrl = "http://localhost:3000/api/api.php?action=add_budget";
+        console.log('API URL:', apiUrl);
+        console.log('Method: POST');
+        
+        const response = await fetch(apiUrl, { 
+          method: "POST", 
+          body: formData 
+        });
+        
+        console.log('Response Status:', response.status);
+        console.log('Response OK:', response.ok);
+        
+        const result = await response.json();
+        console.log('Response Data:', result);
+        
+        if (result.success) {
+          console.log('✓ Budget record saved successfully!');
+          alert('Budget record saved successfully!');
+          this.reset();
+          loadData();
+        } else {
+          console.error('✗ Error saving budget:', result.error || result.message);
+          alert(result.error || result.message || 'Error saving budget record');
+        }
+      } catch (error) {
+        console.error('✗ Exception caught:', error);
+        console.error('Error stack:', error.stack);
+        alert('Error saving budget record: ' + error.message);
+      }
+    });
+
+    async function loadData() {
+      console.log('=== Loading Budget Data ===');
+      
+      try {
+        const apiUrl = "http://localhost:3000/api/api.php?action=get_budget";
+        console.log('API URL:', apiUrl);
+        console.log('Method: GET');
+        
+        const response = await fetch(apiUrl);
+        console.log('Response Status:', response.status);
+        console.log('Response OK:', response.ok);
+        
+        const result = await response.json();
+        console.log('Response Data:', result);
+        
+        const tbody = document.querySelector("#budgetTable tbody");
+        tbody.innerHTML = "";
+        
+        const data = result.data || result;
+        console.log('Parsed Data Array:', data);
+        console.log('Is Array:', Array.isArray(data));
+        console.log('Data Length:', data.length);
+        
+        if (Array.isArray(data) && data.length > 0) {
+          console.log(`✓ Rendering ${data.length} budget records`);
+          
+          data.forEach((row, index) => {
+            console.log(`  Row ${index + 1}:`, row);
+            
+            const remainingAmount = parseFloat(row.allocated_amount || 0) - parseFloat(row.spent_amount || 0);
+            const percentageSpent = row.allocated_amount > 0 
+              ? ((parseFloat(row.spent_amount || 0) / parseFloat(row.allocated_amount)) * 100).toFixed(1)
+              : 0;
+            
+            // Color code based on budget status
+            const statusClass = percentageSpent > 90 ? 'style="background-color: #ffebee;"' : 
+                               percentageSpent > 75 ? 'style="background-color: #fff9e6;"' : '';
+            
+            tbody.innerHTML += `<tr ${statusClass}>
+              <td>${row.id || ''}</td>
+              <td>${row.department || ''}</td>
+              <td>$${parseFloat(row.allocated_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>$${parseFloat(row.spent_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>$${remainingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>${percentageSpent}%</td>
+              <td>${row.fiscal_year || ''}</td>
+              <td>
+                <button onclick="deleteBudget(${row.id})" style="padding: 3px 8px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;">Delete</button>
+              </td>
+            </tr>`;
+          });
+          
+          console.log('✓ Table rendering complete');
+        } else {
+          console.log('⚠ No budget records found');
+          tbody.innerHTML = '<tr><td colspan="8">No budget records found</td></tr>';
+        }
+      } catch (error) {
+        console.error('✗ Error loading data:', error);
+        console.error('Error stack:', error.stack);
+        const tbody = document.querySelector("#budgetTable tbody");
+        tbody.innerHTML = '<tr><td colspan="8">Error loading data</td></tr>';
+      }
+    }
+    
+    async function deleteBudget(id) {
+      console.log('=== Delete Budget ===');
+      console.log('Budget ID:', id);
+      
+      if (!confirm('Are you sure you want to delete this budget record?')) {
+        console.log('⚠ Delete cancelled by user');
+        return;
+      }
+      
+      try {
+        const formData = new FormData();
+        formData.append('id', id);
+        
+        console.log('Delete Data:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}: ${value}`);
+        }
+        
+        const apiUrl = "http://localhost:3000/api/api.php?action=delete_budget";
+        console.log('API URL:', apiUrl);
+        console.log('Method: POST');
+        
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          body: formData
+        });
+        
+        console.log('Response Status:', response.status);
+        console.log('Response OK:', response.ok);
+        
+        const result = await response.json();
+        console.log('Response Data:', result);
+        
+        if (result.success) {
+          console.log('✓ Budget record deleted successfully!');
+          alert('Budget record deleted successfully!');
+          loadData();
+        } else {
+          console.error('✗ Error deleting budget:', result.error || result.message);
+          alert(result.error || result.message || 'Error deleting budget record');
+        }
+      } catch (error) {
+        console.error('✗ Exception caught:', error);
+        console.error('Error stack:', error.stack);
+        alert('Error deleting budget record');
+      }
+    }
+  </script>
+</body>
+</html>

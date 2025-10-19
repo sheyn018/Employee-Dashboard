@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payslip - HR Connect</title>
+  <link rel="stylesheet" href="../css/payslip.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <div class="content">
+    <header>
+      <h1>Payslip Page</h1>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Employee Name</th>
+          <th>Position</th>
+          <th>Last Payslip Tasks</th>
+          <th>Last Payslip Amount (₱)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="payslipTableBody">
+        <!-- rows will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2>Generate Payslip</h2>
+      <p><strong>Name:</strong> <span id="modalName"></span></p>
+      <p><strong>Position:</strong> <span id="modalPosition"></span></p>
+      <p><strong>Total Earnings:</strong> ₱<span id="modalEarnings"></span></p>
+      <p><strong>Tasks Completed:</strong> <span id="modalTasksCompleted"></span> tasks</p>
+      <button class="modal-btn modal-send" onclick="sendPayslip()">Send</button>
+      <button class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="historyModal" class="history-modal">
+    <div class="modal-content">
+      <h2>Payslip History for <span id="historyEmployeeName"></span></h2>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date Generated</th>
+            <th>Position</th>
+            <th>Tasks Completed</th>
+            <th>Total Earnings</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <!-- History rows will be inserted here -->
+        </tbody>
+      </table>
+      <div class="action-buttons">
+        <button class="modal-btn reset-btn" onclick="resetAllRecords()">Reset Records</button>
+        <button class="modal-btn delete-btn" onclick="deleteAllRecords()">Delete History</button>
+        <button class="modal-btn close-history-btn" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    // API Configuration
+    const API_BASE_URL = 'http://localhost:3000/api/api.php';
+    
+    // API Helper Functions
+    async function apiCall(endpoint, method = 'GET', data = null) {
+      const url = `${API_BASE_URL}/${endpoint}`;
+      console.log('Making API call to:', url); // Debug log
+      
+      const config = {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+      
+      if (data && method !== 'GET') {
+        config.body = JSON.stringify(data);
+      }
+      
+      try {
+        const response = await fetch(url, config);
+        const result = await response.json();
+        
+        console.log('API Response:', result); // Debug log
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'API request failed');
+        }
+        
+        return result;
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    }
+
+    function openNav() {
+      document.getElementById("mySidebar").style.width = "250px";
+    }
+
+    function closeNav() {
+      document.getElementById("mySidebar").style.width = "0";
+    }
+
+    function logout() {
+      localStorage.removeItem("isAdmin");
+      window.location.href = "index.html";
+    }
+
+    // Check admin authentication and initialize navigation
+    if (localStorage.getItem("isAdmin") !== "true") {
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation with custom options
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false // We already checked above
+    });
+
+    // Set the current page as active
+    NavigationComponent.setActiveNavItem('payslip.html');
+
+    let selectedPayslip = null;
+
+    async function loadPayslipTable() {
+      try {
+        // Fetch payslip data from API
+        const payslips = await apiCall('payslips');
+        const tableBody = document.getElementById("payslipTableBody");
+        tableBody.innerHTML = "";
+
+        if (payslips.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 5;
+          cell.textContent = "No payslip data available.";
+          row.appendChild(cell);
+          tableBody.appendChild(row);
+          return;
+        }
+
+        // Group payslips by employee name to show latest payslip data for each employee
+        const employeeMap = new Map();
+        
+        // Sort payslips by date (most recent first) to get latest data for each employee
+        payslips.sort((a, b) => new Date(b.date_generated) - new Date(a.date_generated));
+        
+        payslips.forEach((payslip) => {
+          if (!employeeMap.has(payslip.employee_name)) {
+            employeeMap.set(payslip.employee_name, {
+              name: payslip.employee_name,
+              position: payslip.position,
+              earnings: parseFloat(payslip.earnings) || 0,
+              tasksCompleted: 1, // Each payslip row = 1 task
+              lastPayslipDate: payslip.date_generated
+            });
+          } else {
+            // If employee already exists, increment task count and add earnings
+            const existing = employeeMap.get(payslip.employee_name);
+            existing.tasksCompleted += 1; // Count the rows
+            existing.earnings += parseFloat(payslip.earnings) || 0;
+          }
+        });
+
+        // Display unique employees with their latest payslip data
+        employeeMap.forEach((emp) => {
+          const row = document.createElement("tr");
+          const formattedDate = new Date(emp.lastPayslipDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+          
+          row.innerHTML = `
+            <td><span class="employee-name" onclick="showHistory('${emp.name}')">${emp.name}</span></td>
+            <td>${emp.position}</td>
+            <td>${emp.tasksCompleted} tasks (Last: ${formattedDate})</td>
+            <td>₱${emp.earnings.toLocaleString()}</td>
+            <td><button class="generate-btn" onclick="showHistory('${emp.name}')">View History</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+        
+      } catch (error) {
+        console.error('Error loading payslip table:', error);
+        const tableBody = document.getElementById("payslipTableBody");
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; color: red;">
+              Error loading payslip data: ${error.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function openModal(name, position, earnings, tasksCompleted = 0) {
+      selectedPayslip = { 
+        name, 
+        position, 
+        earnings,
+        tasksCompleted
+      };
+      
+      document.getElementById("modalName").textContent = name;
+      document.getElementById("modalPosition").textContent = position;
+      document.getElementById("modalEarnings").textContent = earnings.toLocaleString();
+      document.getElementById("modalTasksCompleted").textContent = tasksCompleted;
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function closeModal() {
+      selectedPayslip = null;
+      document.getElementById("modal").style.display = "none";
+    }
+
+    async function sendPayslip() {
+      if (selectedPayslip) {
+        try {
+          // Create payslip using the API (it will automatically count tasks and sum earnings)
+          const payslipResult = await apiCall('payslips', 'POST', {
+            employee_name: selectedPayslip.name
+          });
+
+          // Delete all employee records to reset their earnings (since they've been paid)
+          const allEmployees = await apiCall('employees');
+          const employeeRecords = allEmployees.filter(emp => emp.name === selectedPayslip.name);
+          
+          // Delete each record for this employee
+          for (const record of employeeRecords) {
+            await apiCall('employees', 'DELETE', { id: record.id });
+          }
+
+          const payslipData = payslipResult.payslip_data;
+          alert(`Payslip for ${selectedPayslip.name} has been generated:
+          
+Tasks Completed: ${payslipData.tasks_completed}
+Total Earnings: ₱${parseFloat(payslipData.total_earnings).toLocaleString()}
+
+All records have been reset for this employee.`);
+          
+          closeModal();
+          loadPayslipTable();
+          
+        } catch (error) {
+          console.error('Error sending payslip:', error);
+          alert(`Error sending payslip: ${error.message}`);
+        }
+      }
+    }
+
+    async function showHistory(employeeName) {
+      try {
+        // Fetch payslip history for the specific employee from API
+        const payslipHistory = await apiCall(`payslips?employee=${encodeURIComponent(employeeName)}`);
+        const historyTableBody = document.getElementById("historyTableBody");
+        const historyEmployeeName = document.getElementById("historyEmployeeName");
+        
+        historyEmployeeName.textContent = employeeName;
+        historyTableBody.innerHTML = "";
+
+        if (payslipHistory.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 5;
+          cell.textContent = "No payslip history available for this employee.";
+          row.appendChild(cell);
+          historyTableBody.appendChild(row);
+        } else {
+          // Sort history by date, most recent first
+          payslipHistory.sort((a, b) => new Date(b.date_generated) - new Date(a.date_generated));
+
+          // Each row in payslip_history represents one task completion
+          payslipHistory.forEach((record, index) => {
+            const row = document.createElement("tr");
+            const formattedDate = new Date(record.date_generated).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            
+            row.innerHTML = `
+              <td>${formattedDate}</td>
+              <td>${record.position}</td>
+              <td>1 task completed</td>
+              <td>₱${parseFloat(record.earnings).toLocaleString()}</td>
+              <td>
+                <button class="modal-btn delete-btn" onclick="deleteRecord(${record.id}, '${employeeName}')">
+                  Delete
+                </button>
+              </td>
+            `;
+            historyTableBody.appendChild(row);
+          });
+          
+          // Show total count at the bottom or in a summary
+          const totalTasks = payslipHistory.length;
+          console.log(`Total tasks completed by ${employeeName}: ${totalTasks}`);
+        }
+
+        document.getElementById("historyModal").style.display = "flex";
+        
+      } catch (error) {
+        console.error('Error loading payslip history:', error);
+        alert(`Error loading payslip history: ${error.message}`);
+      }
+    }
+
+    function closeHistoryModal() {
+      document.getElementById("historyModal").style.display = "none";
+    }
+
+    async function deleteRecord(recordId, employeeName) {
+      if (confirm("Are you sure you want to delete this payslip record?")) {
+        try {
+          await apiCall('payslips', 'DELETE', { id: recordId });
+          showHistory(employeeName); // Refresh the history view
+        } catch (error) {
+          console.error('Error deleting record:', error);
+          alert(`Error deleting record: ${error.message}`);
+        }
+      }
+    }
+
+    async function resetAllRecords() {
+      const employeeName = document.getElementById("historyEmployeeName").textContent;
+      if (confirm(`Are you sure you want to reset all current records for ${employeeName}? This will not affect the history.`)) {
+        try {
+          // Get all employee records for this person
+          const allEmployees = await apiCall('employees');
+          const employeeRecords = allEmployees.filter(emp => emp.name === employeeName);
+          
+          // Delete each record for this employee to reset their earnings
+          for (const record of employeeRecords) {
+            await apiCall('employees', 'DELETE', { id: record.id });
+          }
+
+          alert(`Current records for ${employeeName} have been reset to zero.`);
+          loadPayslipTable();
+          showHistory(employeeName);
+          
+        } catch (error) {
+          console.error('Error resetting records:', error);
+          alert(`Error resetting records: ${error.message}`);
+        }
+      }
+    }
+
+    async function deleteAllRecords() {
+      const employeeName = document.getElementById("historyEmployeeName").textContent;
+      if (confirm(`Are you sure you want to delete all payslip history for ${employeeName}? This action cannot be undone.`)) {
+        try {
+          await apiCall('payslips', 'DELETE', { employee_name: employeeName });
+          
+          alert(`All payslip history for ${employeeName} has been deleted.`);
+          closeHistoryModal();
+          loadPayslipTable();
+          
+        } catch (error) {
+          console.error('Error deleting all records:', error);
+          alert(`Error deleting all records: ${error.message}`);
+        }
+      }
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      const historyModal = document.getElementById("historyModal");
+      const modal = document.getElementById("modal");
+      if (event.target === historyModal) {
+        closeHistoryModal();
+      }
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+
+    window.onload = loadPayslipTable;
+  </script>
+</body>
+</html>

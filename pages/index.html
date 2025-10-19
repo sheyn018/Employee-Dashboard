@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR Connect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #2c3e50;
+      background: linear-gradient(135deg, #27ae60, #2ecc71, #58d68d);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header Styles with Logo Focus */
+    header {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 4px solid #27ae60;
+    }
+
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 5px;
+    }
+
+    .logo-image {
+      width: 70px;
+      height: 70px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.15),
+        0 0 0 3px rgba(39, 174, 96, 0.2);
+      overflow: hidden;
+      border: 3px solid #27ae60;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .logo-image:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 12px 35px rgba(0, 0, 0, 0.2),
+        0 0 0 3px rgba(39, 174, 96, 0.4);
+    }
+
+    .logo-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+
+    .brand-info {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .logo {
+      font-size: 32px;
+      color: #2c3e50;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #27ae60, #16a085);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transition: all 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .tagline {
+      font-size: 14px;
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Navigation Styles */
+    nav {
+      background: rgba(39, 174, 96, 0.1);
+      border-radius: 30px;
+      padding: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 5px;
+    }
+
+    nav a {
+      color: #2c3e50;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 22px;
+      transition: all 0.3s ease;
+      font-size: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    nav a:hover {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+    }
+
+    nav a.active {
+      color: #27ae60;
+      font-weight: 700;
+      background: rgba(39, 174, 96, 0.1);
+    }
+
+    nav a.active:hover {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(39, 174, 96, 0.3);
+    }
+
+    nav a[style*="red"] {
+      background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+      color: white !important;
+    }
+
+    nav a[style*="red"]:hover {
+      background: linear-gradient(135deg, #c0392b, #a93226) !important;
+      box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4) !important;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #2ecc71 0%, #27ae60 50%, #16a085 100%);
+      padding: 180px 0 120px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.05) 0%, transparent 50%);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-10px) rotate(1deg); }
+      66% { transform: translateY(5px) rotate(-1deg); }
+    }
+
+    .hero .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero h2 {
+      font-size: 52px;
+      margin-bottom: 25px;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      font-size: 22px;
+      margin-bottom: 45px;
+      max-width: 650px;
+      margin-left: auto;
+      margin-right: auto;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+      font-style: italic;
+      line-height: 1.4;
+    }
+
+    .btn {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.95);
+      color: #27ae60;
+      padding: 18px 45px;
+      text-decoration: none;
+      border-radius: 35px;
+      font-weight: 700;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      transition: left 0.3s ease;
+      z-index: -1;
+    }
+
+    .btn:hover {
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn:hover::before {
+      left: 0;
+    }
+
+    /* Footer */
+    footer {
+      background: linear-gradient(135deg, #2c3e50, #34495e);
+      color: #fff;
+      padding: 60px 0 40px;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    footer p {
+      margin-bottom: 15px;
+    }
+
+    .blockquote {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 30px;
+      border-radius: 15px;
+      margin: 30px auto;
+      max-width: 550px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blockquote p {
+      font-size: 18px !important;
+      color: #ecf0f1;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .blockquote-footer {
+      color: #bdc3c7;
+      font-size: 15px;
+    }
+
+    .blockquote-footer cite {
+      color: #2ecc71;
+      font-weight: 600;
+      display: inline-block;
+      margin: 3px 0;
+      padding: 2px 8px;
+      background: rgba(46, 204, 113, 0.1);
+      border-radius: 12px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header .container {
+        flex-direction: column;
+        gap: 20px;
+        padding: 15px 20px;
+      }
+
+      .logo-container {
+        gap: 15px;
+      }
+
+      .logo-image {
+        width: 60px;
+        height: 60px;
+      }
+
+      .logo {
+        font-size: 28px;
+      }
+
+      nav {
+        order: -1;
+      }
+
+      nav ul {
+        gap: 3px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      nav a {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+
+      .hero {
+        padding: 150px 0 100px;
+      }
+
+      .hero h2 {
+        font-size: 38px;
+      }
+
+      .hero p {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h2 {
+        font-size: 32px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .btn {
+        padding: 16px 35px;
+        font-size: 16px;
+      }
+
+      .logo {
+        font-size: 24px;
+      }
+
+      .logo-image {
+        width: 50px;
+        height: 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo-container">
+        <div class="logo-image">
+          <img src="logo.jpg" alt="SmartPath Logo">
+        </div>
+        <div class="brand-info">
+          <h1 class="logo">SmartPath</h1>
+          <div class="tagline">HR Solutions</div>
+        </div>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html" class="active">Home</a></li>
+          <li><a href="service.html">Services</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="admin-login.html" style="color: red;">Admin</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h2>Empowering Your Workforce</h2>
+      <p>Choose a job you love, and you will never have to work a day in your life.</p>
+      <a href="login.html" class="btn">SIGN IN</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>2025 HR Connect. All rights reserved.</p>
+      <p style="font-size: 12px; text-align: center;">&copy; 2025 Group BSIT 31031 (Gerardo Ortencio)</p>
+      <figure class="text-center">
+        <blockquote class="blockquote">
+          <p style="font-size: 18px;">BSIT 31031</p>
+        </blockquote>
+        <figcaption class="blockquote-footer">
+          <br>
+          Group Members:
+          <br>
+          <cite>Gerardo Ortencio</cite><br>
+          <cite>John Michael Pedico</cite><br>
+          <cite>Aldrin Isip</cite><br>
+          <cite>Khyle Jero Montecina</cite><br>
+        </figcaption>
+      </figure>
+    </div>
+  </footer>
+</body>
+</html>
