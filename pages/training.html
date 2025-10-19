@@ -3,115 +3,1074 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Training and Development</title>
-  <link rel="stylesheet" href="../css/modules.css">
+  <title>Training and Development - HR Connect</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../components/navigation.css">
+  <style>
+    .training-container {
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .form-section {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+
+    .form-section h3 {
+      margin-top: 0;
+      color: #2e7d32;
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2e7d32;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-submit {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    }
+
+    .btn-reset {
+      padding: 12px 24px;
+      background: #9e9e9e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-reset:hover {
+      background: #757575;
+    }
+
+    .filters-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    .stat-card .label {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-enrolled {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .status-ongoing {
+      background: #fff3e0;
+      color: #f57c00;
+    }
+
+    .status-completed {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status-cancelled {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2e7d32, #4caf50);
+      transition: width 0.3s ease;
+    }
+
+    .btn-update {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #1976d2, #2196f3);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-update:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-delete {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #d32f2f, #f44336);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    }
+
+    .certification-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      overflow: auto;
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 3% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .close {
+      color: white;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .close:hover {
+      transform: scale(1.2);
+    }
+
+    .modal-body {
+      padding: 30px;
+    }
+
+    .modal-form-group {
+      margin-bottom: 20px;
+    }
+
+    .modal-form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #555;
+    }
+
+    .modal-form-group input,
+    .modal-form-group select,
+    .modal-form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .modal-form-group input:focus,
+    .modal-form-group select:focus,
+    .modal-form-group textarea:focus {
+      outline: none;
+      border-color: #2e7d32;
+    }
+
+    .modal-form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .btn-modal-save {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-modal-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    }
+
+    .btn-modal-cancel {
+      padding: 12px 24px;
+      background: #9e9e9e;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-modal-cancel:hover {
+      background: #757575;
+    }
+
+    .progress-slider {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .progress-display {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #2e7d32;
+      margin: 10px 0;
+    }
+  </style>
 </head>
 <body>
-  <!-- Navigation Component -->
-  <div id="navigation-container"></div>
-  
-  <!-- Main Content -->
-  <div class="container">
-    <h2>🎓 Training and Development</h2>
-    <form id="trainingForm">
-      <label>Employee ID</label>
-      <input type="number" name="employee_id" required>
-      <label>Program Name</label>
-      <input type="text" name="program_name" required>
-      <label>Start Date</label>
-      <input type="date" name="start_date" required>
-      <label>End Date</label>
-      <input type="date" name="end_date">
-      <label>Status</label>
-      <select name="status">
-        <option value="Enrolled">Enrolled</option>
-        <option value="Completed">Completed</option>
-        <option value="Ongoing">Ongoing</option>
-      </select>
-      <button type="submit">Save Training</button>
-    </form>
+  <header><h1>Training & Development</h1></header>
 
-    <h3>Training Records</h3>
-    <table id="trainingTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Employee</th>
-          <th>Program</th>
-          <th>Status</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <div class="training-container">
+    <!-- Statistics Summary -->
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="number" id="totalPrograms">0</div>
+        <div class="label">Total Programs</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="ongoingCount">0</div>
+        <div class="label">Ongoing</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="completedCount">0</div>
+        <div class="label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="avgCompletion">0%</div>
+        <div class="label">Avg Completion</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="certificationsCount">0</div>
+        <div class="label">Certifications</div>
+      </div>
+    </div>
+
+    <!-- Add Training Form -->
+    <div class="form-section">
+      <h3>📝 Enroll Employee in Training Program</h3>
+      <form id="trainingForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="employee_id">Employee ID <span style="color: red;">*</span></label>
+            <input type="number" id="employee_id" name="employee_id" min="10000" max="99999" required>
+          </div>
+          <div class="form-group">
+            <label for="program_name">Program Name <span style="color: red;">*</span></label>
+            <input type="text" id="program_name" name="program_name" required>
+          </div>
+          <div class="form-group">
+            <label for="program_type">Program Type</label>
+            <select id="program_type" name="program_type">
+              <option value="">Select type...</option>
+              <option value="Technical">Technical</option>
+              <option value="Soft Skills">Soft Skills</option>
+              <option value="Leadership">Leadership</option>
+              <option value="Compliance">Compliance</option>
+              <option value="Safety">Safety</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="start_date">Start Date <span style="color: red;">*</span></label>
+            <input type="date" id="start_date" name="start_date" required>
+          </div>
+          <div class="form-group">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date">
+          </div>
+          <div class="form-group">
+            <label for="duration_hours">Duration (Hours)</label>
+            <input type="number" id="duration_hours" name="duration_hours" min="0">
+          </div>
+          <div class="form-group">
+            <label for="trainer_name">Trainer Name</label>
+            <input type="text" id="trainer_name" name="trainer_name">
+          </div>
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" placeholder="e.g., Online, Office, Training Center">
+          </div>
+          <div class="form-group">
+            <label for="cost">Cost (₱)</label>
+            <input type="number" id="cost" name="cost" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="enrolled">Enrolled</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" placeholder="Additional notes or comments..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Enroll in Program</button>
+          <button type="button" class="btn-reset" onclick="document.getElementById('trainingForm').reset()">Reset Form</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <label for="filterEmployee">Employee ID</label>
+        <input type="number" id="filterEmployee" placeholder="Filter by employee ID...">
+      </div>
+      <div class="filter-group">
+        <label for="filterStatus">Status</label>
+        <select id="filterStatus">
+          <option value="">All Statuses</option>
+          <option value="enrolled">Enrolled</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterType">Program Type</label>
+        <select id="filterType">
+          <option value="">All Types</option>
+          <option value="Technical">Technical</option>
+          <option value="Soft Skills">Soft Skills</option>
+          <option value="Leadership">Leadership</option>
+          <option value="Compliance">Compliance</option>
+          <option value="Safety">Safety</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <button class="btn-submit" onclick="applyFilters()" style="margin-top: auto;">Apply Filters</button>
+      <button class="btn-reset" onclick="resetFilters()" style="margin-top: auto;">Reset</button>
+    </div>
+
+    <!-- Training Records Table -->
+    <div class="evaluations-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Program Name</th>
+            <th>Type</th>
+            <th>Duration</th>
+            <th>Progress</th>
+            <th>Status</th>
+            <th>Certification</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="trainingTableBody">
+          <tr>
+            <td colspan="8" style="text-align: center;">Loading training records...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Update Training Modal -->
+  <div id="updateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Update Training Program</h2>
+        <span class="close" onclick="closeUpdateModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="updateForm">
+          <input type="hidden" id="update_id" name="id">
+          
+          <div class="modal-form-group">
+            <label>Employee</label>
+            <input type="text" id="update_employee" readonly style="background: #f5f5f5;">
+          </div>
+
+          <div class="modal-form-group">
+            <label>Program Name</label>
+            <input type="text" id="update_program" readonly style="background: #f5f5f5;">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_completion">Completion Percentage</label>
+            <div class="progress-display" id="update_completion_display">0%</div>
+            <input type="range" 
+                   id="update_completion" 
+                   name="completion_percentage" 
+                   min="0" 
+                   max="100" 
+                   value="0"
+                   class="progress-slider"
+                   oninput="updateCompletionDisplay(this.value)">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_status">Status</label>
+            <select id="update_status" name="status">
+              <option value="enrolled">Enrolled</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_end_date">End Date</label>
+            <input type="date" id="update_end_date" name="end_date">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_duration">Duration (Hours)</label>
+            <input type="number" id="update_duration" name="duration_hours" min="0">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_trainer">Trainer Name</label>
+            <input type="text" id="update_trainer" name="trainer_name">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_location">Location</label>
+            <input type="text" id="update_location" name="location" placeholder="e.g., Online, Office">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_cost">Cost (₱)</label>
+            <input type="number" id="update_cost" name="cost" min="0" step="0.01">
+          </div>
+
+          <div class="modal-form-group">
+            <div class="checkbox-group">
+              <input type="checkbox" id="update_cert_obtained" name="certification_obtained">
+              <label for="update_cert_obtained" style="margin: 0;">Certification Obtained</label>
+            </div>
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_cert_name">Certification Name</label>
+            <input type="text" id="update_cert_name" name="certification_name" placeholder="Only if certification obtained">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="update_notes">Notes</label>
+            <textarea id="update_notes" name="notes" placeholder="Progress notes, comments, observations..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" onclick="closeUpdateModal()">Cancel</button>
+            <button type="submit" class="btn-modal-save">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts -->
   <script src="../components/navigation.js"></script>
   <script>
+    // Disable auto-initialization
+    window.NavigationComponent_AutoInit = false;
+    
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
     // Initialize navigation
-    document.addEventListener('DOMContentLoaded', function() {
-      NavigationComponent.init({
-        containerId: 'navigation-container',
-        menuType: 'admin',
-        includeLogout: true,
-        authCheck: true
-      });
-      
-      // Set active navigation item
-      NavigationComponent.setActiveNavItem('training.html');
-      
-      // Load data
-      loadData();
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false
     });
 
-    document.getElementById("trainingForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      try {
-        const formData = new FormData(this);
-        const response = await fetch("../api/api.php?action=add_training", { 
-          method: "POST", 
-          body: formData 
-        });
-        const data = await response.json();
-        alert(data.message);
-        this.reset();
-        loadData();
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        alert('Error saving training record');
-      }
-    });
+    NavigationComponent.setActiveNavItem('training.html');
 
-    async function loadData() {
+    // API base URL
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Global variables
+    let allTrainings = [];
+    let filteredTrainings = [];
+
+    // Fetch training programs
+    async function fetchTrainings() {
       try {
-        const response = await fetch("../api/api.php?action=get_training");
-        const data = await response.json();
-        const tbody = document.querySelector("#trainingTable tbody");
-        tbody.innerHTML = "";
+        const response = await fetch(`${API_BASE}/training`);
+        if (!response.ok) throw new Error('Failed to fetch training programs');
         
-        if (data.data && Array.isArray(data.data)) {
-          data.data.forEach(row => {
-            const duration = (row.start_date && row.end_date) 
-              ? `${row.start_date} to ${row.end_date}` 
-              : row.start_date || 'Not specified';
-              
-            tbody.innerHTML += `<tr>
-              <td>${row.id || ''}</td>
-              <td>${row.employee_id || ''}</td>
-              <td>${row.program_name || ''}</td>
-              <td>${row.status || ''}</td>
-              <td>${duration}</td>
-            </tr>`;
-          });
-        }
+        allTrainings = await response.json();
+        filteredTrainings = [...allTrainings];
+        
+        updateStatistics();
+        renderTrainings();
       } catch (error) {
-        console.error('Error loading data:', error);
-        const tbody = document.querySelector("#trainingTable tbody");
-        tbody.innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
+        console.error('Error fetching trainings:', error);
+        document.getElementById('trainingTableBody').innerHTML = 
+          '<tr><td colspan="8" style="text-align: center; color: #f44336;">Error loading training records. Please check your connection.</td></tr>';
       }
     }
+
+    // Update statistics
+    function updateStatistics() {
+      const total = allTrainings.length;
+      document.getElementById('totalPrograms').textContent = total;
+
+      if (total === 0) {
+        document.getElementById('ongoingCount').textContent = '0';
+        document.getElementById('completedCount').textContent = '0';
+        document.getElementById('avgCompletion').textContent = '0%';
+        document.getElementById('certificationsCount').textContent = '0';
+        return;
+      }
+
+      const ongoingCount = allTrainings.filter(t => t.status === 'ongoing').length;
+      const completedCount = allTrainings.filter(t => t.status === 'completed').length;
+      const certificationsCount = allTrainings.filter(t => t.certification_obtained == 1).length;
+      
+      document.getElementById('ongoingCount').textContent = ongoingCount;
+      document.getElementById('completedCount').textContent = completedCount;
+      document.getElementById('certificationsCount').textContent = certificationsCount;
+
+      // Calculate average completion percentage
+      const totalCompletion = allTrainings.reduce((sum, t) => sum + parseInt(t.completion_percentage || 0), 0);
+      const avgCompletion = total > 0 ? Math.round(totalCompletion / total) : 0;
+      document.getElementById('avgCompletion').textContent = avgCompletion + '%';
+    }
+
+    // Render training programs table
+    function renderTrainings() {
+      const tbody = document.getElementById('trainingTableBody');
+      
+      if (filteredTrainings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">No training records found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      filteredTrainings.forEach(training => {
+        const statusClass = `status-${training.status}`;
+        const completion = parseInt(training.completion_percentage || 0);
+        
+        // Format duration
+        let duration = '';
+        if (training.start_date && training.end_date) {
+          duration = `${formatDate(training.start_date)} - ${formatDate(training.end_date)}`;
+        } else if (training.start_date) {
+          duration = `From ${formatDate(training.start_date)}`;
+        } else {
+          duration = 'Not specified';
+        }
+
+        if (training.duration_hours) {
+          duration += ` (${training.duration_hours}h)`;
+        }
+
+        // Certification badge
+        const certBadge = training.certification_obtained == 1 
+          ? `<span class="certification-badge" style="color: #2e7d32;">✓ ${training.certification_name || 'Certified'}</span>`
+          : '<span style="color: #999; font-size: 12px;">No certification</span>';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <strong>${training.employee_name}</strong><br>
+            <small style="color: #999;">ID: ${training.employee_id}</small>
+          </td>
+          <td>
+            <strong>${training.program_name}</strong><br>
+            ${training.trainer_name ? `<small style="color: #666;">Trainer: ${training.trainer_name}</small>` : ''}
+          </td>
+          <td>${training.program_type || '-'}</td>
+          <td style="font-size: 12px;">${duration}</td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 5px;">
+              <span style="font-size: 12px; font-weight: 600;">${completion}%</span>
+              <div class="progress-bar" style="flex: 1;">
+                <div class="progress-fill" style="width: ${completion}%"></div>
+              </div>
+            </div>
+          </td>
+          <td><span class="status-badge ${statusClass}">${capitalizeFirst(training.status)}</span></td>
+          <td style="font-size: 12px;">${certBadge}</td>
+          <td style="white-space: nowrap;">
+            <button class="btn-update" onclick="updateProgress(${training.id})">Update</button>
+            <button class="btn-delete" onclick="deleteTraining(${training.id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const employeeId = document.getElementById('filterEmployee').value;
+      const status = document.getElementById('filterStatus').value;
+      const programType = document.getElementById('filterType').value;
+
+      filteredTrainings = allTrainings.filter(training => {
+        const employeeMatch = !employeeId || training.employee_id == employeeId;
+        const statusMatch = !status || training.status === status;
+        const typeMatch = !programType || training.program_type === programType;
+        
+        return employeeMatch && statusMatch && typeMatch;
+      });
+
+      renderTrainings();
+    }
+
+    // Make applyFilters globally accessible
+    window.applyFilters = applyFilters;
+
+    // Reset filters
+    function resetFilters() {
+      document.getElementById('filterEmployee').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterType').value = '';
+      filteredTrainings = [...allTrainings];
+      renderTrainings();
+    }
+
+    // Make resetFilters globally accessible
+    window.resetFilters = resetFilters;
+
+    // Update progress
+    function updateProgress(id) {
+      console.log('Update button clicked for ID:', id);
+      console.log('All trainings:', allTrainings);
+      console.log('ID type:', typeof id, 'Sample training ID type:', typeof allTrainings[0]?.id);
+      
+      // Convert id to number to ensure type match
+      const numId = parseInt(id);
+      const training = allTrainings.find(t => parseInt(t.id) === numId);
+      console.log('Training found:', training);
+      
+      if (!training) {
+        console.error('Training not found with ID:', id);
+        alert('Training record not found. Please refresh the page.');
+        return;
+      }
+
+      // Populate the modal with current data
+      document.getElementById('update_id').value = training.id;
+      document.getElementById('update_employee').value = `${training.employee_name} (ID: ${training.employee_id})`;
+      document.getElementById('update_program').value = training.program_name;
+      document.getElementById('update_completion').value = training.completion_percentage || 0;
+      document.getElementById('update_completion_display').textContent = (training.completion_percentage || 0) + '%';
+      document.getElementById('update_status').value = training.status || 'enrolled';
+      document.getElementById('update_end_date').value = training.end_date || '';
+      document.getElementById('update_duration').value = training.duration_hours || '';
+      document.getElementById('update_trainer').value = training.trainer_name || '';
+      document.getElementById('update_location').value = training.location || '';
+      document.getElementById('update_cost').value = training.cost || '';
+      document.getElementById('update_cert_obtained').checked = training.certification_obtained == 1;
+      document.getElementById('update_cert_name').value = training.certification_name || '';
+      document.getElementById('update_notes').value = training.notes || '';
+
+      console.log('Opening modal...');
+      // Show the modal
+      document.getElementById('updateModal').style.display = 'block';
+    }
+
+    // Make updateProgress globally accessible
+    window.updateProgress = updateProgress;
+
+    // Close update modal
+    function closeUpdateModal() {
+      document.getElementById('updateModal').style.display = 'none';
+    }
+
+    // Make closeUpdateModal globally accessible
+    window.closeUpdateModal = closeUpdateModal;
+
+    // Update completion display and auto-suggest status
+    function updateCompletionDisplay(value) {
+      document.getElementById('update_completion_display').textContent = value + '%';
+      
+      const statusSelect = document.getElementById('update_status');
+      const currentStatus = statusSelect.value;
+      
+      // Auto-suggest status based on completion
+      if (value == 100 && currentStatus !== 'completed' && currentStatus !== 'cancelled') {
+        statusSelect.value = 'completed';
+        statusSelect.style.border = '2px solid #4caf50';
+        setTimeout(() => {
+          statusSelect.style.border = '2px solid #e0e0e0';
+        }, 1000);
+      } else if (value > 0 && value < 100 && currentStatus === 'enrolled') {
+        statusSelect.value = 'ongoing';
+        statusSelect.style.border = '2px solid #ff9800';
+        setTimeout(() => {
+          statusSelect.style.border = '2px solid #e0e0e0';
+        }, 1000);
+      }
+    }
+
+    // Make updateCompletionDisplay globally accessible
+    window.updateCompletionDisplay = updateCompletionDisplay;
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('updateModal');
+      if (event.target == modal) {
+        closeUpdateModal();
+      }
+    }
+
+    // Handle update form submission
+    document.getElementById('updateForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const id = parseInt(formData.get('id'));
+      
+      const data = {
+        id: id,
+        completion_percentage: parseInt(formData.get('completion_percentage')),
+        status: formData.get('status'),
+        end_date: formData.get('end_date') || null,
+        duration_hours: formData.get('duration_hours') ? parseInt(formData.get('duration_hours')) : null,
+        trainer_name: formData.get('trainer_name') || null,
+        location: formData.get('location') || null,
+        cost: formData.get('cost') ? parseFloat(formData.get('cost')) : null,
+        certification_obtained: document.getElementById('update_cert_obtained').checked,
+        certification_name: formData.get('certification_name') || null,
+        notes: formData.get('notes') || null
+      };
+
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+
+      try {
+        const response = await fetch(`${API_BASE}/training`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('Training program updated successfully!');
+          closeUpdateModal();
+          fetchTrainings();
+        } else {
+          throw new Error(result.error || 'Failed to update training');
+        }
+      } catch (error) {
+        console.error('Error updating training:', error);
+        alert('Error updating training: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Delete training
+    function deleteTraining(id) {
+      console.log('Delete button clicked for ID:', id);
+      // Convert id to number to ensure type match
+      const numId = parseInt(id);
+      const training = allTrainings.find(t => parseInt(t.id) === numId);
+      if (!training) {
+        console.error('Training not found with ID:', id);
+        alert('Training record not found. Please refresh the page.');
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete the training program "${training.program_name}" for ${training.employee_name}?`)) {
+        return;
+      }
+
+      performDelete(id);
+    }
+
+    // Make deleteTraining globally accessible
+    window.deleteTraining = deleteTraining;
+
+    // Perform actual delete operation
+    async function performDelete(id) {
+      try {
+        const response = await fetch(`${API_BASE}/training`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: id })
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('Training program deleted successfully!');
+          fetchTrainings();
+        } else {
+          throw new Error(result.error || 'Failed to delete training');
+        }
+      } catch (error) {
+        console.error('Error deleting training:', error);
+        alert('Error deleting training: ' + error.message);
+      }
+    }
+
+    // Form submission
+    document.getElementById('trainingForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const data = {
+        employee_id: parseInt(formData.get('employee_id')),
+        program_name: formData.get('program_name'),
+        program_type: formData.get('program_type') || null,
+        start_date: formData.get('start_date'),
+        end_date: formData.get('end_date') || null,
+        duration_hours: formData.get('duration_hours') ? parseInt(formData.get('duration_hours')) : null,
+        trainer_name: formData.get('trainer_name') || null,
+        location: formData.get('location') || null,
+        cost: formData.get('cost') ? parseFloat(formData.get('cost')) : 0.00,
+        status: formData.get('status'),
+        notes: formData.get('notes') || null
+      };
+
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enrolling...';
+
+      try {
+        const response = await fetch(`${API_BASE}/training`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('Employee enrolled in training program successfully!');
+          this.reset();
+          fetchTrainings();
+        } else {
+          throw new Error(result.error || 'Failed to enroll in training program');
+        }
+      } catch (error) {
+        console.error('Error enrolling in training:', error);
+        alert('Error: ' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Utility functions
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Initial load
+    fetchTrainings();
   </script>
 </body>
 </html>

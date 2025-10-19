@@ -63,6 +63,74 @@ if (($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoin
 // Handle query parameter actions (for compatibility)
 if ($action) {
     switch ($action) {
+        case 'get_training':
+            $result = $conn->query("SELECT * FROM training_programs ORDER BY date_enrolled DESC");
+            $trainings = [];
+            while ($row = $result->fetch_assoc()) {
+                $trainings[] = $row;
+            }
+            sendJsonResponse(['success' => true, 'data' => $trainings]);
+            break;
+            
+        case 'add_training':
+            // Validate required fields
+            if (!isset($_POST['employee_id'], $_POST['program_name'], $_POST['start_date'])) {
+                sendJsonResponse(['success' => false, 'message' => 'Missing required fields: employee_id, program_name, start_date'], 400);
+            }
+
+            $employeeId = intval($_POST['employee_id']);
+            $programName = $_POST['program_name'];
+            $startDate = $_POST['start_date'];
+            $endDate = isset($_POST['end_date']) && !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+            $status = isset($_POST['status']) ? $_POST['status'] : 'enrolled';
+
+            // Validate employee_id
+            if ($employeeId < 10000 || $employeeId > 99999) {
+                sendJsonResponse(['success' => false, 'message' => 'Employee ID must be a 5-digit number'], 400);
+            }
+
+            // Get employee name
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if (!$result || $result->num_rows === 0) {
+                sendJsonResponse(['success' => false, 'message' => 'Employee ID not found'], 404);
+            }
+            
+            $employee = $result->fetch_assoc();
+            $employeeName = $employee['name'];
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM training_programs WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Insert training record
+            if ($endDate) {
+                $stmt = $conn->prepare("INSERT INTO training_programs (id, employee_id, employee_name, program_name, start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("iisssss", $randomId, $employeeId, $employeeName, $programName, $startDate, $endDate, $status);
+            } else {
+                $stmt = $conn->prepare("INSERT INTO training_programs (id, employee_id, employee_name, program_name, start_date, status) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("iissss", $randomId, $employeeId, $employeeName, $programName, $startDate, $status);
+            }
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'message' => 'Training record saved successfully!',
+                    'id' => $randomId
+                ]);
+            } else {
+                sendJsonResponse(['success' => false, 'message' => 'Failed to create training record', 'details' => $conn->error], 500);
+            }
+            break;
+
         case 'get_budget':
             $result = $conn->query("SELECT * FROM budget ORDER BY fiscal_year DESC, department ASC");
             $budgets = [];
@@ -188,8 +256,12 @@ switch ($endpoint) {
     case 'budget':
         handleBudget($conn, $method);
         break;
+    case 'training':
+    case 'training-programs':
+        handleTrainingPrograms($conn, $method);
+        break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -1814,6 +1886,332 @@ function handleOvertimeRequests($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to delete overtime request', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Training Programs
+function handleTrainingPrograms($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all training programs, optionally filtered
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $programType = isset($_GET['program_type']) ? $_GET['program_type'] : null;
+            
+            $query = "SELECT * FROM training_programs";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if ($programType) {
+                $conditions[] = "program_type = ?";
+                $params[] = $programType;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY date_enrolled DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $trainings = [];
+            while ($row = $result->fetch_assoc()) {
+                $trainings[] = $row;
+            }
+            sendJsonResponse($trainings);
+            break;
+
+        case 'POST':
+            // Create new training program enrollment
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            if (!isset($input['employee_id'], $input['program_name'], $input['start_date'])) {
+                sendJsonResponse(['error' => 'Missing required fields: employee_id, program_name, start_date'], 400);
+                break;
+            }
+
+            // Validate employee_id
+            $employeeId = intval($input['employee_id']);
+            if ($employeeId < 10000 || $employeeId > 99999) {
+                sendJsonResponse(['error' => 'Employee ID must be a 5-digit number'], 400);
+                break;
+            }
+
+            // Validate employee exists
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if (!$result || $result->num_rows === 0) {
+                sendJsonResponse(['error' => 'Employee ID not found in active records'], 404);
+                break;
+            }
+            
+            $employee = $result->fetch_assoc();
+            $employeeName = $employee['name'];
+
+            // Validate dates
+            $startDate = $input['start_date'];
+            if (!strtotime($startDate)) {
+                sendJsonResponse(['error' => 'Invalid start date format'], 400);
+                break;
+            }
+
+            if (isset($input['end_date']) && !empty($input['end_date'])) {
+                $endDate = $input['end_date'];
+                if (!strtotime($endDate)) {
+                    sendJsonResponse(['error' => 'Invalid end date format'], 400);
+                    break;
+                }
+                
+                if (strtotime($endDate) < strtotime($startDate)) {
+                    sendJsonResponse(['error' => 'End date cannot be before start date'], 400);
+                    break;
+                }
+            } else {
+                $endDate = null;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM training_programs WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Prepare optional fields
+            $programType = isset($input['program_type']) ? $input['program_type'] : null;
+            $durationHours = isset($input['duration_hours']) ? intval($input['duration_hours']) : null;
+            $status = isset($input['status']) ? $input['status'] : 'enrolled';
+            $completionPercentage = isset($input['completion_percentage']) ? intval($input['completion_percentage']) : 0;
+            $trainerName = isset($input['trainer_name']) ? $input['trainer_name'] : null;
+            $location = isset($input['location']) ? $input['location'] : null;
+            $cost = isset($input['cost']) ? floatval($input['cost']) : 0.00;
+            $certificationObtained = isset($input['certification_obtained']) ? ($input['certification_obtained'] ? 1 : 0) : 0;
+            $certificationName = isset($input['certification_name']) ? $input['certification_name'] : null;
+            $notes = isset($input['notes']) ? $input['notes'] : null;
+
+            // Validate status
+            $validStatuses = ['enrolled', 'ongoing', 'completed', 'cancelled'];
+            if (!in_array($status, $validStatuses)) {
+                sendJsonResponse(['error' => 'Invalid status. Must be: enrolled, ongoing, completed, or cancelled'], 400);
+                break;
+            }
+
+            // Validate completion percentage
+            if ($completionPercentage < 0 || $completionPercentage > 100) {
+                sendJsonResponse(['error' => 'Completion percentage must be between 0 and 100'], 400);
+                break;
+            }
+
+            // Insert training program
+            $stmt = $conn->prepare("
+                INSERT INTO training_programs 
+                (id, employee_id, employee_name, program_name, program_type, start_date, end_date, 
+                 duration_hours, status, completion_percentage, trainer_name, location, cost, 
+                 certification_obtained, certification_name, notes) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->bind_param(
+                "iisssssisisdisss", 
+                $randomId,
+                $employeeId,
+                $employeeName,
+                $input['program_name'],
+                $programType,
+                $startDate,
+                $endDate,
+                $durationHours,
+                $status,
+                $completionPercentage,
+                $trainerName,
+                $location,
+                $cost,
+                $certificationObtained,
+                $certificationName,
+                $notes
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'training_program' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $employeeName,
+                        'program_name' => $input['program_name'],
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create training program enrollment', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update training program
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Training program ID is required'], 400);
+                break;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['enrolled', 'ongoing', 'completed', 'cancelled'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    break;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+                
+                // Set date_completed if status is being set to completed
+                if ($input['status'] === 'completed' && !isset($input['date_completed'])) {
+                    $updates[] = "date_completed = CURRENT_TIMESTAMP";
+                }
+            }
+
+            if (isset($input['completion_percentage'])) {
+                $percentage = intval($input['completion_percentage']);
+                if ($percentage < 0 || $percentage > 100) {
+                    sendJsonResponse(['error' => 'Completion percentage must be between 0 and 100'], 400);
+                    break;
+                }
+                $updates[] = "completion_percentage = ?";
+                $params[] = $percentage;
+                $types .= "i";
+            }
+
+            if (isset($input['end_date'])) {
+                $updates[] = "end_date = ?";
+                $params[] = $input['end_date'];
+                $types .= "s";
+            }
+
+            if (isset($input['duration_hours'])) {
+                $updates[] = "duration_hours = ?";
+                $params[] = intval($input['duration_hours']);
+                $types .= "i";
+            }
+
+            if (isset($input['trainer_name'])) {
+                $updates[] = "trainer_name = ?";
+                $params[] = $input['trainer_name'];
+                $types .= "s";
+            }
+
+            if (isset($input['location'])) {
+                $updates[] = "location = ?";
+                $params[] = $input['location'];
+                $types .= "s";
+            }
+
+            if (isset($input['cost'])) {
+                $updates[] = "cost = ?";
+                $params[] = floatval($input['cost']);
+                $types .= "d";
+            }
+
+            if (isset($input['certification_obtained'])) {
+                $updates[] = "certification_obtained = ?";
+                $params[] = $input['certification_obtained'] ? 1 : 0;
+                $types .= "i";
+            }
+
+            if (isset($input['certification_name'])) {
+                $updates[] = "certification_name = ?";
+                $params[] = $input['certification_name'];
+                $types .= "s";
+            }
+
+            if (isset($input['notes'])) {
+                $updates[] = "notes = ?";
+                $params[] = $input['notes'];
+                $types .= "s";
+            }
+
+            if (isset($input['program_type'])) {
+                $updates[] = "program_type = ?";
+                $params[] = $input['program_type'];
+                $types .= "s";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                break;
+            }
+
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE training_programs SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update training program', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete training program
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Training program ID is required'], 400);
+                break;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM training_programs WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete training program', 'details' => $conn->error], 500);
             }
             break;
     }

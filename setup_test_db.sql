@@ -178,6 +178,37 @@ CREATE TABLE IF NOT EXISTS overtime_requests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+-- training_programs
+
+CREATE TABLE IF NOT EXISTS training_programs (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit training program id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  program_name VARCHAR(200) NOT NULL,
+  program_type VARCHAR(100), -- e.g., 'Technical', 'Soft Skills', 'Leadership', 'Compliance'
+  start_date DATE NOT NULL,
+  end_date DATE,
+  duration_hours INT, -- Total hours for the program
+  status ENUM('enrolled', 'ongoing', 'completed', 'cancelled') DEFAULT 'enrolled',
+  completion_percentage INT DEFAULT 0 CHECK (completion_percentage BETWEEN 0 AND 100),
+  trainer_name VARCHAR(100),
+  location VARCHAR(200), -- Physical location or 'Online' or 'Hybrid'
+  cost DECIMAL(10,2) DEFAULT 0.00,
+  certification_obtained BOOLEAN DEFAULT FALSE,
+  certification_name VARCHAR(200),
+  notes TEXT,
+  date_enrolled DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_completed DATETIME NULL,
+  date_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_training_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  KEY idx_status (status),
+  KEY idx_program_name (program_name),
+  KEY idx_start_date (start_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 -- Sample Data
 
 
@@ -242,3 +273,14 @@ INSERT INTO overtime_requests (id, employee_id, employee_name, ot_date, hours, r
 (97002, 24680, 'Maria Garcia', '2025-10-19', 4.00, 'Special event catering', 'pending', '2025-10-18 10:00:00'),
 (97003, 35791, 'Michael Lee', '2025-10-15', 2.50, 'Lab experiment completion', 'approved', '2025-10-14 14:20:00'),
 (97004, 46802, 'Emily Davis', '2025-10-16', 5.00, 'Urgent recruitment drive', 'approved', '2025-10-15 09:45:00');
+
+-- Training programs (sample data)
+INSERT INTO training_programs (id, employee_id, employee_name, program_name, program_type, start_date, end_date, duration_hours, status, completion_percentage, trainer_name, location, cost, certification_obtained, certification_name, notes, date_enrolled, date_completed) VALUES
+(98001, 13579, 'William Searl', 'Advanced Python Programming', 'Technical', '2025-09-15', '2025-11-15', 40, 'ongoing', 65, 'Dr. Python Expert', 'Online', 599.00, FALSE, NULL, 'Excellent progress, very engaged in all sessions', '2025-09-10 10:00:00', NULL),
+(98002, 13579, 'William Searl', 'AWS Cloud Certification', 'Technical', '2025-01-10', '2025-03-10', 60, 'completed', 100, 'AWS Certified Trainer', 'Online', 899.00, TRUE, 'AWS Solutions Architect Associate', 'Successfully completed with distinction', '2025-01-05 09:00:00', '2025-03-10 16:00:00'),
+(98003, 24680, 'Maria Garcia', 'Customer Service Excellence', 'Soft Skills', '2025-08-01', '2025-09-01', 24, 'completed', 100, 'Sarah Johnson', 'Main Office', 299.00, TRUE, 'Customer Service Professional Certificate', 'Outstanding performance and practical application', '2025-07-28 11:00:00', '2025-09-01 15:00:00'),
+(98004, 24680, 'Maria Garcia', 'Food Safety and Hygiene', 'Compliance', '2025-10-01', '2025-10-15', 16, 'ongoing', 80, 'Health Inspector Mike', 'Training Center', 199.00, FALSE, NULL, 'Nearly complete, final exam scheduled', '2025-09-25 10:00:00', NULL),
+(98005, 35791, 'Michael Lee', 'Leadership Development Program', 'Leadership', '2025-07-01', '2025-12-31', 100, 'ongoing', 50, 'Executive Coach Linda', 'Hybrid', 1500.00, FALSE, 'Certified Team Leader', 'Showing good leadership potential, needs more practice in team dynamics', '2025-06-25 09:00:00', NULL),
+(98006, 46802, 'Emily Davis', 'HR Analytics and Data-Driven Decisions', 'Technical', '2025-09-01', '2025-10-30', 32, 'ongoing', 75, 'Data Scientist John', 'Online', 699.00, FALSE, NULL, 'Applying learnings immediately to current projects', '2025-08-28 14:00:00', NULL),
+(98007, 46802, 'Emily Davis', 'Diversity and Inclusion Training', 'Compliance', '2025-06-15', '2025-07-01', 8, 'completed', 100, 'DEI Consultant Maria', 'Main Office', 149.00, TRUE, 'DEI Champion Certificate', 'Excellent insights and immediate implementation of best practices', '2025-06-10 13:00:00', '2025-07-01 12:00:00');
+
