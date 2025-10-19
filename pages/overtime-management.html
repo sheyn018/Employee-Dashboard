@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Overtime Management - HR Connect</title>
+  <link rel="stylesheet" href="../css/overtime-management.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../components/navigation.css"/>
+</head>
+<body>
+  <header><h1>Overtime Management Dashboard</h1></header>
+
+  <!-- Nav Component -->
+  <div id="navigation-container"></div>
+
+  <section class="management-section">
+    <div class="container">
+      <div class="dashboard-header">
+        <div>
+          <h2>⏰ Overtime Requests Overview</h2>
+          <p>Review and manage employee overtime requests</p>
+        </div>
+        <div class="header-stats">
+          <div class="stat-card pending">
+            <span class="stat-value" id="pendingCount">0</span>
+            <span class="stat-label">Pending</span>
+          </div>
+          <div class="stat-card approved">
+            <span class="stat-value" id="approvedCount">0</span>
+            <span class="stat-label">Approved</span>
+          </div>
+          <div class="stat-card rejected">
+            <span class="stat-value" id="rejectedCount">0</span>
+            <span class="stat-label">Rejected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="statusFilter">Filter by Status:</label>
+          <select id="statusFilter">
+            <option value="all">All Requests</option>
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="searchEmployee">Search Employee:</label>
+          <input type="text" id="searchEmployee" placeholder="Enter employee name or ID...">
+        </div>
+        <div class="filter-group">
+          <label for="dateFilter">Filter by Date:</label>
+          <input type="date" id="dateFilter">
+        </div>
+        <button class="btn-refresh" onclick="loadOvertimeRequests()">🔄 Refresh</button>
+      </div>
+
+      <!-- Quick View Tabs -->
+      <div class="tabs-container">
+        <button class="tab-btn active" onclick="quickFilter('pending')">
+          ⏳ Pending Requests
+        </button>
+        <button class="tab-btn" onclick="quickFilter('approved')">
+          ✅ Approved Requests
+        </button>
+        <button class="tab-btn" onclick="quickFilter('rejected')">
+          ❌ Rejected Requests
+        </button>
+        <button class="tab-btn" onclick="quickFilter('all')">
+          📋 All Requests
+        </button>
+      </div>
+
+      <!-- Overtime Requests Table -->
+      <div class="table-container">
+        <table class="overtime-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Employee Name</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Hours</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Requested On</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="overtimeTableBody">
+            <!-- Data will be loaded here -->
+          </tbody>
+        </table>
+        <div id="noDataMessage" class="no-data" style="display: none;">
+          <div class="no-data-icon">📭</div>
+          <p>No overtime requests found</p>
+        </div>
+        <div id="loadingMessage" class="loading-message">
+          <div class="spinner"></div>
+          <p>Loading overtime requests...</p>
+        </div>
+      </div>
+
+      <!-- Action Confirmation Modal -->
+      <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p id="modalMessage">Are you sure you want to perform this action?</p>
+            <div class="employee-details" id="employeeDetails"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn-primary" id="confirmBtn" onclick="confirmAction()">Confirm</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success/Error Messages -->
+      <div id="toast" class="toast" style="display: none;"></div>
+
+    </div>
+  </section>
+
+  <!-- JavaScript -->
+  <script src="../components/navigation.js"></script>
+  <script>
+    // Disable auto-initialization to customize the navigation
+    window.NavigationComponent_AutoInit = false;
+    
+    // Check admin authentication
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
+    // Initialize navigation
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false
+    });
+
+    NavigationComponent.setActiveNavItem('overtime-management.html');
+
+    // API Configuration
+    const API_BASE = 'http://localhost:3000/api/api.php';
+    
+    // Global variables
+    let allOvertimeRequests = [];
+    let currentAction = null;
+    let currentRequestId = null;
+
+    // Load overtime requests on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadOvertimeRequests();
+      
+      // Set up filter listeners
+      document.getElementById('statusFilter').addEventListener('change', filterRequests);
+      document.getElementById('searchEmployee').addEventListener('input', filterRequests);
+      document.getElementById('dateFilter').addEventListener('change', filterRequests);
+    });
+
+    // Load all overtime requests from API
+    async function loadOvertimeRequests() {
+      const loadingMessage = document.getElementById('loadingMessage');
+      const tableBody = document.getElementById('overtimeTableBody');
+      const noDataMessage = document.getElementById('noDataMessage');
+      
+      loadingMessage.style.display = 'block';
+      noDataMessage.style.display = 'none';
+      tableBody.innerHTML = '';
+
+      try {
+        const response = await fetch(`${API_BASE}/overtime-requests`);
+        const data = await response.json();
+
+        console.log('=== OVERTIME API RESPONSE ===');
+        console.log('Full response:', data);
+        console.log('============================');
+
+        if (response.ok && Array.isArray(data)) {
+          allOvertimeRequests = data;
+          updateStatistics();
+          filterRequests();
+        } else {
+          throw new Error('Failed to load overtime requests');
+        }
+      } catch (error) {
+        console.error('Error loading overtime requests:', error);
+        showToast('Error loading overtime requests', 'error');
+        noDataMessage.querySelector('p').textContent = 'Error loading overtime requests';
+        noDataMessage.style.display = 'block';
+      } finally {
+        loadingMessage.style.display = 'none';
+      }
+    }
+
+    // Update statistics cards
+    function updateStatistics() {
+      const pending = allOvertimeRequests.filter(r => r.status === 'pending').length;
+      const approved = allOvertimeRequests.filter(r => r.status === 'approved').length;
+      const rejected = allOvertimeRequests.filter(r => r.status === 'rejected').length;
+
+      document.getElementById('pendingCount').textContent = pending;
+      document.getElementById('approvedCount').textContent = approved;
+      document.getElementById('rejectedCount').textContent = rejected;
+    }
+
+    // Quick filter function for tabs
+    function quickFilter(status) {
+      document.getElementById('statusFilter').value = status;
+      
+      // Update active tab
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      filterRequests();
+    }
+
+    // Filter and display requests
+    function filterRequests() {
+      const statusFilter = document.getElementById('statusFilter').value;
+      const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
+      const dateFilter = document.getElementById('dateFilter').value;
+      
+      let filtered = allOvertimeRequests;
+
+      // Filter by status
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(r => r.status === statusFilter);
+      }
+
+      // Filter by employee name or ID
+      if (searchTerm) {
+        filtered = filtered.filter(r => 
+          (r.employee_name && r.employee_name.toLowerCase().includes(searchTerm)) ||
+          (r.employee_id && String(r.employee_id).includes(searchTerm))
+        );
+      }
+
+      // Filter by date
+      if (dateFilter) {
+        filtered = filtered.filter(r => r.ot_date === dateFilter);
+      }
+
+      displayRequests(filtered);
+    }
+
+    // Display requests in table
+    function displayRequests(requests) {
+      const tableBody = document.getElementById('overtimeTableBody');
+      const noDataMessage = document.getElementById('noDataMessage');
+
+      if (requests.length === 0) {
+        tableBody.innerHTML = '';
+        noDataMessage.style.display = 'block';
+        return;
+      }
+
+      noDataMessage.style.display = 'none';
+      
+      tableBody.innerHTML = requests.map((request, index) => {
+        const statusClass = `status-${request.status}`;
+        const requestId = request.id || request.ID || index;
+        const escapedName = (request.employee_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const requestData = JSON.stringify(request).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+        
+        return `
+          <tr data-request-id="${requestId}" data-request='${requestData}'>
+            <td>${requestId}</td>
+            <td class="employee-name">${request.employee_name || 'N/A'}</td>
+            <td>${request.employee_id || 'N/A'}</td>
+            <td>${formatDate(request.ot_date)}</td>
+            <td><strong>${request.hours} hrs</strong></td>
+            <td class="reason-cell" title="${request.reason || 'No reason provided'}">
+              ${request.reason ? truncateText(request.reason, 50) : '<em>No reason</em>'}
+            </td>
+            <td><span class="status-badge ${statusClass}">${capitalizeFirst(request.status)}</span></td>
+            <td>${formatDateTime(request.date_requested)}</td>
+            <td class="actions-cell">
+              ${request.status === 'pending' ? `
+                <button class="btn-approve" onclick="handleActionClick(this, 'approve')" title="Approve">
+                  ✓
+                </button>
+                <button class="btn-reject" onclick="handleActionClick(this, 'reject')" title="Reject">
+                  ✗
+                </button>
+              ` : `
+                <button class="btn-view" onclick="handleActionClick(this, 'view')" title="View Details">
+                  👁️
+                </button>
+              `}
+              <button class="btn-delete" onclick="handleActionClick(this, 'delete')" title="Delete">
+                🗑️
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Handler that gets ID from the row's data attribute
+    function handleActionClick(button, action) {
+      const row = button.closest('tr');
+      const requestId = row.getAttribute('data-request-id');
+      const requestDataStr = row.getAttribute('data-request');
+      
+      console.log('=== ACTION CLICK ===');
+      console.log('Action:', action);
+      console.log('Request ID:', requestId);
+      console.log('===================');
+      
+      let request;
+      try {
+        request = JSON.parse(requestDataStr.replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
+      } catch (e) {
+        console.error('Failed to parse request data:', e);
+        request = allOvertimeRequests.find(r => String(r.id) === String(requestId) || String(r.ID) === String(requestId));
+      }
+      
+      const employeeName = request ? request.employee_name : 'Unknown';
+      
+      if (action === 'view') {
+        viewDetails(requestId);
+      } else {
+        showConfirmModal(action, requestId, employeeName);
+      }
+    }
+
+    // Show confirmation modal
+    function showConfirmModal(action, requestId, employeeName) {
+      currentAction = action;
+      currentRequestId = requestId;
+      
+      const modal = document.getElementById('confirmModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalMessage = document.getElementById('modalMessage');
+      const confirmBtn = document.getElementById('confirmBtn');
+      const employeeDetails = document.getElementById('employeeDetails');
+      
+      // Find the request details
+      let request = allOvertimeRequests.find(r => String(r.id) === String(requestId));
+      if (!request) {
+        request = allOvertimeRequests.find(r => String(r.ID) === String(requestId));
+      }
+      
+      if (action === 'approve') {
+        modalTitle.textContent = '✅ Approve Overtime Request';
+        modalMessage.textContent = `Are you sure you want to approve this overtime request?`;
+        confirmBtn.className = 'btn-primary btn-approve';
+        confirmBtn.textContent = 'Approve';
+      } else if (action === 'reject') {
+        modalTitle.textContent = '❌ Reject Overtime Request';
+        modalMessage.textContent = `Are you sure you want to reject this overtime request?`;
+        confirmBtn.className = 'btn-primary btn-reject';
+        confirmBtn.textContent = 'Reject';
+      } else if (action === 'delete') {
+        modalTitle.textContent = '🗑️ Delete Overtime Request';
+        modalMessage.textContent = `Are you sure you want to permanently delete this overtime request?`;
+        confirmBtn.className = 'btn-primary btn-delete';
+        confirmBtn.textContent = 'Delete';
+      }
+      
+      // Display employee details
+      if (request) {
+        employeeDetails.innerHTML = `
+          <div class="detail-row"><strong>Employee:</strong> ${request.employee_name || 'N/A'}</div>
+          <div class="detail-row"><strong>Employee ID:</strong> ${request.employee_id || 'N/A'}</div>
+          <div class="detail-row"><strong>Date:</strong> ${formatDate(request.ot_date)}</div>
+          <div class="detail-row"><strong>Hours:</strong> ${request.hours} hours</div>
+          <div class="detail-row"><strong>Reason:</strong> ${request.reason || 'No reason provided'}</div>
+        `;
+      }
+      
+      modal.style.display = 'flex';
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('confirmModal').style.display = 'none';
+      currentAction = null;
+      currentRequestId = null;
+    }
+
+    // Confirm and execute action
+    async function confirmAction() {
+      if (!currentAction || !currentRequestId) {
+        console.error('Missing action or requestId:', { currentAction, currentRequestId });
+        showToast('Error: Invalid request', 'error');
+        return;
+      }
+
+      const confirmBtn = document.getElementById('confirmBtn');
+      const originalText = confirmBtn.textContent;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Processing...';
+
+      try {
+        if (currentAction === 'approve' || currentAction === 'reject') {
+          await updateOvertimeStatus(currentRequestId, currentAction === 'approve' ? 'approved' : 'rejected');
+        } else if (currentAction === 'delete') {
+          await deleteOvertimeRequest(currentRequestId);
+        }
+        
+        closeModal();
+        await loadOvertimeRequests();
+        
+        const actionMessages = {
+          'approve': 'Overtime request approved successfully',
+          'reject': 'Overtime request rejected',
+          'delete': 'Overtime request deleted'
+        };
+        showToast(actionMessages[currentAction] || 'Action completed successfully', 'success');
+      } catch (error) {
+        console.error(`Error ${currentAction}ing overtime request:`, error);
+        showToast(`Failed to ${currentAction} overtime request: ${error.message}`, 'error');
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = originalText;
+      }
+    }
+
+    // Update overtime request status
+    async function updateOvertimeStatus(id, status) {
+      const response = await fetch(`${API_BASE}/overtime-requests`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update overtime request');
+      }
+    }
+
+    // Delete overtime request
+    async function deleteOvertimeRequest(id) {
+      const response = await fetch(`${API_BASE}/overtime-requests`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to delete overtime request');
+      }
+    }
+
+    // View request details
+    function viewDetails(requestId) {
+      const request = allOvertimeRequests.find(r => String(r.id) === String(requestId) || String(r.ID) === String(requestId));
+      if (!request) return;
+
+      const modal = document.getElementById('confirmModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalMessage = document.getElementById('modalMessage');
+      const confirmBtn = document.getElementById('confirmBtn');
+      const employeeDetails = document.getElementById('employeeDetails');
+      
+      modalTitle.textContent = '📄 Overtime Request Details';
+      modalMessage.textContent = '';
+      confirmBtn.style.display = 'none';
+      
+      const statusEmoji = request.status === 'approved' ? '✅' : request.status === 'rejected' ? '❌' : '⏳';
+      
+      employeeDetails.innerHTML = `
+        <div class="detail-row"><strong>Request ID:</strong> ${request.id}</div>
+        <div class="detail-row"><strong>Employee:</strong> ${request.employee_name || 'N/A'}</div>
+        <div class="detail-row"><strong>Employee ID:</strong> ${request.employee_id || 'N/A'}</div>
+        <div class="detail-row"><strong>Date:</strong> ${formatDate(request.ot_date)}</div>
+        <div class="detail-row"><strong>Hours:</strong> ${request.hours} hours</div>
+        <div class="detail-row"><strong>Reason:</strong> ${request.reason || 'No reason provided'}</div>
+        <div class="detail-row"><strong>Status:</strong> ${statusEmoji} ${capitalizeFirst(request.status)}</div>
+        <div class="detail-row"><strong>Requested On:</strong> ${formatDateTime(request.date_requested)}</div>
+        ${request.date_updated ? `<div class="detail-row"><strong>Last Updated:</strong> ${formatDateTime(request.date_updated)}</div>` : ''}
+      `;
+      
+      modal.style.display = 'flex';
+      
+      // Restore confirm button when modal is closed
+      modal.addEventListener('click', function restoreBtn(e) {
+        if (e.target === modal || e.target.className === 'modal-close' || e.target.className.includes('btn-secondary')) {
+          confirmBtn.style.display = 'inline-block';
+          modal.removeEventListener('click', restoreBtn);
+        }
+      });
+    }
+
+    // Utility Functions
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatDateTime(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function capitalizeFirst(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function truncateText(text, maxLength) {
+      if (!text || text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast toast-${type}`;
+      toast.style.display = 'block';
+
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('confirmModal');
+      if (event.target === modal) {
+        closeModal();
+      }
+    }
+  </script>
+</body>
+</html>

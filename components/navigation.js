@@ -27,14 +27,16 @@ const NavigationComponent = {
             { href: "payslip.html", icon: "💰", text: "Payslip Management" },
             { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" },
             { href: "benefits.html", icon: "🎁", text: "Employee Benefits" },
-            { href: "overtime.html", icon: "⏰", text: "Overtime Management" }
+            { href: "overtime.html", icon: "⏰", text: "Overtime Requests" },
+            { href: "overtime-management.html", icon: "⏰✅", text: "Overtime Management" }
           ]
         },
         {
           title: "Employee Requests",
           items: [
             { href: "salary-request.html", icon: "💰📝", text: "Salary Requests" },
-            { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" }
+            { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" },
+            { href: "leave-management.html", icon: "📋✅", text: "Leave Management" }
           ]
         },
         {

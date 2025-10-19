@@ -175,6 +175,9 @@ switch ($endpoint) {
     case 'leave-requests':
         handleLeaveRequests($conn, $method);
         break;
+    case 'overtime-requests':
+        handleOvertimeRequests($conn, $method);
+        break;
     case 'evaluations':
     case 'employee-evaluations':
         handleEvaluations($conn, $method);
@@ -186,7 +189,7 @@ switch ($endpoint) {
         handleBudget($conn, $method);
         break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'evaluations', 'attendance', 'budget', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -1580,6 +1583,237 @@ function handleBudget($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to delete budget record', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Overtime requests
+function handleOvertimeRequests($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all overtime requests, optionally filtered
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $date = isset($_GET['date']) ? $_GET['date'] : null;
+            
+            $query = "SELECT * FROM overtime_requests";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if ($date) {
+                $conditions[] = "ot_date = ?";
+                $params[] = $date;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY date_requested DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $requests = [];
+            while ($row = $result->fetch_assoc()) {
+                $requests[] = $row;
+            }
+            sendJsonResponse($requests);
+            break;
+
+        case 'POST':
+            // Create new overtime request
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            if (!isset($input['employee_id'], $input['ot_date'], $input['hours'])) {
+                sendJsonResponse(['error' => 'Missing required fields: employee_id, ot_date, hours'], 400);
+                break;
+            }
+
+            // Validate employee_id
+            $employeeId = intval($input['employee_id']);
+            if ($employeeId <= 0) {
+                sendJsonResponse(['error' => 'Invalid employee ID'], 400);
+                break;
+            }
+
+            // Validate hours
+            $hours = floatval($input['hours']);
+            if ($hours <= 0 || $hours > 24) {
+                sendJsonResponse(['error' => 'Hours must be between 0 and 24'], 400);
+                break;
+            }
+
+            // Validate date
+            $otDate = $input['ot_date'];
+            if (!strtotime($otDate)) {
+                sendJsonResponse(['error' => 'Invalid date format'], 400);
+                break;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM overtime_requests WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Try to get employee name from activerecords
+            $employeeName = null;
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ? LIMIT 1");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                $employeeName = $row['name'];
+            }
+
+            // Insert overtime request
+            $stmt = $conn->prepare("
+                INSERT INTO overtime_requests 
+                (id, employee_id, employee_name, ot_date, hours, reason, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $status = isset($input['status']) ? $input['status'] : 'pending';
+            $reason = isset($input['reason']) ? $input['reason'] : null;
+            
+            $stmt->bind_param(
+                "iissdss", 
+                $randomId, 
+                $employeeId, 
+                $employeeName, 
+                $otDate, 
+                $hours, 
+                $reason, 
+                $status
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'id' => $randomId,
+                    'overtime_request' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $employeeName,
+                        'ot_date' => $otDate,
+                        'hours' => $hours,
+                        'reason' => $reason,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create overtime request', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update overtime request (mainly for status changes)
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Overtime request ID is required'], 400);
+                break;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['pending', 'approved', 'rejected'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    break;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+            }
+
+            if (isset($input['hours'])) {
+                $hours = floatval($input['hours']);
+                if ($hours <= 0 || $hours > 24) {
+                    sendJsonResponse(['error' => 'Hours must be between 0 and 24'], 400);
+                    break;
+                }
+                $updates[] = "hours = ?";
+                $params[] = $hours;
+                $types .= "d";
+            }
+
+            if (isset($input['reason'])) {
+                $updates[] = "reason = ?";
+                $params[] = $input['reason'];
+                $types .= "s";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                break;
+            }
+
+            // Add updated timestamp
+            $updates[] = "date_updated = CURRENT_TIMESTAMP";
+            
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE overtime_requests SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update overtime request', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete overtime request
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Overtime request ID is required'], 400);
+                break;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM overtime_requests WHERE id = $id")) {
+                sendJsonResponse(['success' => true]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete overtime request', 'details' => $conn->error], 500);
             }
             break;
     }

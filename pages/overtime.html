@@ -3,105 +3,521 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Overtime Management</title>
-  <link rel="stylesheet" href="../css/modules.css">
+  <title>Overtime Request - HR Connect</title>
+  <link rel="stylesheet" href="../css/overtime-request.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
   <link rel="stylesheet" href="../components/navigation.css">
 </head>
 <body>
+  <header><h1>Submit Overtime Request</h1></header>
+
   <!-- Navigation Component -->
   <div id="navigation-container"></div>
   
-  <!-- Main Content -->
-  <div class="container">
-    <h2>⏰ Overtime Requests</h2>
-    <form id="overtimeForm">
-      <label>Employee ID</label>
-      <input type="number" name="employee_id" required>
-      <label>Date</label>
-      <input type="date" name="ot_date" required>
-      <label>Hours</label>
-      <input type="number" name="hours" required>
-      <label>Reason</label>
-      <textarea name="reason"></textarea>
-      <button type="submit">Submit Overtime</button>
-    </form>
+  <section class="form-section">
+    <div class="container">
+      <div class="form-header">
+        <h2>⏰ Overtime Request Form</h2>
+        <p>Please fill out the form below to submit your overtime request.</p>
+      </div>
 
-    <h3>Overtime Records</h3>
-    <table id="overtimeTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Employee</th>
-          <th>Date</th>
-          <th>Hours</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+      <div class="form-container">
+        <form id="overtimeForm">
+          <div class="form-group">
+            <label for="employeeId">Employee ID <span class="required">*</span></label>
+            <input type="number" id="employeeId" name="employee_id" required 
+                   placeholder="Enter your employee ID" min="10000" max="99999">
+            <div class="error-message" id="employeeIdError"></div>
+            <div class="helper-text">Your 5-digit employee ID</div>
+          </div>
+
+          <div class="form-group">
+            <label for="otDate">Overtime Date <span class="required">*</span></label>
+            <input type="date" id="otDate" name="ot_date" required>
+            <div class="error-message" id="dateError"></div>
+            <div class="helper-text">Date when you worked overtime</div>
+          </div>
+
+          <div class="form-group">
+            <label for="hours">Number of Hours <span class="required">*</span></label>
+            <input type="number" id="hours" name="hours" required 
+                   placeholder="e.g., 3.5" min="0.5" max="24" step="0.5">
+            <div class="error-message" id="hoursError"></div>
+            <div class="helper-text">Enter hours worked (0.5 to 24 hours)</div>
+          </div>
+
+          <div class="form-group">
+            <label for="reason">Reason for Overtime <span class="required">*</span></label>
+            <textarea id="reason" name="reason" rows="4" required
+                      placeholder="Briefly explain why you worked overtime"></textarea>
+            <div class="error-message" id="reasonError"></div>
+            <div class="helper-text">Provide details about the overtime work</div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="resetForm()">Reset Form</button>
+            <button type="submit" class="btn-primary">Submit Request</button>
+          </div>
+        </form>
+
+        <!-- Success/Error Messages -->
+        <div id="successMessage" class="message success-message" style="display: none;">
+          <div class="message-icon">✅</div>
+          <div class="message-content">
+            <h3>Request Submitted Successfully!</h3>
+            <p>Your overtime request has been submitted and is pending review by management.</p>
+          </div>
+        </div>
+
+        <div id="errorMessage" class="message error-message" style="display: none;">
+          <div class="message-icon">❌</div>
+          <div class="message-content">
+            <h3>Submission Failed</h3>
+            <p id="errorText">Please try again or contact IT support if the problem persists.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Overtime Requests -->
+      <div class="records-section">
+        <h3>📋 My Overtime Requests</h3>
+        <div class="table-container">
+          <table id="overtimeTable">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Submitted On</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Data will be loaded here -->
+            </tbody>
+          </table>
+          <div id="noRecords" class="no-data" style="display: none;">
+            <p>No overtime requests found. Submit your first request above!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <center>
+          <a href="dashboard.html" class="btn-back">← Back to Dashboard</a>
+        </center>
+      </div>
+    </div>
+  </section>
 
   <!-- Scripts -->
   <script src="../components/navigation.js"></script>
   <script>
+    // Disable auto-initialization
+    window.NavigationComponent_AutoInit = false;
+    
+    // Check admin authentication
+    const isAdmin = localStorage.getItem("isAdmin");
+    if (isAdmin !== "true") {
+      alert("Access denied. Admins only.");
+      window.location.href = "admin-login.html";
+    }
+
     // Initialize navigation
+    NavigationComponent.init({
+      containerId: 'navigation-container',
+      menuType: 'admin',
+      includeLogout: true,
+      authCheck: false
+    });
+    
+    NavigationComponent.setActiveNavItem('overtime.html');
+
+    // API Configuration
+    const API_BASE = 'http://localhost:3000/api/api.php';
+
+    // Load existing requests on page load
     document.addEventListener('DOMContentLoaded', function() {
-      NavigationComponent.init({
-        containerId: 'navigation-container',
-        menuType: 'admin',
-        includeLogout: true,
-        authCheck: true
-      });
+      loadMyRequests();
       
-      // Set active navigation item
-      NavigationComponent.setActiveNavItem('overtime.html');
-      
-      // Load data
-      loadData();
+      // Set minimum date to prevent past dates
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('otDate').setAttribute('max', today);
     });
 
-    document.getElementById("overtimeForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      try {
-        const formData = new FormData(this);
-        const response = await fetch("../api/api.php?action=add_overtime", { 
-          method: "POST", 
-          body: formData 
-        });
-        const data = await response.json();
-        alert(data.message);
-        this.reset();
-        loadData();
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        alert('Error saving overtime record');
+    // Form validation functions
+    function validateEmployeeId(id) {
+      if (!id || id < 10000 || id > 99999) {
+        return "Employee ID must be a 5-digit number";
+      }
+      return null;
+    }
+
+    function validateHours(hours) {
+      const h = parseFloat(hours);
+      if (isNaN(h) || h < 0.5 || h > 24) {
+        return "Hours must be between 0.5 and 24";
+      }
+      return null;
+    }
+
+    function validateDate(date) {
+      if (!date) {
+        return "Date is required";
+      }
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate > today) {
+        return "Date cannot be in the future";
+      }
+      
+      // Check if date is more than 30 days old
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      if (selectedDate < thirtyDaysAgo) {
+        return "Date cannot be more than 30 days in the past";
+      }
+      
+      return null;
+    }
+
+    function validateReason(reason) {
+      if (!reason || reason.trim().length < 10) {
+        return "Reason must be at least 10 characters";
+      }
+      if (reason.trim().length > 500) {
+        return "Reason cannot exceed 500 characters";
+      }
+      return null;
+    }
+
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    function hideError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.style.display = 'none';
+    }
+
+    function hideAllErrors() {
+      hideError('employeeIdError');
+      hideError('dateError');
+      hideError('hoursError');
+      hideError('reasonError');
+    }
+
+    function hideMessages() {
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showSuccessMessage() {
+      hideMessages();
+      document.getElementById('successMessage').style.display = 'block';
+      document.getElementById('successMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function showErrorMessage(message = null) {
+      hideMessages();
+      if (message) {
+        document.getElementById('errorText').textContent = message;
+      }
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorMessage').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+
+    function resetForm() {
+      document.getElementById('overtimeForm').reset();
+      hideAllErrors();
+      hideMessages();
+    }
+
+    // Real-time validation
+    document.getElementById('employeeId').addEventListener('blur', function() {
+      const error = validateEmployeeId(this.value);
+      if (error) {
+        showError('employeeIdError', error);
+      } else {
+        hideError('employeeIdError');
       }
     });
 
-    async function loadData() {
+    document.getElementById('hours').addEventListener('blur', function() {
+      const error = validateHours(this.value);
+      if (error) {
+        showError('hoursError', error);
+      } else {
+        hideError('hoursError');
+      }
+    });
+
+    document.getElementById('otDate').addEventListener('change', function() {
+      const error = validateDate(this.value);
+      if (error) {
+        showError('dateError', error);
+      } else {
+        hideError('dateError');
+      }
+    });
+
+    document.getElementById('reason').addEventListener('blur', function() {
+      const error = validateReason(this.value);
+      if (error) {
+        showError('reasonError', error);
+      } else {
+        hideError('reasonError');
+      }
+    });
+
+    // Form submission
+    document.getElementById('overtimeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      hideAllErrors();
+      hideMessages();
+
+      const formData = new FormData(e.target);
+      const data = {
+        employee_id: parseInt(formData.get('employee_id')),
+        ot_date: formData.get('ot_date'),
+        hours: parseFloat(formData.get('hours')),
+        reason: formData.get('reason').trim(),
+        status: 'pending'
+      };
+
+      // Validate all fields
+      let hasErrors = false;
+
+      const employeeIdError = validateEmployeeId(data.employee_id);
+      if (employeeIdError) {
+        showError('employeeIdError', employeeIdError);
+        hasErrors = true;
+      }
+
+      const dateError = validateDate(data.ot_date);
+      if (dateError) {
+        showError('dateError', dateError);
+        hasErrors = true;
+      }
+
+      const hoursError = validateHours(data.hours);
+      if (hoursError) {
+        showError('hoursError', hoursError);
+        hasErrors = true;
+      }
+
+      const reasonError = validateReason(data.reason);
+      if (reasonError) {
+        showError('reasonError', reasonError);
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        return;
+      }
+
+      // Disable submit button during submission
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
       try {
-        const response = await fetch("../api/api.php?action=get_overtime");
+        console.log('Submitting overtime request:', data);
+        
+        const response = await fetch(`${API_BASE}/overtime-requests`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('Server response:', result);
+
+        if (response.ok && result.success) {
+          showSuccessMessage();
+          setTimeout(() => {
+            resetForm();
+            loadMyRequests(); // Reload the table
+          }, 2000);
+        } else {
+          throw new Error(result.error || 'Failed to submit overtime request');
+        }
+
+      } catch (error) {
+        console.error('Error submitting overtime request:', error);
+        showErrorMessage(`Error: ${error.message}`);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // Load user's overtime requests
+    async function loadMyRequests() {
+      try {
+        const response = await fetch(`${API_BASE}/overtime-requests`);
         const data = await response.json();
+        
         const tbody = document.querySelector("#overtimeTable tbody");
+        const noRecords = document.getElementById('noRecords');
+        
         tbody.innerHTML = "";
         
-        if (data.data && Array.isArray(data.data)) {
-          data.data.forEach(row => {
+        if (response.ok && Array.isArray(data) && data.length > 0) {
+          noRecords.style.display = 'none';
+          
+          data.forEach(row => {
+            const statusClass = `status-${row.status}`;
             tbody.innerHTML += `<tr>
               <td>${row.id || ''}</td>
-              <td>${row.employee_id || ''}</td>
-              <td>${row.ot_date || ''}</td>
-              <td>${row.hours || ''}</td>
-              <td>${row.status || ''}</td>
+              <td>${formatDate(row.ot_date)}</td>
+              <td><strong>${row.hours} hrs</strong></td>
+              <td>${truncateText(row.reason || 'No reason', 50)}</td>
+              <td><span class="status-badge ${statusClass}">${capitalizeFirst(row.status)}</span></td>
+              <td>${formatDateTime(row.date_requested)}</td>
             </tr>`;
           });
+        } else {
+          noRecords.style.display = 'block';
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading overtime requests:', error);
         const tbody = document.querySelector("#overtimeTable tbody");
-        tbody.innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ef4444;">Error loading requests</td></tr>';
       }
     }
+
+    // Utility functions
+    function formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function formatDateTime(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function capitalizeFirst(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function truncateText(text, maxLength) {
+      if (!text || text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    }
+
+    // Auto-hide messages after 10 seconds
+    setTimeout(() => {
+      hideMessages();
+    }, 10000);
   </script>
+
+  <style>
+    .records-section {
+      margin-top: 40px;
+      padding: 32px;
+      border-top: 2px solid #f1f5f9;
+    }
+
+    .records-section h3 {
+      color: #4d6b4a;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    #overtimeTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    #overtimeTable thead {
+      background: linear-gradient(135deg, #f8fffe 0%, #f0f7f0 100%);
+    }
+
+    #overtimeTable th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #4d6b4a;
+      border-bottom: 2px solid #e5f0e5;
+    }
+
+    #overtimeTable td {
+      padding: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #374151;
+    }
+
+    #overtimeTable tbody tr:hover {
+      background-color: #f9fafb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .status-approved {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .status-rejected {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9ca3af;
+    }
+  </style>
 </body>
 </html>

@@ -158,6 +158,26 @@ CREATE TABLE IF NOT EXISTS budget (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+-- overtime_requests
+
+CREATE TABLE IF NOT EXISTS overtime_requests (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit overtime request id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  ot_date DATE NOT NULL,
+  hours DECIMAL(5,2) NOT NULL CHECK (hours > 0),
+  reason TEXT,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  date_requested DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_overtime_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  KEY idx_status (status),
+  KEY idx_ot_date (ot_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 -- Sample Data
 
 
@@ -215,3 +235,10 @@ INSERT INTO budget (department, allocated_amount, spent_amount, fiscal_year, not
 ('Operations', 200000.00, 125000.00, '2025', 'Facility maintenance and supplies'),
 ('Research & Development', 180000.00, 92000.00, '2025', 'New product development'),
 ('Customer Service', 60000.00, 38000.00, '2025', 'Support tools and training');
+
+-- Overtime requests (sample data)
+INSERT INTO overtime_requests (id, employee_id, employee_name, ot_date, hours, reason, status, date_requested) VALUES
+(97001, 13579, 'William Searl', '2025-10-18', 3.50, 'Project deadline for new feature', 'pending', '2025-10-17 15:30:00'),
+(97002, 24680, 'Maria Garcia', '2025-10-19', 4.00, 'Special event catering', 'pending', '2025-10-18 10:00:00'),
+(97003, 35791, 'Michael Lee', '2025-10-15', 2.50, 'Lab experiment completion', 'approved', '2025-10-14 14:20:00'),
+(97004, 46802, 'Emily Davis', '2025-10-16', 5.00, 'Urgent recruitment drive', 'approved', '2025-10-15 09:45:00');

@@ -1,0 +1,527 @@
+/* Leave Request Form Styles */
+/* Inherits base styles from dashboard.css and navigation.css */
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f6f9f6;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Header Styles (consistent with dashboard) */
+header {
+  background: linear-gradient(135deg, #9caf88 0%, #88a172 100%);
+  padding: 20px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Form Section */
+.form-section {
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Form Header */
+.form-header {
+  background: linear-gradient(135deg, #f8fffe 0%, #f0f7f0 100%);
+  padding: 32px;
+  text-align: center;
+  border-bottom: 1px solid #e5f0e5;
+}
+
+.form-header h2 {
+  color: #4d6b4a;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-header p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Form Container */
+.form-container {
+  padding: 40px;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Row for side-by-side inputs */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Labels */
+label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Input Styles */
+input[type="text"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  background-color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #9caf88;
+  box-shadow: 0 0 0 3px rgba(156, 175, 136, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: #fefffe;
+}
+
+input[type="text"]:hover,
+input[type="date"]:hover,
+select:hover,
+textarea:hover {
+  border-color: #d1d5db;
+}
+
+/* Select Specific Styles */
+select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 40px;
+  appearance: none;
+}
+
+select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239caf88' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* Option styles */
+select option {
+  color: #374151;
+  background-color: #ffffff;
+  padding: 8px 12px;
+}
+
+select option:hover {
+  background-color: #f9fafb;
+}
+
+/* Date Input Specific */
+input[type="date"] {
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(156, 175, 136, 0.1);
+}
+
+/* Textarea Specific */
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+/* Helper Text */
+.helper-text {
+  font-size: 0.825rem;
+  color: #6b7280;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Error Messages */
+.error-message {
+  display: none;
+  color: #ef4444;
+  font-size: 0.825rem;
+  margin-top: 6px;
+  font-weight: 500;
+  padding: 4px 0;
+}
+
+/* Success/Error Messages */
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 24px 0;
+  font-size: 0.9rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+.success-message {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.error-message {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.message-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.message-content h3 {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.message-content p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Button Styles */
+.btn-primary,
+.btn-secondary,
+.btn-back {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #9caf88 0%, #88a172 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #88a172 0%, #7a9968 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(156, 175, 136, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-back {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: white;
+  margin: 0 auto;
+}
+
+.btn-back:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(107, 114, 128, 0.3);
+}
+
+/* Form Footer */
+.form-footer {
+  padding: 24px 40px 32px;
+  background: #fafafa;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Input Validation States */
+input.invalid,
+select.invalid,
+textarea.invalid {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+input.valid,
+select.valid,
+textarea.valid {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Loading State */
+.btn-primary:disabled {
+  position: relative;
+  color: transparent;
+}
+
+.btn-primary:disabled::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-section {
+    padding: 16px;
+  }
+
+  .form-header {
+    padding: 24px 20px;
+  }
+
+  .form-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .form-container {
+    padding: 24px 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 24px;
+  }
+
+  .form-footer {
+    padding: 20px;
+  }
+
+  .message {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .message-icon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-section {
+    padding: 12px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-header {
+    padding: 20px 16px;
+  }
+
+  .form-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .form-header p {
+    font-size: 0.9rem;
+  }
+
+  .form-container {
+    padding: 20px 16px;
+  }
+
+  input[type="text"],
+  input[type="date"],
+  select,
+  textarea {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  select {
+    padding-right: 36px;
+    background-size: 14px;
+    background-position: right 10px center;
+  }
+
+  .form-footer {
+    padding: 16px;
+  }
+}
+
+/* Focus Management */
+.form-group:focus-within label {
+  color: #9caf88;
+}
+
+/* Smooth Transitions */
+* {
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  input[type="text"],
+  input[type="date"],
+  select,
+  textarea {
+    border-width: 3px;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-back {
+    border-width: 2px;
+    border-style: solid;
+  }
+}
+
+/* Leave type specific styling */
+select[name="leave_type"] option[value="sick_leave"] {
+  color: #dc2626;
+}
+
+select[name="leave_type"] option[value="vacation_leave"] {
+  color: #2563eb;
+}
+
+select[name="leave_type"] option[value="personal_leave"] {
+  color: #7c3aed;
+}
+
+select[name="leave_type"] option[value="emergency_leave"] {
+  color: #ea580c;
+}
+
+select[name="leave_type"] option[value="maternity_leave"] {
+  color: #ec4899;
+}
+
+select[name="leave_type"] option[value="paternity_leave"] {
+  color: #059669;
+}
