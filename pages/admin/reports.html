@@ -83,19 +83,21 @@
   </div>
 
   <!-- Scripts -->
-  <script src="../../components/navigation.js"></script>
+  <script>
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
   <script>
     // Initialize navigation
     document.addEventListener('DOMContentLoaded', function() {
-      NavigationComponent.init({
+      AdminNavigation.init({
         containerId: 'navigation-container',
-        menuType: 'admin',
         includeLogout: true,
         authCheck: true
       });
       
       // Set active navigation item
-      NavigationComponent.setActiveNavItem('reports.html');
+      AdminNavigation.setActiveNavItem('reports.html');
       
       // Load reports data
       loadReports();

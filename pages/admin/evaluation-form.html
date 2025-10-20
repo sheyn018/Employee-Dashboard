@@ -211,27 +211,21 @@
   </section>
 
   <!-- JavaScript for form handling -->
-  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
-    window.NavigationComponent_AutoInit = false;
-    
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin !== "true") {
-      alert("Access denied. Admins only.");
-      window.location.href = "../admin-login.html";
-    }
-
-    // Initialize navigation with custom options
-    NavigationComponent.init({
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
+  <script>
+    // Initialize admin navigation
+    AdminNavigation.init({
       containerId: 'navigation-container',
-      menuType: 'admin',
       includeLogout: true,
-      authCheck: false // We already checked above
+      authCheck: true
     });
 
     // Set the current page as active
-    NavigationComponent.setActiveNavItem('evaluation-form.html');
+    AdminNavigation.setActiveNavItem('evaluation-form.html');
 
     // API base URL
     const API_BASE = 'http://localhost:3000/api/api.php';

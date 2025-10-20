@@ -122,29 +122,18 @@
   <!-- JavaScript -->
   <script>
     // Disable auto-initialization - MUST be set before loading navigation.js
-    window.NavigationComponent_AutoInit = false;
+    window.EmployeeNavigation_AutoInit = false;
   </script>
-  <script src="../../components/navigation.js"></script>
+  <script src="../../components/navigation-employee.js"></script>
   <script>
-    // Navigation setup
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin === "true") {
-      NavigationComponent.init({
-        containerId: 'navigation-container',
-        menuType: 'admin',
-        includeLogout: true,
-        authCheck: false
-      });
-    } else {
-      NavigationComponent.init({
-        containerId: 'navigation-container',
-        menuType: 'employee',
-        includeLogout: true,
-        authCheck: false
-      });
-    }
+    // Initialize employee navigation
+    EmployeeNavigation.init({
+      containerId: 'navigation-container',
+      includeLogout: true,
+      authCheck: true
+    });
 
-    NavigationComponent.setActiveNavItem('attendance.html');
+    EmployeeNavigation.setActiveNavItem('attendance.html');
 
     // Set today's date as default
     document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];

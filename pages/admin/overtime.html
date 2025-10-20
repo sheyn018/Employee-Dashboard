@@ -112,27 +112,20 @@
   </section>
 
   <!-- Scripts -->
-  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization
-    window.NavigationComponent_AutoInit = false;
-    
-    // Check admin authentication
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin !== "true") {
-      alert("Access denied. Admins only.");
-      window.location.href = "../admin-login.html";
-    }
-
-    // Initialize navigation
-    NavigationComponent.init({
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
+  <script>
+    // Initialize admin navigation
+    AdminNavigation.init({
       containerId: 'navigation-container',
-      menuType: 'admin',
       includeLogout: true,
-      authCheck: false
+      authCheck: true
     });
     
-    NavigationComponent.setActiveNavItem('overtime.html');
+    AdminNavigation.setActiveNavItem('overtime.html');
 
     // API Configuration
     const API_BASE = 'http://localhost:3000/api/api.php';

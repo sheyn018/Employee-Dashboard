@@ -91,20 +91,19 @@
   <!-- JavaScript for form handling -->
   <script>
     // Disable auto-initialization - MUST be set before loading navigation.js
-    window.NavigationComponent_AutoInit = false;
+    window.EmployeeNavigation_AutoInit = false;
   </script>
-  <script src="../../components/navigation.js"></script>
+  <script src="../../components/navigation-employee.js"></script>
   <script>
     // Initialize navigation for employee (this is an employee page)
-    NavigationComponent.init({
+    EmployeeNavigation.init({
       containerId: 'navigation-container',
-      menuType: 'employee',
       includeLogout: true,
-      authCheck: false
+      authCheck: true
     });
 
     // Set the current page as active
-    NavigationComponent.setActiveNavItem('salary-request.html');
+    EmployeeNavigation.setActiveNavItem('salary-request.html');
 
     // API base URL
     const API_BASE = 'http://localhost:3000/api/api.php';

@@ -126,11 +126,12 @@
     </div>
   </div>
 
-  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
-    window.NavigationComponent_AutoInit = false;
-    
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
+  <script>
     // API Configuration
     const API_BASE_URL = 'http://localhost:3000/api/api.php';
     
@@ -167,23 +168,15 @@
       }
     }
     
-    // Check admin authentication
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin !== "true") {
-      alert("Access denied. Admins only.");
-      window.location.href = "../admin-login.html";
-    }
-
-    // Initialize navigation with custom options
-    NavigationComponent.init({
+    // Initialize admin navigation
+    AdminNavigation.init({
       containerId: 'navigation-container',
-      menuType: 'admin',
       includeLogout: true,
-      authCheck: false // We already checked above
+      authCheck: true
     });
 
     // Set the current page as active
-    NavigationComponent.setActiveNavItem('add-payslip.html');
+    AdminNavigation.setActiveNavItem('add-payslip.html');
 
     function openNav() {
       document.getElementById("mySidebar").style.width = "250px";

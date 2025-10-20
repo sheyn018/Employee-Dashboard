@@ -22,7 +22,8 @@ const NavigationComponent = {
                 { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
                 { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
                 { href: "evaluations-view.html", icon: "⭐", text: "View Evaluations" },
-                { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
+                { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" },
+                { href: "performance.html", icon: "📈", text: "Performance" }
               ]
             },
             {
@@ -49,7 +50,11 @@ const NavigationComponent = {
               ]
             }
           ]
-        },
+        }
+      ]
+    },
+    employee: {
+      sections: [
         {
           title: "👥 EMPLOYEE SECTION",
           isMainSection: true,
@@ -57,54 +62,30 @@ const NavigationComponent = {
             {
               title: "My Dashboard",
               items: [
-                { href: "../employee/workpage.html", icon: "📋", text: "Employee Dashboard" },
-                { href: "../employee/attendance.html", icon: "📅", text: "Attendance Tracking" }
+                { href: "workpage.html", icon: "📋", text: "Employee Dashboard" },
+                { href: "attendance.html", icon: "📅", text: "Attendance Tracking" }
               ]
             },
             {
               title: "My Requests",
               items: [
-                { href: "../employee/salary-request.html", icon: "💰📝", text: "Salary Requests" },
-                { href: "../employee/leave.html", icon: "🏖️", text: "Leave Requests" }
+                { href: "salary-request.html", icon: "💰📝", text: "Salary Requests" },
+                { href: "leave.html", icon: "🏖️", text: "Leave Requests" }
               ]
             },
             {
               title: "My Profile",
               items: [
-                { href: "../employee/profile.html", icon: "👤", text: "Profile & Settings" }
+                { href: "profile.html", icon: "👤", text: "Profile & Settings" }
+              ]
+            },
+            {
+              title: "Company Info",
+              items: [
+                { href: "../service.html", icon: "🔧", text: "Services" },
+                { href: "../contact.html", icon: "📞", text: "Contact Information" }
               ]
             }
-          ]
-        }
-      ]
-    },
-    employee: {
-      sections: [
-        {
-          title: "Dashboard",
-          items: [
-            { href: "workpage.html", icon: "👥", text: "My Dashboard" },
-            { href: "attendance.html", icon: "📋", text: "My Attendance" }
-          ]
-        },
-        {
-          title: "My Requests",
-          items: [
-            { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" },
-            { href: "leave.html", icon: "📅", text: "Request Leave" }
-          ]
-        },
-        {
-          title: "My Profile",
-          items: [
-            { href: "profile.html", icon: "👤", text: "My Profile" }
-          ]
-        },
-        {
-          title: "Company Info",
-          items: [
-            { href: "../service.html", icon: "🔧", text: "Services" },
-            { href: "../contact.html", icon: "📞", text: "Contact Information" }
           ]
         }
       ]

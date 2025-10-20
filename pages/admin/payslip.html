@@ -72,11 +72,12 @@
     </div>
   </div>
 
-  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
-    window.NavigationComponent_AutoInit = false;
-    
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
+  <script>
     // API Configuration
     const API_BASE_URL = 'http://localhost:3000/api/api.php';
     
@@ -95,7 +96,7 @@
       if (data && method !== 'GET') {
         config.body = JSON.stringify(data);
       }
-      
+
       try {
         const response = await fetch(url, config);
         const result = await response.json();
@@ -126,23 +127,15 @@
       window.location.href = "index.html";
     }
 
-    // Check admin authentication and initialize navigation
-    if (localStorage.getItem("isAdmin") !== "true") {
-      window.location.href = "../admin-login.html";
-    }
-
-    // Initialize navigation with custom options
-    NavigationComponent.init({
+    // Initialize admin navigation
+    AdminNavigation.init({
       containerId: 'navigation-container',
-      menuType: 'admin',
       includeLogout: true,
-      authCheck: false // We already checked above
+      authCheck: true
     });
 
     // Set the current page as active
-    NavigationComponent.setActiveNavItem('payslip.html');
-
-    let selectedPayslip = null;
+    AdminNavigation.setActiveNavItem('payslip.html');    let selectedPayslip = null;
 
     async function loadPayslipTable() {
       try {

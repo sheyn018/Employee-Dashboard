@@ -85,7 +85,10 @@
   </div>
 
   <!-- Scripts -->
-  <script src="../../components/navigation.js"></script>
+  <script>
+    window.AdminNavigation_AutoInit = false;
+  </script>
+  <script src="../../components/navigation-admin.js"></script>
   <script>
     const API_BASE = 'http://localhost:3000/api/api.php';
     let currentEmployeeName = '';
@@ -94,15 +97,14 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('🟢 Disciplinary page loaded');
       
-      NavigationComponent.init({
+      AdminNavigation.init({
         containerId: 'navigation-container',
-        menuType: 'admin',
         includeLogout: true,
         authCheck: true
       });
       
       // Set active navigation item
-      NavigationComponent.setActiveNavItem('disciplinary.html');
+      AdminNavigation.setActiveNavItem('disciplinary.html');
       
       // Load data
       loadData();

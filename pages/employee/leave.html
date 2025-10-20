@@ -75,19 +75,18 @@ loadData();
 
 <script>
   // Disable auto-initialization - MUST be set before loading navigation.js
-  window.NavigationComponent_AutoInit = false;
+  window.EmployeeNavigation_AutoInit = false;
 </script>
-<script src="../../components/navigation.js"></script>
+<script src="../../components/navigation-employee.js"></script>
 <script>
   // Initialize navigation for employee
-  NavigationComponent.init({
-    menuType: 'employee',
+  EmployeeNavigation.init({
     includeLogout: true,
     authCheck: true
   });
   
   // Set active navigation item
-  NavigationComponent.setActiveNavItem('leave.html');
+  EmployeeNavigation.setActiveNavItem('leave.html');
 </script>
 </body>
 </html>
