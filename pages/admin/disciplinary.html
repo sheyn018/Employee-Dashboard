@@ -15,21 +15,55 @@
   <div class="container">
     <h2>📋 Disciplinary Actions</h2>
     <form id="disciplinaryForm">
-      <label>Employee ID</label>
-      <input type="number" name="employee_id" required>
-      <label>Case Type</label>
-      <input type="text" name="case_type" required>
-      <label>Description</label>
-      <textarea name="description" required></textarea>
-      <label>Action Taken</label>
-      <input type="text" name="action_taken">
-      <label>Date Reported</label>
-      <input type="date" name="date_reported" required>
-      <label>Status</label>
-      <select name="status">
+      <label for="employee_id">Employee ID <span style="color: red;">*</span></label>
+      <input type="number" id="employee_id" name="employee_id" required min="10000" max="99999" placeholder="Enter 5-digit ID">
+      <div style="margin-top: -3px; margin-bottom: 10px;">
+        <small id="employee_id_hint" style="color: #666; font-size: 11px; display: block;">Enter employee ID to auto-fill name</small>
+        <small id="employee_id_error" style="color: #d32f2f; font-size: 11px; display: none;"></small>
+      </div>
+      
+      <label for="employee_name_display">Employee Name <span style="color: red;">*</span></label>
+      <input type="text" id="employee_name_display" readonly style="background: #f5f5f5; cursor: not-allowed;" placeholder="Auto-filled">
+      <div style="margin-top: -3px; margin-bottom: 10px;">
+        <small style="color: #666; font-size: 11px; display: block;">Auto-filled from Employee ID</small>
+      </div>
+      
+      <label for="action_type">Action Type <span style="color: red;">*</span></label>
+      <select id="action_type" name="action_type" required>
+        <option value="">-- Select Action Type --</option>
+        <option value="verbal_warning">Verbal Warning</option>
+        <option value="written_warning">Written Warning</option>
+        <option value="suspension">Suspension</option>
+        <option value="termination">Termination</option>
+        <option value="other">Other</option>
+      </select>
+      
+      <label for="case_type">Violation/Case Type</label>
+      <input type="text" id="case_type" name="case_type" placeholder="e.g., Tardiness, Insubordination, Policy Violation">
+      
+      <label for="severity">Severity</label>
+      <select id="severity" name="severity">
+        <option value="minor">Minor</option>
+        <option value="moderate">Moderate</option>
+        <option value="major">Major</option>
+        <option value="critical">Critical</option>
+      </select>
+      
+      <label for="description">Description <span style="color: red;">*</span></label>
+      <textarea id="description" name="description" required placeholder="Detailed description of the incident..."></textarea>
+      
+      <label for="action_taken">Action Taken</label>
+      <input type="text" id="action_taken" name="action_taken" placeholder="What action was taken or recommended">
+      
+      <label for="date_reported">Date Reported <span style="color: red;">*</span></label>
+      <input type="date" id="date_reported" name="date_reported" required>
+      
+      <label for="status">Status</label>
+      <select id="status" name="status">
         <option value="Open">Open</option>
         <option value="Resolved">Resolved</option>
       </select>
+      
       <button type="submit">Save Record</button>
     </form>
 
@@ -39,7 +73,9 @@
         <tr>
           <th>ID</th>
           <th>Employee</th>
-          <th>Case</th>
+          <th>Action Type</th>
+          <th>Violation</th>
+          <th>Severity</th>
           <th>Status</th>
           <th>Date</th>
         </tr>
@@ -52,6 +88,7 @@
   <script src="../../components/navigation.js"></script>
   <script>
     const API_BASE = 'http://localhost:3000/api/api.php';
+    let currentEmployeeName = '';
     
     // Initialize navigation
     document.addEventListener('DOMContentLoaded', function() {
@@ -69,20 +106,115 @@
       
       // Load data
       loadData();
+      
+      // Setup employee lookup
+      setupEmployeeLookup();
     });
+
+    function setupEmployeeLookup() {
+      const employeeIdInput = document.getElementById('employee_id');
+      const employeeNameDisplay = document.getElementById('employee_name_display');
+      const employeeIdError = document.getElementById('employee_id_error');
+      const employeeIdHint = document.getElementById('employee_id_hint');
+      
+      let lookupTimeout = null;
+      
+      employeeIdInput.addEventListener('input', function() {
+        const employeeId = this.value.trim();
+        
+        // Clear previous timeout
+        if (lookupTimeout) {
+          clearTimeout(lookupTimeout);
+        }
+        
+        // Reset fields if input is cleared
+        if (!employeeId) {
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+          employeeIdError.style.display = 'none';
+          employeeIdHint.style.display = 'block';
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+          return;
+        }
+        
+        // Only lookup if it's a 5-digit number
+        if (employeeId.length === 5 && /^\d{5}$/.test(employeeId)) {
+          // Debounce lookup by 500ms
+          lookupTimeout = setTimeout(() => {
+            lookupEmployee(employeeId);
+          }, 500);
+        } else if (employeeId.length >= 5) {
+          employeeIdError.textContent = 'Employee ID must be exactly 5 digits';
+          employeeIdError.style.display = 'block';
+          employeeIdHint.style.display = 'none';
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+        }
+      });
+      
+      async function lookupEmployee(employeeId) {
+        try {
+          employeeIdHint.textContent = 'Looking up employee...';
+          employeeIdHint.style.color = '#1976d2';
+          employeeIdError.style.display = 'none';
+          
+          const response = await fetch(`${API_BASE}/employee-lookup?id=${employeeId}`);
+          const result = await response.json();
+          
+          if (response.ok && result.success && result.employee) {
+            // Auto-fill employee name
+            employeeNameDisplay.value = result.employee.name;
+            currentEmployeeName = result.employee.name;
+            
+            // Show success message
+            employeeIdHint.textContent = '✓ Employee found';
+            employeeIdHint.style.color = '#2e7d32';
+            employeeIdError.style.display = 'none';
+            
+            // Reset hint after 2 seconds
+            setTimeout(() => {
+              employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+              employeeIdHint.style.color = '#666';
+            }, 2000);
+          } else {
+            // Employee not found
+            employeeNameDisplay.value = '';
+            currentEmployeeName = '';
+            employeeIdError.textContent = result.error || 'Employee ID not found';
+            employeeIdError.style.display = 'block';
+            employeeIdHint.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error looking up employee:', error);
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+          employeeIdError.textContent = 'Error connecting to server';
+          employeeIdError.style.display = 'block';
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+        }
+      }
+    }
 
     document.getElementById("disciplinaryForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       console.log('📤 Submitting disciplinary form...');
       
+      // Validate employee name is populated
+      if (!currentEmployeeName) {
+        alert('Please enter a valid Employee ID first. Employee name must be auto-filled.');
+        return;
+      }
+      
       try {
         const formData = new FormData(this);
         const jsonData = {
           employee_id: formData.get('employee_id'),
-          employee_name: 'Employee ' + formData.get('employee_id'), // You'll need to fetch this
-          action_type: formData.get('case_type') || 'other',
-          severity: 'minor',
-          violation_type: formData.get('case_type'),
+          employee_name: currentEmployeeName,
+          action_type: formData.get('action_type'),
+          severity: formData.get('severity') || 'minor',
+          violation_type: formData.get('case_type') || null,
           incident_date: formData.get('date_reported'),
           description: formData.get('description'),
           action_taken: formData.get('action_taken') || 'Under review',
@@ -108,6 +240,8 @@
         if (data.success) {
           alert('Disciplinary record saved successfully!');
           this.reset();
+          currentEmployeeName = '';
+          document.getElementById('employee_name_display').value = '';
           loadData();
         } else {
           alert('Error: ' + (data.error || 'Failed to save record'));
@@ -145,9 +279,11 @@
               tbody.innerHTML += `<tr>
                 <td>${row.id || ''}</td>
                 <td>${row.employee_name || row.employee_id || ''}</td>
-                <td>${row.action_type || row.case_type || ''}</td>
-                <td>${row.status || ''}</td>
-                <td>${row.incident_date || row.date_reported || ''}</td>
+                <td>${formatActionType(row.action_type || '')}</td>
+                <td>${row.violation_type || row.case_type || ''}</td>
+                <td>${capitalizeFirst(row.severity || '')}</td>
+                <td>${capitalizeFirst(row.status || '')}</td>
+                <td>${formatDate(row.incident_date || row.date_reported || '')}</td>
               </tr>`;
             });
           }
@@ -163,6 +299,29 @@
         const tbody = document.querySelector("#disciplinaryTable tbody");
         tbody.innerHTML = '<tr><td colspan="5">❌ Error loading data. Check console for details.</td></tr>';
       }
+    }
+    
+    // Utility functions
+    function formatActionType(type) {
+      const types = {
+        'verbal_warning': 'Verbal Warning',
+        'written_warning': 'Written Warning',
+        'suspension': 'Suspension',
+        'termination': 'Termination',
+        'other': 'Other'
+      };
+      return types[type] || type;
+    }
+    
+    function capitalizeFirst(str) {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
     }
   </script>
 </body>
