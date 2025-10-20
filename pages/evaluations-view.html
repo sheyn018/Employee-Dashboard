@@ -550,8 +550,13 @@
 
     // View evaluation details in modal
     function viewEvaluation(id) {
-      const evaluation = allEvaluations.find(e => e.id === id);
-      if (!evaluation) return;
+      // Convert id to number for comparison (API may return string or number)
+      const numId = parseInt(id);
+      const evaluation = allEvaluations.find(e => parseInt(e.id) === numId);
+      if (!evaluation) {
+        console.error('Evaluation not found with id:', id);
+        return;
+      }
 
       const modalBody = document.getElementById('modalBody');
       const score = parseFloat(evaluation.overall_score);
