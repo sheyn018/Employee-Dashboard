@@ -5,45 +5,75 @@ const NavigationComponent = {
     admin: {
       sections: [
         {
-          title: "Records & Dashboard",
-          items: [
-            { href: "dashboard.html", icon: "📊", text: "Employee Records" },
-            { href: "reports.html", icon: "📝", text: "Reports" },
-            { href: "budget.html", icon: "💼", text: "Budget Management" }
+          title: "💼 ADMIN SECTION",
+          isMainSection: true,
+          subsections: [
+            {
+              title: "Records & Dashboard",
+              items: [
+                { href: "dashboard.html", icon: "📊", text: "Employee Records" },
+                { href: "reports.html", icon: "📝", text: "Reports" },
+                { href: "budget.html", icon: "💼", text: "Budget Management" }
+              ]
+            },
+            {
+              title: "Employee Management",
+              items: [
+                { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
+                { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
+                { href: "evaluations-view.html", icon: "⭐", text: "View Evaluations" },
+                { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
+              ]
+            },
+            {
+              title: "Payroll & Benefits",
+              items: [
+                { href: "payslip.html", icon: "💰", text: "Payslip Management" },
+                { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" },
+                { href: "benefits.html", icon: "🎁", text: "Employee Benefits" }
+              ]
+            },
+            {
+              title: "Requests Management",
+              items: [
+                { href: "overtime.html", icon: "⏰", text: "Overtime Requests" },
+                { href: "overtime-management.html", icon: "⏰✅", text: "Overtime Management" },
+                { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" },
+                { href: "leave-management.html", icon: "📋✅", text: "Leave Management" }
+              ]
+            },
+            {
+              title: "Training & Development",
+              items: [
+                { href: "training.html", icon: "🎓", text: "Training Programs" }
+              ]
+            }
           ]
         },
         {
-          title: "Employee Management",
-          items: [
-            { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
-            { href: "../employee/attendance.html", icon: "📅", text: "Attendance Tracking" },
-            { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
-            { href: "evaluations-view.html", icon: "⭐", text: "View Evaluations" },
-            { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
-          ]
-        },
-        {
-          title: "Payroll & Benefits",
-          items: [
-            { href: "payslip.html", icon: "💰", text: "Payslip Management" },
-            { href: "add-payslip.html", icon: "💰➕", text: "Add Payslip" },
-            { href: "benefits.html", icon: "🎁", text: "Employee Benefits" },
-            { href: "overtime.html", icon: "⏰", text: "Overtime Requests" },
-            { href: "overtime-management.html", icon: "⏰✅", text: "Overtime Management" }
-          ]
-        },
-        {
-          title: "Employee Requests",
-          items: [
-            { href: "../employee/salary-request.html", icon: "💰📝", text: "Salary Requests" },
-            { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" },
-            { href: "leave-management.html", icon: "📋✅", text: "Leave Management" }
-          ]
-        },
-        {
-          title: "Training & Development",
-          items: [
-            { href: "training.html", icon: "🎓", text: "Training Programs" }
+          title: "👥 EMPLOYEE SECTION",
+          isMainSection: true,
+          subsections: [
+            {
+              title: "My Dashboard",
+              items: [
+                { href: "../employee/workpage.html", icon: "📋", text: "Employee Dashboard" },
+                { href: "../employee/attendance.html", icon: "📅", text: "Attendance Tracking" }
+              ]
+            },
+            {
+              title: "My Requests",
+              items: [
+                { href: "../employee/salary-request.html", icon: "💰📝", text: "Salary Requests" },
+                { href: "../employee/leave.html", icon: "🏖️", text: "Leave Requests" }
+              ]
+            },
+            {
+              title: "My Profile",
+              items: [
+                { href: "../employee/profile.html", icon: "👤", text: "Profile & Settings" }
+              ]
+            }
           ]
         }
       ]
@@ -90,20 +120,54 @@ const NavigationComponent = {
     // Generate sections
     if (menu.sections) {
       menu.sections.forEach((section, index) => {
-        // Add section title
-        menuItemsHTML += `<div class="nav-section">`;
-        menuItemsHTML += `<div class="nav-section-title">${section.title}</div>`;
-        
-        // Add section items
-        section.items.forEach(item => {
-          menuItemsHTML += `<a href="${item.href}">${item.icon} ${item.text}</a>`;
-        });
-        
-        menuItemsHTML += `</div>`;
-        
-        // Add divider between sections (except for last section)
-        if (index < menu.sections.length - 1) {
-          menuItemsHTML += `<div class="nav-divider"></div>`;
+        // Check if this is a main section with subsections
+        if (section.isMainSection && section.subsections) {
+          // Add main section title (Admin Section / Employee Section)
+          menuItemsHTML += `<div class="nav-main-section">`;
+          menuItemsHTML += `<div class="nav-main-section-title">${section.title}</div>`;
+          
+          // Add subsections
+          section.subsections.forEach((subsection, subIndex) => {
+            menuItemsHTML += `<div class="nav-subsection">`;
+            menuItemsHTML += `<div class="nav-subsection-title">${subsection.title}</div>`;
+            
+            // Add subsection items
+            subsection.items.forEach(item => {
+              menuItemsHTML += `<a href="${item.href}">${item.icon} ${item.text}</a>`;
+            });
+            
+            menuItemsHTML += `</div>`;
+            
+            // Add divider between subsections (except for last subsection)
+            if (subIndex < section.subsections.length - 1) {
+              menuItemsHTML += `<div class="nav-subdivider"></div>`;
+            }
+          });
+          
+          menuItemsHTML += `</div>`;
+          
+          // Add divider between main sections
+          if (index < menu.sections.length - 1) {
+            menuItemsHTML += `<div class="nav-divider"></div>`;
+          }
+        } else {
+          // Regular section without subsections (for backward compatibility)
+          menuItemsHTML += `<div class="nav-section">`;
+          menuItemsHTML += `<div class="nav-section-title">${section.title}</div>`;
+          
+          // Add section items
+          if (section.items) {
+            section.items.forEach(item => {
+              menuItemsHTML += `<a href="${item.href}">${item.icon} ${item.text}</a>`;
+            });
+          }
+          
+          menuItemsHTML += `</div>`;
+          
+          // Add divider between sections (except for last section)
+          if (index < menu.sections.length - 1) {
+            menuItemsHTML += `<div class="nav-divider"></div>`;
+          }
         }
       });
     } else {
