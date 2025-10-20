@@ -172,7 +172,7 @@
           <div class="card-icon">💰</div>
           <div class="card-content">
             <h3>Total Payroll</h3>
-            <p class="card-number">$${data.total_payroll || 0}</p>
+            <p class="card-number">₱${data.total_payroll || 0}</p>
           </div>
         </div>
         <div class="card">
@@ -267,7 +267,7 @@
         </div>
         <div class="analytics-card">
           <h4>Total Training Cost</h4>
-          <p class="big-number">$${data.total_training_cost || 0}</p>
+          <p class="big-number">₱${data.total_training_cost || 0}</p>
         </div>
         <div class="analytics-card full-width">
           <h4>Programs by Type</h4>
@@ -282,9 +282,9 @@
       const deptTable = departments.map(dept => `
         <tr>
           <td>${dept.department}</td>
-          <td>$${dept.allocated}</td>
-          <td>$${dept.spent}</td>
-          <td>$${dept.remaining}</td>
+          <td>₱${dept.allocated}</td>
+          <td>₱${dept.spent}</td>
+          <td>₱${dept.remaining}</td>
           <td><span class="progress-badge">${dept.percentage_spent}%</span></td>
         </tr>
       `).join('');

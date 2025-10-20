@@ -57,7 +57,7 @@ if (($endpoint === 'api.php' || $endpoint === '' || empty($endpoint) || $endpoin
     $connectionStatus['all_tables_in_current_db'] = $allTables;
     
     // Test if required tables exist
-    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history', 'leave_requests', 'employee_evaluations', 'attendance_records', 'budget', 'overtime_requests', 'training_programs', 'disciplinary_actions', 'grievances'];
+    $requiredTables = ['activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip_history', 'leave_requests', 'employee_evaluations', 'attendance_records', 'budget', 'overtime_requests', 'training_programs', 'disciplinary_actions', 'grievances', 'benefits'];
     $tableStatus = [];
     foreach ($requiredTables as $table) {
         $result = $conn->query("SHOW TABLES LIKE '$table'");
@@ -222,6 +222,86 @@ if ($action) {
             handleReportsAnalytics($conn, $method);
             break;
             
+        case 'get_benefits':
+            handleBenefits($conn, $method);
+            break;
+            
+        case 'add_benefit':
+            // Handle add benefit via POST
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                sendJsonResponse(['success' => false, 'message' => 'Only POST method allowed'], 405);
+            }
+            
+            // Validate required fields
+            if (!isset($_POST['employee_id'], $_POST['benefit_type'], $_POST['start_date'])) {
+                sendJsonResponse(['success' => false, 'message' => 'Missing required fields: employee_id, benefit_type, start_date'], 400);
+            }
+
+            $employeeId = intval($_POST['employee_id']);
+            $benefitType = $_POST['benefit_type'];
+            $startDate = $_POST['start_date'];
+            $description = isset($_POST['description']) && !empty($_POST['description']) ? $_POST['description'] : null;
+            $amount = isset($_POST['amount']) && !empty($_POST['amount']) ? floatval($_POST['amount']) : 0.00;
+            $endDate = isset($_POST['end_date']) && !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+            $status = isset($_POST['status']) ? $_POST['status'] : 'active';
+
+            // Validate employee_id
+            if ($employeeId < 10000 || $employeeId > 99999) {
+                sendJsonResponse(['success' => false, 'message' => 'Employee ID must be a 5-digit number'], 400);
+            }
+
+            // Get employee name
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if (!$result || $result->num_rows === 0) {
+                sendJsonResponse(['success' => false, 'message' => 'Employee ID not found'], 404);
+            }
+            
+            $employee = $result->fetch_assoc();
+            $employeeName = $employee['name'];
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM benefits WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Insert benefit record
+            if ($endDate) {
+                $stmt = $conn->prepare("INSERT INTO benefits (id, employee_id, employee_name, benefit_type, description, amount, start_date, end_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("iissdssss", $randomId, $employeeId, $employeeName, $benefitType, $description, $amount, $startDate, $endDate, $status);
+            } else {
+                $stmt = $conn->prepare("INSERT INTO benefits (id, employee_id, employee_name, benefit_type, description, amount, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("iissdsss", $randomId, $employeeId, $employeeName, $benefitType, $description, $amount, $startDate, $status);
+            }
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'message' => 'Benefit record saved successfully!',
+                    'id' => $randomId,
+                    'data' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $employeeName,
+                        'benefit_type' => $benefitType,
+                        'amount' => $amount,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['success' => false, 'message' => 'Failed to create benefit record', 'details' => $conn->error], 500);
+            }
+            break;
+            
         default:
             // Action not recognized, continue to path-based routing
             break;
@@ -279,12 +359,15 @@ switch ($endpoint) {
     case 'grievances':
         handleGrievances($conn, $method);
         break;
+    case 'benefits':
+        handleBenefits($conn, $method);
+        break;
     case 'reports':
     case 'analytics':
         handleReportsAnalytics($conn, $method);
         break;
     default:
-        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'disciplinary', 'disciplinary-actions', 'grievances', 'reports', 'analytics', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
+        sendJsonResponse(['error' => 'Endpoint not found', 'available_endpoints' => ['employees', 'new-employee', 'salary-requests', 'deleted-records', 'payslips', 'add-payslip', 'leave-requests', 'overtime-requests', 'evaluations', 'attendance', 'budget', 'training', 'training-programs', 'disciplinary', 'disciplinary-actions', 'grievances', 'benefits', 'reports', 'analytics', 'activerecords', 'employeesalaryrequests', 'deletedrecords', 'payslip-history']], 404);
 }
 
 // Insert-only employee endpoint
@@ -2879,6 +2962,295 @@ function handleGrievances($conn, $method) {
                 sendJsonResponse(['success' => true]);
             } else {
                 sendJsonResponse(['error' => 'Failed to delete grievance', 'details' => $conn->error], 500);
+            }
+            break;
+    }
+}
+
+// Benefits
+function handleBenefits($conn, $method) {
+    switch ($method) {
+        case 'GET':
+            // Get all benefits, optionally filtered
+            $employeeId = isset($_GET['employee_id']) ? $_GET['employee_id'] : null;
+            $status = isset($_GET['status']) ? $_GET['status'] : null;
+            $benefitType = isset($_GET['benefit_type']) ? $_GET['benefit_type'] : null;
+            
+            $query = "SELECT * FROM benefits";
+            $conditions = [];
+            $params = [];
+            $types = "";
+            
+            if ($employeeId) {
+                $conditions[] = "employee_id = ?";
+                $params[] = $employeeId;
+                $types .= "i";
+            }
+            
+            if ($status) {
+                $conditions[] = "status = ?";
+                $params[] = $status;
+                $types .= "s";
+            }
+            
+            if ($benefitType) {
+                $conditions[] = "benefit_type = ?";
+                $params[] = $benefitType;
+                $types .= "s";
+            }
+            
+            if (!empty($conditions)) {
+                $query .= " WHERE " . implode(" AND ", $conditions);
+            }
+            
+            $query .= " ORDER BY start_date DESC, date_created DESC";
+            
+            if (!empty($params)) {
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            } else {
+                $result = $conn->query($query);
+            }
+            
+            $benefits = [];
+            while ($row = $result->fetch_assoc()) {
+                $benefits[] = $row;
+            }
+            sendJsonResponse(['success' => true, 'data' => $benefits]);
+            break;
+
+        case 'POST':
+            // Create new benefit
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            // Validate required fields
+            $requiredFields = ['employee_id', 'benefit_type', 'start_date'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field]) || empty($input[$field])) {
+                    sendJsonResponse(['error' => "Missing required field: $field"], 400);
+                    return;
+                }
+            }
+
+            // Validate employee_id
+            $employeeId = intval($input['employee_id']);
+            if ($employeeId < 10000 || $employeeId > 99999) {
+                sendJsonResponse(['error' => 'Employee ID must be a 5-digit number'], 400);
+                return;
+            }
+
+            // Validate employee exists
+            $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+            $stmt->bind_param("i", $employeeId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if (!$result || $result->num_rows === 0) {
+                sendJsonResponse(['error' => 'Employee ID not found in active records'], 404);
+                return;
+            }
+            
+            $employee = $result->fetch_assoc();
+            $employeeName = $employee['name'];
+
+            // Validate dates
+            $startDate = $input['start_date'];
+            if (!strtotime($startDate)) {
+                sendJsonResponse(['error' => 'Invalid start date format'], 400);
+                return;
+            }
+
+            if (isset($input['end_date']) && !empty($input['end_date'])) {
+                $endDate = $input['end_date'];
+                if (!strtotime($endDate)) {
+                    sendJsonResponse(['error' => 'Invalid end date format'], 400);
+                    return;
+                }
+                
+                if (strtotime($endDate) < strtotime($startDate)) {
+                    sendJsonResponse(['error' => 'End date cannot be before start date'], 400);
+                    return;
+                }
+            } else {
+                $endDate = null;
+            }
+
+            // Validate status if provided
+            $status = isset($input['status']) ? $input['status'] : 'active';
+            $validStatuses = ['active', 'inactive', 'expired', 'cancelled'];
+            if (!in_array($status, $validStatuses)) {
+                sendJsonResponse(['error' => 'Invalid status. Must be: active, inactive, expired, or cancelled'], 400);
+                return;
+            }
+
+            // Validate amount if provided
+            $amount = isset($input['amount']) ? floatval($input['amount']) : 0.00;
+            if ($amount < 0) {
+                sendJsonResponse(['error' => 'Amount must be a positive number'], 400);
+                return;
+            }
+
+            // Generate unique random 5-digit ID
+            do {
+                $randomId = rand(10000, 99999);
+                $check = $conn->prepare("SELECT id FROM benefits WHERE id = ?");
+                $check->bind_param("i", $randomId);
+                $check->execute();
+                $result = $check->get_result();
+            } while ($result && $result->num_rows > 0);
+
+            // Prepare optional fields
+            $description = isset($input['description']) ? $input['description'] : null;
+            $notes = isset($input['notes']) ? $input['notes'] : null;
+
+            // Insert benefit record
+            $stmt = $conn->prepare("
+                INSERT INTO benefits 
+                (id, employee_id, employee_name, benefit_type, description, amount, 
+                 start_date, end_date, status, notes) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            
+            $stmt->bind_param(
+                "iissdssss", 
+                $randomId,
+                $employeeId,
+                $employeeName,
+                $input['benefit_type'],
+                $description,
+                $amount,
+                $startDate,
+                $endDate,
+                $status,
+                $notes
+            );
+            
+            if ($stmt->execute()) {
+                sendJsonResponse([
+                    'success' => true, 
+                    'message' => 'Benefit record created successfully!',
+                    'id' => $randomId,
+                    'benefit' => [
+                        'id' => $randomId,
+                        'employee_id' => $employeeId,
+                        'employee_name' => $employeeName,
+                        'benefit_type' => $input['benefit_type'],
+                        'amount' => $amount,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'status' => $status
+                    ]
+                ]);
+            } else {
+                sendJsonResponse(['error' => 'Failed to create benefit record', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'PUT':
+            // Update benefit record
+            $input = json_decode(file_get_contents('php://input'), true);
+
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Benefit ID is required'], 400);
+                return;
+            }
+
+            $id = intval($input['id']);
+            $updates = [];
+            $params = [];
+            $types = "";
+
+            // Build dynamic update query
+            if (isset($input['status'])) {
+                $validStatuses = ['active', 'inactive', 'expired', 'cancelled'];
+                if (!in_array($input['status'], $validStatuses)) {
+                    sendJsonResponse(['error' => 'Invalid status'], 400);
+                    return;
+                }
+                $updates[] = "status = ?";
+                $params[] = $input['status'];
+                $types .= "s";
+            }
+
+            if (isset($input['benefit_type'])) {
+                $updates[] = "benefit_type = ?";
+                $params[] = $input['benefit_type'];
+                $types .= "s";
+            }
+
+            if (isset($input['description'])) {
+                $updates[] = "description = ?";
+                $params[] = $input['description'];
+                $types .= "s";
+            }
+
+            if (isset($input['notes'])) {
+                $updates[] = "notes = ?";
+                $params[] = $input['notes'];
+                $types .= "s";
+            }
+
+            if (isset($input['amount'])) {
+                $amount = floatval($input['amount']);
+                if ($amount < 0) {
+                    sendJsonResponse(['error' => 'Amount must be a positive number'], 400);
+                    return;
+                }
+                $updates[] = "amount = ?";
+                $params[] = $amount;
+                $types .= "d";
+            }
+
+            if (isset($input['start_date'])) {
+                $updates[] = "start_date = ?";
+                $params[] = $input['start_date'];
+                $types .= "s";
+            }
+
+            if (isset($input['end_date'])) {
+                $updates[] = "end_date = ?";
+                $params[] = $input['end_date'];
+                $types .= "s";
+            }
+
+            if (empty($updates)) {
+                sendJsonResponse(['error' => 'No valid fields to update'], 400);
+                return;
+            }
+
+            // Add ID parameter
+            $params[] = $id;
+            $types .= "i";
+
+            $query = "UPDATE benefits SET " . implode(", ", $updates) . " WHERE id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+
+            if ($stmt->execute()) {
+                sendJsonResponse(['success' => true, 'message' => 'Benefit record updated successfully!']);
+            } else {
+                sendJsonResponse(['error' => 'Failed to update benefit record', 'details' => $conn->error], 500);
+            }
+            break;
+
+        case 'DELETE':
+            // Delete benefit record
+            $input = json_decode(file_get_contents('php://input'), true);
+            
+            if (!isset($input['id'])) {
+                sendJsonResponse(['error' => 'Benefit ID is required'], 400);
+                return;
+            }
+            
+            $id = intval($input['id']);
+            
+            if ($conn->query("DELETE FROM benefits WHERE id = $id")) {
+                sendJsonResponse(['success' => true, 'message' => 'Benefit record deleted successfully!']);
+            } else {
+                sendJsonResponse(['error' => 'Failed to delete benefit record', 'details' => $conn->error], 500);
             }
             break;
     }

@@ -68,7 +68,7 @@
       e.preventDefault();
       try {
         const formData = new FormData(this);
-        const response = await fetch("../api/api.php?action=add_benefit", { 
+        const response = await fetch("http://localhost:3000/api/api.php?action=add_benefit", { 
           method: "POST", 
           body: formData 
         });
@@ -84,7 +84,7 @@
 
     async function loadData() {
       try {
-        const response = await fetch("../api/api.php?action=get_benefits");
+        const response = await fetch("http://localhost:3000/api/api.php?action=get_benefits");
         const data = await response.json();
         const tbody = document.querySelector("#benefitsTable tbody");
         tbody.innerHTML = "";

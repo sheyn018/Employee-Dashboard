@@ -155,9 +155,9 @@
             tbody.innerHTML += `<tr ${statusClass}>
               <td>${row.id || ''}</td>
               <td>${row.department || ''}</td>
-              <td>$${parseFloat(row.allocated_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-              <td>$${parseFloat(row.spent_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-              <td>$${remainingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>₱${parseFloat(row.allocated_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>₱${parseFloat(row.spent_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+              <td>₱${remainingAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
               <td>${percentageSpent}%</td>
               <td>${row.fiscal_year || ''}</td>
               <td>

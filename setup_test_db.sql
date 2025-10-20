@@ -276,6 +276,30 @@ CREATE TABLE IF NOT EXISTS grievances (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+-- benefits
+
+CREATE TABLE IF NOT EXISTS benefits (
+  id INT PRIMARY KEY CHECK (id BETWEEN 10000 AND 99999), -- 5-digit benefit id
+  employee_id INT NULL CHECK (employee_id BETWEEN 10000 AND 99999),
+  employee_name VARCHAR(100) NOT NULL,
+  benefit_type VARCHAR(100) NOT NULL, -- e.g., 'Health Insurance', 'Dental', 'Vision', 'Retirement 401k', 'Life Insurance', 'Bonus', 'Allowance'
+  description TEXT,
+  amount DECIMAL(10,2) DEFAULT 0.00,
+  start_date DATE NOT NULL,
+  end_date DATE NULL,
+  status ENUM('active', 'inactive', 'expired', 'cancelled') DEFAULT 'active',
+  notes TEXT,
+  date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  date_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_benefit_employee FOREIGN KEY (employee_id) REFERENCES activerecords(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  KEY idx_benefit_type (benefit_type),
+  KEY idx_status (status),
+  KEY idx_start_date (start_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 -- Sample Data
 
 
@@ -362,4 +386,15 @@ INSERT INTO grievances (id, employee_id, employee_name, grievance_type, priority
 (99101, 24680, 'Maria Garcia', 'workload', 'high', 'Excessive overtime requirements without adequate compensation', 'Over the past 3 months, I have been consistently required to work 10-15 hours of overtime per week. While overtime requests are being tracked, the compensation does not match the actual hours worked. This is affecting my work-life balance and health.', '2025-09-25', 'Fair compensation for all overtime hours worked, and a review of staffing levels to reduce excessive overtime requirements.', NULL, 'Restaurant Operations', 'under_review', 'Emily Davis', 'Initial review conducted. Time records being audited for the past 3 months. Manager interview scheduled.', NULL, '2025-09-25 10:15:00'),
 (99102, 35791, 'Michael Lee', 'management_issue', 'medium', 'Lack of communication and unclear performance expectations', 'My supervisor has not provided clear performance objectives for this quarter. Multiple requests for one-on-one meetings have been declined or rescheduled. I am uncertain about project priorities and feel unsupported in my role.', '2025-10-05', 'Regular one-on-one meetings with supervisor, clear written performance objectives, and improved communication channels.', 'Dr. Chemistry Head', 'Research & Development', 'investigation', 'Emily Davis', 'Met with employee. Concerns appear valid. Scheduling meeting with supervisor to address communication breakdown. Will implement structured check-in schedule.', NULL, '2025-10-05 14:00:00'),
 (99103, 46802, 'Emily Davis', 'workplace_safety', 'urgent', 'Inadequate ergonomic setup causing physical strain', 'Current desk setup does not meet ergonomic standards. Despite multiple requests for an adjustable chair and monitor stand, no action has been taken. Experiencing back and neck pain that is worsening.', '2025-10-10', 'Immediate provision of ergonomic office furniture including adjustable chair, monitor stand, and keyboard tray. Ergonomic assessment of workstation.', NULL, 'HR Department', 'resolved', 'John Manager', 'Urgent priority due to health concerns. Ergonomic assessment completed. New furniture ordered and installed within 48 hours.', 'Ergonomic workstation setup completed. Employee reports significant improvement. Follow-up scheduled in 2 weeks to ensure continued comfort.', '2025-10-10 09:00:00');
+
+-- Benefits (sample data)
+INSERT INTO benefits (id, employee_id, employee_name, benefit_type, description, amount, start_date, end_date, status, notes, date_created) VALUES
+(99201, 13579, 'William Searl', 'Health Insurance', 'Comprehensive health coverage including medical, dental, and vision', 450.00, '2025-01-01', '2025-12-31', 'active', 'Premium plan with low deductible', '2025-01-01 09:00:00'),
+(99202, 13579, 'William Searl', 'Retirement 401k', 'Company match up to 6% of salary', 3000.00, '2025-01-01', NULL, 'active', 'Employer contributes 50% match up to 6%', '2025-01-01 09:00:00'),
+(99203, 24680, 'Maria Garcia', 'Health Insurance', 'Basic health coverage', 250.00, '2025-01-01', '2025-12-31', 'active', 'Standard plan', '2025-01-01 09:00:00'),
+(99204, 24680, 'Maria Garcia', 'Performance Bonus', 'Quarterly performance bonus', 500.00, '2025-09-01', '2025-09-30', 'active', 'Q3 2025 bonus for excellent customer service', '2025-09-01 10:00:00'),
+(99205, 35791, 'Michael Lee', 'Health Insurance', 'Premium health coverage', 600.00, '2025-01-01', '2025-12-31', 'active', 'Premium plan with specialist coverage', '2025-01-01 09:00:00'),
+(99206, 35791, 'Michael Lee', 'Research Allowance', 'Annual research and development allowance', 2000.00, '2025-01-01', '2025-12-31', 'active', 'For professional development and research materials', '2025-01-01 09:00:00'),
+(99207, 46802, 'Emily Davis', 'Health Insurance', 'Comprehensive health coverage', 500.00, '2025-01-01', '2025-12-31', 'active', 'Premium plan', '2025-01-01 09:00:00'),
+(99208, 46802, 'Emily Davis', 'Professional Development', 'Annual training and certification budget', 1500.00, '2025-01-01', '2025-12-31', 'active', 'For HR certifications and professional development', '2025-01-01 09:00:00');
 
