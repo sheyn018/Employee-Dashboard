@@ -14,7 +14,7 @@ const EmployeeNavigation = {
         title: "My Requests",
         items: [
           { href: "salary-request.html", icon: "💰📝", text: "Salary Request" },
-          { href: "leave.html", icon: "🏖️", text: "Leave Request" }
+          { href: "leave-request.html", icon: "🏖️", text: "Leave Request" }
         ]
       },
       {

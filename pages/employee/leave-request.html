@@ -101,19 +101,19 @@
   <!-- JavaScript for form handling -->
   <script>
     // Disable auto-initialization to customize the navigation
-    window.AdminNavigation_AutoInit = false;
+    window.EmployeeNavigation_AutoInit = false;
   </script>
-  <script src="../../components/navigation-admin.js"></script>
+  <script src="../../components/navigation-employee.js"></script>
   <script>
-    // Initialize admin navigation
-    AdminNavigation.init({
+    // Initialize employee navigation
+    EmployeeNavigation.init({
       containerId: 'navigation-container',
       includeLogout: true,
       authCheck: true
     });
 
     // Set the current page as active
-    AdminNavigation.setActiveNavItem('leave-request.html');
+    EmployeeNavigation.setActiveNavItem('leave-request.html');
 
     // API base URL
     const API_BASE = 'http://localhost:3000/api/api.php';
