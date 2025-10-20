@@ -1,12 +1,15 @@
-p<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Leave Management</title>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="stylesheet" href="../../css/modules.css">
+  <link rel="stylesheet" href="../../components/navigation.css">
 </head>
 <body>
+<div id="navigation-container"></div>
+
 <div class="container">
   <h2>🏖️ Leave Management</h2>
   <form id="leaveForm">
@@ -68,6 +71,23 @@ async function loadData(){
   });
 }
 loadData();
+</script>
+
+<script>
+  // Disable auto-initialization - MUST be set before loading navigation.js
+  window.NavigationComponent_AutoInit = false;
+</script>
+<script src="../../components/navigation.js"></script>
+<script>
+  // Initialize navigation for employee
+  NavigationComponent.init({
+    menuType: 'employee',
+    includeLogout: true,
+    authCheck: true
+  });
+  
+  // Set active navigation item
+  NavigationComponent.setActiveNavItem('leave.html');
 </script>
 </body>
 </html>

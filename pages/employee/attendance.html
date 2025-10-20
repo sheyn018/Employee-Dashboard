@@ -120,11 +120,13 @@
   </section>
 
   <!-- JavaScript -->
+  <script>
+    // Disable auto-initialization - MUST be set before loading navigation.js
+    window.NavigationComponent_AutoInit = false;
+  </script>
   <script src="../../components/navigation.js"></script>
   <script>
     // Navigation setup
-    window.NavigationComponent_AutoInit = false;
-    
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin === "true") {
       NavigationComponent.init({

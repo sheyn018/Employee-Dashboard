@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Work Page - HR Connect</title>
+  <link rel="stylesheet" href="../../components/navigation.css">
   <style>
     body {
       margin: 0;
@@ -29,6 +30,7 @@
       padding: 20px;
       text-align: center;
       animation: floatBox 4s ease-in-out infinite;
+      margin-top: 80px; /* Add spacing for navigation buttons */
     }
 
     @keyframes floatBox {
@@ -153,6 +155,8 @@
   </style>
 </head>
 <body>
+  <div id="navigation-container"></div>
+  
   <div class="work-container">
     <div class="stats-container">
       <div class="stat-card">
@@ -335,6 +339,23 @@
       loadRandomWord();
       updateDisplay();
     };
+  </script>
+  
+  <script>
+    // Disable auto-initialization - MUST be set before loading navigation.js
+    window.NavigationComponent_AutoInit = false;
+  </script>
+  <script src="../../components/navigation.js"></script>
+  <script>
+    // Initialize navigation for employee
+    NavigationComponent.init({
+      menuType: 'employee',
+      includeLogout: true,
+      authCheck: true
+    });
+    
+    // Set active navigation item
+    NavigationComponent.setActiveNavItem('workpage.html');
   </script>
 </body>
 </html>

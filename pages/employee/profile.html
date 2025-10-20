@@ -1,9 +1,10 @@
-p<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Employee Profile - HR Connect</title>
+  <link rel="stylesheet" href="../../components/navigation.css">
   <style>
     body {
       margin: 0;
@@ -20,75 +21,6 @@ p<!DOCTYPE html>
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
-    }
-
-    .menu-btn {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      font-size: 22px;
-      background-color: rgba(0, 0, 0, 0.6);
-      color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      z-index: 10;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
-    }
-    .menu-btn:hover {
-      background-color: rgba(0, 0, 0, 0.8);
-      transform: translateY(-2px);
-    }
-
-    .btn-logout {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #ff6b6b, #e63946);
-      padding: 10px 20px;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 15px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
-    }
-    .btn-logout:hover {
-      background: linear-gradient(135deg, #d62828, #b71c1c);
-      transform: translateY(-2px);
-    }
-
-    .sidebar {
-      height: 100%;
-      width: 0;
-      position: fixed;
-      z-index: 9;
-      top: 0;
-      left: 0;
-      background-color: rgba(0, 0, 0, 0.95);
-      overflow-x: hidden;
-      transition: 0.5s;
-      padding-top: 60px;
-    }
-    .sidebar a {
-      padding: 15px 25px;
-      text-decoration: none;
-      font-size: 18px;
-      color: white;
-      display: block;
-      transition: 0.3s;
-    }
-    .sidebar a:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-    .sidebar .closebtn {
-      position: absolute;
-      top: 0;
-      right: 25px;
-      font-size: 36px;
     }
 
     header {
@@ -217,14 +149,7 @@ p<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <button class="menu-btn" onclick="openNav()">☰</button>
-  <button class="btn-logout" onclick="logout()">Logout</button>
-
-  <div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    <a href="profile.html">👤 Profile</a>
-    <a href="workpage.html">💼 Work Page</a>
-  </div>
+  <div id="navigation-container"></div>
 
   <header>
     <img src="../logo.jpg" alt="HR Connect Logo">
@@ -296,15 +221,6 @@ p<!DOCTYPE html>
     document.getElementById("tasksCompleted").textContent = employeeData.tasksCompleted || 0;
     document.getElementById("avgSpeed").textContent = employeeData.avgSpeed || 0;
 
-    function logout() {
-      localStorage.removeItem("isEmployee");
-      localStorage.removeItem("loggedInEmployee");
-      localStorage.removeItem("currentEmployeeName");
-      window.location.href = "index.html";
-    }
-    function openNav() { document.getElementById("mySidebar").style.width = "250px"; }
-    function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
-
     function updateProfilePhoto(input) {
       if (input.files && input.files[0]) {
         const reader = new FileReader();
@@ -321,6 +237,23 @@ p<!DOCTYPE html>
         document.getElementById('profilePhoto').src = savedPhoto;
       }
     };
+  </script>
+  
+  <script>
+    // Disable auto-initialization - MUST be set before loading navigation.js
+    window.NavigationComponent_AutoInit = false;
+  </script>
+  <script src="../../components/navigation.js"></script>
+  <script>
+    // Initialize navigation for employee
+    NavigationComponent.init({
+      menuType: 'employee',
+      includeLogout: true,
+      authCheck: true
+    });
+    
+    // Set active navigation item
+    NavigationComponent.setActiveNavItem('profile.html');
   </script>
 </body>
 </html>

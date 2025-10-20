@@ -89,23 +89,18 @@
   </section>
 
   <!-- JavaScript for form handling -->
+  <script>
+    // Disable auto-initialization - MUST be set before loading navigation.js
+    window.NavigationComponent_AutoInit = false;
+  </script>
   <script src="../../components/navigation.js"></script>
   <script>
-    // Disable auto-initialization to customize the navigation
-    window.NavigationComponent_AutoInit = false;
-    
-    const isAdmin = localStorage.getItem("isAdmin");
-    if (isAdmin !== "true") {
-      alert("Access denied. Admins only.");
-      window.location.href = "admin-login.html";
-    }
-
-    // Initialize navigation with custom options
+    // Initialize navigation for employee (this is an employee page)
     NavigationComponent.init({
       containerId: 'navigation-container',
-      menuType: 'admin',
+      menuType: 'employee',
       includeLogout: true,
-      authCheck: false // We already checked above
+      authCheck: false
     });
 
     // Set the current page as active
