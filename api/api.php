@@ -314,6 +314,9 @@ switch ($endpoint) {
     case 'activerecords':
         handleEmployees($conn, $method);
         break;
+    case 'employee-lookup':
+        handleEmployeeLookup($conn, $method);
+        break;
     case 'new-employee':
         handleNewEmployee($conn, $method);
         break;
@@ -399,6 +402,55 @@ function handleNewEmployee($conn, $method) {
         sendJsonResponse(['success' => true, 'id' => $randomId]);
     } else {
         sendJsonResponse(['error' => 'Failed to insert new employee', 'details' => $conn->error], 500);
+    }
+}
+
+// Employee lookup by ID
+function handleEmployeeLookup($conn, $method) {
+    if ($method !== 'GET') {
+        sendJsonResponse(['error' => 'Only GET method allowed'], 405);
+    }
+
+    // Check if employee_id is provided
+    if (!isset($_GET['id']) || empty($_GET['id'])) {
+        sendJsonResponse(['error' => 'Employee ID is required'], 400);
+    }
+
+    $employeeId = intval($_GET['id']);
+
+    // Validate employee_id format (5-digit number)
+    if ($employeeId < 10000 || $employeeId > 99999) {
+        sendJsonResponse(['error' => 'Employee ID must be a 5-digit number (10000-99999)'], 400);
+    }
+
+    // Lookup employee in activerecords
+    $stmt = $conn->prepare("SELECT id, name, position, work_date, time_in, time_out, earnings FROM activerecords WHERE id = ? LIMIT 1");
+    $stmt->bind_param("i", $employeeId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result && $result->num_rows > 0) {
+        $employee = $result->fetch_assoc();
+        
+        // Format response with employee data
+        sendJsonResponse([
+            'success' => true,
+            'employee' => [
+                'id' => intval($employee['id']),
+                'name' => $employee['name'],
+                'position' => $employee['position'],
+                'work_date' => $employee['work_date'],
+                'time_in' => $employee['time_in'],
+                'time_out' => $employee['time_out'],
+                'earnings' => floatval($employee['earnings'])
+            ]
+        ]);
+    } else {
+        sendJsonResponse([
+            'success' => false,
+            'error' => 'Employee ID not found',
+            'message' => 'No employee found with ID: ' . $employeeId
+        ], 404);
     }
 }
 

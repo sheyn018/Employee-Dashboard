@@ -15,8 +15,15 @@
   <div class="container">
     <h2>💼 Employee Benefits</h2>
     <form id="benefitForm">
-      <label>Employee ID</label>
-      <input type="number" name="employee_id" required>
+      <label>Employee ID <span style="color: red;">*</span></label>
+      <input type="number" name="employee_id" id="employee_id" required min="10000" max="99999" placeholder="Enter 5-digit ID">
+      <small id="employee_id_hint" style="color: #666; font-size: 11px;">Enter employee ID to auto-fill name</small>
+      <small id="employee_id_error" style="color: #d32f2f; font-size: 11px; display: none;"></small>
+      
+      <label>Employee Name <span style="color: red;">*</span></label>
+      <input type="text" id="employee_name_display" readonly style="background: #f5f5f5;" placeholder="Auto-filled">
+      <small style="color: #666; font-size: 11px;">Auto-filled from Employee ID</small>
+      
       <label>Benefit Type</label>
       <input type="text" name="benefit_type" required>
       <label>Description</label>
@@ -62,10 +69,109 @@
       
       // Load data
       loadData();
+      
+      // Employee ID lookup functionality
+      setupEmployeeLookup();
     });
+
+    const API_BASE = 'http://localhost:3000/api/api.php';
+    let currentEmployeeName = '';
+
+    function setupEmployeeLookup() {
+      const employeeIdInput = document.getElementById('employee_id');
+      const employeeNameDisplay = document.getElementById('employee_name_display');
+      const employeeIdError = document.getElementById('employee_id_error');
+      const employeeIdHint = document.getElementById('employee_id_hint');
+      
+      let lookupTimeout = null;
+      
+      employeeIdInput.addEventListener('input', function() {
+        const employeeId = this.value.trim();
+        
+        // Clear previous timeout
+        if (lookupTimeout) {
+          clearTimeout(lookupTimeout);
+        }
+        
+        // Reset fields if input is cleared
+        if (!employeeId) {
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+          employeeIdError.style.display = 'none';
+          employeeIdHint.style.display = 'block';
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+          return;
+        }
+        
+        // Only lookup if it's a 5-digit number
+        if (employeeId.length === 5 && /^\d{5}$/.test(employeeId)) {
+          // Debounce lookup by 500ms
+          lookupTimeout = setTimeout(() => {
+            lookupEmployee(employeeId);
+          }, 500);
+        } else if (employeeId.length >= 5) {
+          employeeIdError.textContent = 'Employee ID must be exactly 5 digits';
+          employeeIdError.style.display = 'block';
+          employeeIdHint.style.display = 'none';
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+        }
+      });
+      
+      async function lookupEmployee(employeeId) {
+        try {
+          employeeIdHint.textContent = 'Looking up employee...';
+          employeeIdHint.style.color = '#1976d2';
+          employeeIdError.style.display = 'none';
+          
+          const response = await fetch(`${API_BASE}/employee-lookup?id=${employeeId}`);
+          const result = await response.json();
+          
+          if (response.ok && result.success && result.employee) {
+            // Auto-fill employee name
+            employeeNameDisplay.value = result.employee.name;
+            currentEmployeeName = result.employee.name;
+            
+            // Show success message
+            employeeIdHint.textContent = '✓ Employee found';
+            employeeIdHint.style.color = '#2e7d32';
+            employeeIdError.style.display = 'none';
+            
+            // Reset hint after 2 seconds
+            setTimeout(() => {
+              employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+              employeeIdHint.style.color = '#666';
+            }, 2000);
+          } else {
+            // Employee not found
+            employeeNameDisplay.value = '';
+            currentEmployeeName = '';
+            employeeIdError.textContent = result.error || 'Employee ID not found';
+            employeeIdError.style.display = 'block';
+            employeeIdHint.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error looking up employee:', error);
+          employeeNameDisplay.value = '';
+          currentEmployeeName = '';
+          employeeIdError.textContent = 'Error connecting to server';
+          employeeIdError.style.display = 'block';
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+        }
+      }
+    }
 
     document.getElementById("benefitForm").addEventListener("submit", async function(e) {
       e.preventDefault();
+      
+      // Validate employee name is populated
+      if (!currentEmployeeName) {
+        alert('Please enter a valid Employee ID first. Employee name must be auto-filled.');
+        return;
+      }
+      
       try {
         const formData = new FormData(this);
         const response = await fetch("http://localhost:3000/api/api.php?action=add_benefit", { 
