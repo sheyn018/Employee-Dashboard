@@ -16,7 +16,7 @@ const NavigationComponent = {
           title: "Employee Management",
           items: [
             { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
-            { href: "attendance.html", icon: "📅", text: "Attendance Tracking" },
+            { href: "../employee/attendance.html", icon: "📅", text: "Attendance Tracking" },
             { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
             { href: "evaluations-view.html", icon: "⭐", text: "View Evaluations" },
             { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
@@ -35,7 +35,7 @@ const NavigationComponent = {
         {
           title: "Employee Requests",
           items: [
-            { href: "salary-request.html", icon: "💰📝", text: "Salary Requests" },
+            { href: "../employee/salary-request.html", icon: "💰📝", text: "Salary Requests" },
             { href: "leave-request.html", icon: "🏖️📝", text: "Leave Requests" },
             { href: "leave-management.html", icon: "📋✅", text: "Leave Management" }
           ]
@@ -53,7 +53,7 @@ const NavigationComponent = {
         {
           title: "Dashboard",
           items: [
-            { href: "dashboard.html", icon: "👥", text: "My Dashboard" },
+            { href: "workpage.html", icon: "👥", text: "My Dashboard" },
             { href: "attendance.html", icon: "📋", text: "My Attendance" }
           ]
         },
@@ -61,29 +61,20 @@ const NavigationComponent = {
           title: "My Requests",
           items: [
             { href: "salary-request.html", icon: "💵", text: "Submit Salary Request" },
-            { href: "leave-request.html", icon: "📅", text: "Request Leave" }
+            { href: "leave.html", icon: "📅", text: "Request Leave" }
           ]
         },
         {
-          title: "Payroll & Benefits",
+          title: "My Profile",
           items: [
-            { href: "payslip.html", icon: "💰", text: "My Payslips" },
-            { href: "benefits.html", icon: "🎁", text: "My Benefits" },
-            { href: "overtime.html", icon: "⏰", text: "Overtime Records" }
-          ]
-        },
-        {
-          title: "Training & Development",
-          items: [
-            { href: "training.html", icon: "🎓", text: "Training Programs" },
-            { href: "evaluation-form.html", icon: "📊", text: "Self Evaluation" }
+            { href: "profile.html", icon: "👤", text: "My Profile" }
           ]
         },
         {
           title: "Company Info",
           items: [
-            { href: "service.html", icon: "🔧", text: "Services" },
-            { href: "contact.html", icon: "📞", text: "Contact Information" }
+            { href: "../service.html", icon: "🔧", text: "Services" },
+            { href: "../contact.html", icon: "📞", text: "Contact Information" }
           ]
         }
       ]
@@ -163,8 +154,12 @@ const NavigationComponent = {
   // Logout functionality
   logout: function() {
     localStorage.removeItem("isAdmin");
+    localStorage.removeItem("isEmployee");
+    localStorage.removeItem("loggedInEmployee");
+    localStorage.removeItem("currentEmployeeName");
+    localStorage.removeItem("loginTime");
     localStorage.removeItem("userType");
-    window.location.href = "index.html";
+    window.location.href = "../index.html";
   },
 
   // Add logout button
@@ -195,9 +190,17 @@ const NavigationComponent = {
     // Check authentication if enabled
     if (authCheck) {
       const isAdmin = localStorage.getItem("isAdmin");
-      if (isAdmin !== "true") {
+      const isEmployee = localStorage.getItem("isEmployee");
+      
+      if (menuType === 'admin' && isAdmin !== "true") {
         alert("Access denied. Admins only.");
-        window.location.href = "admin-login.html";
+        window.location.href = "../admin-login.html";
+        return;
+      }
+      
+      if (menuType === 'employee' && isEmployee !== "true") {
+        alert("Access denied. Please log in.");
+        window.location.href = "../login.html";
         return;
       }
     }

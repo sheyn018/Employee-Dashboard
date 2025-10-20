@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard - HR Connect</title>
-  <link rel="stylesheet" href="../css/dashboard.css"/>
-  <link rel="stylesheet" href="../components/navigation.css"/>
+  <link rel="stylesheet" href="../../css/dashboard.css"/>
+  <link rel="stylesheet" href="../../components/navigation.css"/>
 </head>
 <body>
   <header><h1>Employee Records</h1></header>
@@ -76,13 +76,13 @@
         <tbody id="evaluationsTableBody"></tbody>
       </table>
 
-      <center><a href="index.html" class="btn">Back to Home</a></center>
+      <center><a href="../index.html" class="btn">Back to Home</a></center>
       <center><button class="btn-logout" onclick="NavigationComponent.logout()">Log Out</button></center>
     </div>
   </section>
 
   <!-- JavaScript to handle data fetching and rendering -->
-  <script src="../components/navigation.js"></script>
+  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
     window.NavigationComponent_AutoInit = false;
@@ -90,7 +90,7 @@
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
       alert("Access denied. Admins only.");
-      window.location.href = "admin-login.html";
+      window.location.href = "../admin-login.html";
     }
 
     // Initialize navigation with custom options
@@ -407,3 +407,8 @@
   </script>
 </body>
 </html>
+
+
+
+
+

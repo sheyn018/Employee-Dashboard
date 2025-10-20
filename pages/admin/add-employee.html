@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add New Employee</title>
-  <link rel="stylesheet" href="../css/add-employee.css">
-  <link rel="stylesheet" href="../css/dashboard.css"/>
-  <link rel="stylesheet" href="../components/navigation.css"/>
+  <link rel="stylesheet" href="../../css/add-employee.css">
+  <link rel="stylesheet" href="../../css/dashboard.css"/>
+  <link rel="stylesheet" href="../../components/navigation.css"/>
 </head>
 <body>
   <!-- Nav Component -->
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <script src="../components/navigation.js"></script>
+  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
     window.NavigationComponent_AutoInit = false;
@@ -69,7 +69,7 @@
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
       alert("Access denied. Admins only.");
-      window.location.href = "admin-login.html";
+      window.location.href = "../admin-login.html";
     }
 
     // Initialize navigation with custom options
@@ -125,3 +125,8 @@
   </script>
 </body>
 </html>
+
+
+
+
+

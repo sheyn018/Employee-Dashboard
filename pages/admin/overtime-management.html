@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Leave Management - HR Connect</title>
-  <link rel="stylesheet" href="../css/leave-management.css"/>
-  <link rel="stylesheet" href="../css/dashboard.css"/>
-  <link rel="stylesheet" href="../components/navigation.css"/>
+  <title>Overtime Management - HR Connect</title>
+  <link rel="stylesheet" href="../../css/overtime-management.css"/>
+  <link rel="stylesheet" href="../../css/dashboard.css"/>
+  <link rel="stylesheet" href="../../components/navigation.css"/>
 </head>
 <body>
-  <header><h1>Leave Management Dashboard</h1></header>
+  <header><h1>Overtime Management Dashboard</h1></header>
 
   <!-- Nav Component -->
   <div id="navigation-container"></div>
@@ -18,8 +18,8 @@
     <div class="container">
       <div class="dashboard-header">
         <div>
-          <h2>📋 Leave Requests Overview</h2>
-          <p>Review and manage employee leave requests</p>
+          <h2>⏰ Overtime Requests Overview</h2>
+          <p>Review and manage employee overtime requests</p>
         </div>
         <div class="header-stats">
           <div class="stat-card pending">
@@ -50,13 +50,13 @@
         </div>
         <div class="filter-group">
           <label for="searchEmployee">Search Employee:</label>
-          <input type="text" id="searchEmployee" placeholder="Enter employee name...">
+          <input type="text" id="searchEmployee" placeholder="Enter employee name or ID...">
         </div>
         <div class="filter-group">
           <label for="dateFilter">Filter by Date:</label>
           <input type="date" id="dateFilter">
         </div>
-        <button class="btn-refresh" onclick="loadLeaveRequests()">🔄 Refresh</button>
+        <button class="btn-refresh" onclick="loadOvertimeRequests()">🔄 Refresh</button>
       </div>
 
       <!-- Quick View Tabs -->
@@ -75,34 +75,33 @@
         </button>
       </div>
 
-      <!-- Leave Requests Table -->
+      <!-- Overtime Requests Table -->
       <div class="table-container">
-        <table class="leave-table">
+        <table class="overtime-table">
           <thead>
             <tr>
               <th>ID</th>
               <th>Employee Name</th>
-              <th>Leave Type</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Duration</th>
+              <th>Employee ID</th>
+              <th>Date</th>
+              <th>Hours</th>
               <th>Reason</th>
               <th>Status</th>
               <th>Requested On</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="leaveTableBody">
+          <tbody id="overtimeTableBody">
             <!-- Data will be loaded here -->
           </tbody>
         </table>
         <div id="noDataMessage" class="no-data" style="display: none;">
           <div class="no-data-icon">📭</div>
-          <p>No leave requests found</p>
+          <p>No overtime requests found</p>
         </div>
         <div id="loadingMessage" class="loading-message">
           <div class="spinner"></div>
-          <p>Loading leave requests...</p>
+          <p>Loading overtime requests...</p>
         </div>
       </div>
 
@@ -131,7 +130,7 @@
   </section>
 
   <!-- JavaScript -->
-  <script src="../components/navigation.js"></script>
+  <script src="../../components/navigation.js"></script>
   <script>
     // Disable auto-initialization to customize the navigation
     window.NavigationComponent_AutoInit = false;
@@ -140,7 +139,7 @@
     const isAdmin = localStorage.getItem("isAdmin");
     if (isAdmin !== "true") {
       alert("Access denied. Admins only.");
-      window.location.href = "admin-login.html";
+      window.location.href = "../admin-login.html";
     }
 
     // Initialize navigation
@@ -151,19 +150,19 @@
       authCheck: false
     });
 
-    NavigationComponent.setActiveNavItem('leave-management.html');
+    NavigationComponent.setActiveNavItem('overtime-management.html');
 
     // API Configuration
     const API_BASE = 'http://localhost:3000/api/api.php';
     
     // Global variables
-    let allLeaveRequests = [];
+    let allOvertimeRequests = [];
     let currentAction = null;
     let currentRequestId = null;
 
-    // Load leave requests on page load
+    // Load overtime requests on page load
     document.addEventListener('DOMContentLoaded', function() {
-      loadLeaveRequests();
+      loadOvertimeRequests();
       
       // Set up filter listeners
       document.getElementById('statusFilter').addEventListener('change', filterRequests);
@@ -171,10 +170,10 @@
       document.getElementById('dateFilter').addEventListener('change', filterRequests);
     });
 
-    // Load all leave requests from API
-    async function loadLeaveRequests() {
+    // Load all overtime requests from API
+    async function loadOvertimeRequests() {
       const loadingMessage = document.getElementById('loadingMessage');
-      const tableBody = document.getElementById('leaveTableBody');
+      const tableBody = document.getElementById('overtimeTableBody');
       const noDataMessage = document.getElementById('noDataMessage');
       
       loadingMessage.style.display = 'block';
@@ -182,31 +181,24 @@
       tableBody.innerHTML = '';
 
       try {
-        const response = await fetch(`${API_BASE}/leave-requests`);
+        const response = await fetch(`${API_BASE}/overtime-requests`);
         const data = await response.json();
 
-        console.log('=== API RESPONSE DEBUG ===');
+        console.log('=== OVERTIME API RESPONSE ===');
         console.log('Full response:', data);
-        console.log('Is array:', Array.isArray(data));
-        if (Array.isArray(data) && data.length > 0) {
-          console.log('First item:', data[0]);
-          console.log('First item keys:', Object.keys(data[0]));
-          console.log('ID field value:', data[0].id);
-          console.log('ID field type:', typeof data[0].id);
-        }
-        console.log('========================');
+        console.log('============================');
 
         if (response.ok && Array.isArray(data)) {
-          allLeaveRequests = data;
+          allOvertimeRequests = data;
           updateStatistics();
           filterRequests();
         } else {
-          throw new Error('Failed to load leave requests');
+          throw new Error('Failed to load overtime requests');
         }
       } catch (error) {
-        console.error('Error loading leave requests:', error);
-        showToast('Error loading leave requests', 'error');
-        noDataMessage.querySelector('p').textContent = 'Error loading leave requests';
+        console.error('Error loading overtime requests:', error);
+        showToast('Error loading overtime requests', 'error');
+        noDataMessage.querySelector('p').textContent = 'Error loading overtime requests';
         noDataMessage.style.display = 'block';
       } finally {
         loadingMessage.style.display = 'none';
@@ -215,9 +207,9 @@
 
     // Update statistics cards
     function updateStatistics() {
-      const pending = allLeaveRequests.filter(r => r.status === 'pending').length;
-      const approved = allLeaveRequests.filter(r => r.status === 'approved').length;
-      const rejected = allLeaveRequests.filter(r => r.status === 'rejected').length;
+      const pending = allOvertimeRequests.filter(r => r.status === 'pending').length;
+      const approved = allOvertimeRequests.filter(r => r.status === 'approved').length;
+      const rejected = allOvertimeRequests.filter(r => r.status === 'rejected').length;
 
       document.getElementById('pendingCount').textContent = pending;
       document.getElementById('approvedCount').textContent = approved;
@@ -242,28 +234,24 @@
       const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
       const dateFilter = document.getElementById('dateFilter').value;
       
-      let filtered = allLeaveRequests;
+      let filtered = allOvertimeRequests;
 
       // Filter by status
       if (statusFilter !== 'all') {
         filtered = filtered.filter(r => r.status === statusFilter);
       }
 
-      // Filter by employee name
+      // Filter by employee name or ID
       if (searchTerm) {
         filtered = filtered.filter(r => 
-          r.employee_name.toLowerCase().includes(searchTerm)
+          (r.employee_name && r.employee_name.toLowerCase().includes(searchTerm)) ||
+          (r.employee_id && String(r.employee_id).includes(searchTerm))
         );
       }
 
       // Filter by date
       if (dateFilter) {
-        filtered = filtered.filter(r => {
-          const startDate = new Date(r.start_date);
-          const endDate = new Date(r.end_date);
-          const filterDate = new Date(dateFilter);
-          return filterDate >= startDate && filterDate <= endDate;
-        });
+        filtered = filtered.filter(r => r.ot_date === dateFilter);
       }
 
       displayRequests(filtered);
@@ -271,7 +259,7 @@
 
     // Display requests in table
     function displayRequests(requests) {
-      const tableBody = document.getElementById('leaveTableBody');
+      const tableBody = document.getElementById('overtimeTableBody');
       const noDataMessage = document.getElementById('noDataMessage');
 
       if (requests.length === 0) {
@@ -283,34 +271,18 @@
       noDataMessage.style.display = 'none';
       
       tableBody.innerHTML = requests.map((request, index) => {
-        const duration = calculateDuration(request.start_date, request.end_date);
         const statusClass = `status-${request.status}`;
-        const leaveTypeDisplay = formatLeaveType(request.leave_type);
-        
-        // Try multiple ways to get the ID
-        const requestId = request.id || request.ID || request.leave_id || index;
-        
-        console.log(`Row ${index} - ID debug:`, {
-          'request.id': request.id,
-          'request.ID': request.ID,
-          'typeof request.id': typeof request.id,
-          'requestId used': requestId,
-          'employee_name': request.employee_name
-        });
-        
+        const requestId = request.id || request.ID || index;
         const escapedName = (request.employee_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
-        // Store the full request in a data attribute for retrieval
         const requestData = JSON.stringify(request).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
         
         return `
           <tr data-request-id="${requestId}" data-request='${requestData}'>
             <td>${requestId}</td>
-            <td class="employee-name">${request.employee_name}</td>
-            <td>${leaveTypeDisplay}</td>
-            <td>${formatDate(request.start_date)}</td>
-            <td>${formatDate(request.end_date)}</td>
-            <td>${duration}</td>
+            <td class="employee-name">${request.employee_name || 'N/A'}</td>
+            <td>${request.employee_id || 'N/A'}</td>
+            <td>${formatDate(request.ot_date)}</td>
+            <td><strong>${request.hours} hrs</strong></td>
             <td class="reason-cell" title="${request.reason || 'No reason provided'}">
               ${request.reason ? truncateText(request.reason, 50) : '<em>No reason</em>'}
             </td>
@@ -338,24 +310,23 @@
       }).join('');
     }
 
-    // New handler that gets ID from the row's data attribute
+    // Handler that gets ID from the row's data attribute
     function handleActionClick(button, action) {
       const row = button.closest('tr');
       const requestId = row.getAttribute('data-request-id');
       const requestDataStr = row.getAttribute('data-request');
       
-      console.log('=== ACTION CLICK DEBUG ===');
+      console.log('=== ACTION CLICK ===');
       console.log('Action:', action);
-      console.log('Request ID from row:', requestId);
-      console.log('Request ID type:', typeof requestId);
-      console.log('========================');
+      console.log('Request ID:', requestId);
+      console.log('===================');
       
       let request;
       try {
         request = JSON.parse(requestDataStr.replace(/&#39;/g, "'").replace(/&quot;/g, '"'));
       } catch (e) {
         console.error('Failed to parse request data:', e);
-        request = allLeaveRequests.find(r => String(r.id) === String(requestId) || String(r.ID) === String(requestId));
+        request = allOvertimeRequests.find(r => String(r.id) === String(requestId) || String(r.ID) === String(requestId));
       }
       
       const employeeName = request ? request.employee_name : 'Unknown';
@@ -369,16 +340,8 @@
 
     // Show confirmation modal
     function showConfirmModal(action, requestId, employeeName) {
-      console.log('=== SHOW MODAL DEBUG ===');
-      console.log('Action:', action);
-      console.log('Request ID received:', requestId);
-      console.log('Request ID type:', typeof requestId);
-      console.log('Employee Name:', employeeName);
-      
       currentAction = action;
-      currentRequestId = requestId; // Keep as is, don't convert yet
-      
-      console.log('currentRequestId set to:', currentRequestId);
+      currentRequestId = requestId;
       
       const modal = document.getElementById('confirmModal');
       const modalTitle = document.getElementById('modalTitle');
@@ -386,31 +349,25 @@
       const confirmBtn = document.getElementById('confirmBtn');
       const employeeDetails = document.getElementById('employeeDetails');
       
-      // Find the request details - try multiple comparison methods
-      let request = allLeaveRequests.find(r => String(r.id) === String(requestId));
+      // Find the request details
+      let request = allOvertimeRequests.find(r => String(r.id) === String(requestId));
       if (!request) {
-        request = allLeaveRequests.find(r => String(r.ID) === String(requestId));
+        request = allOvertimeRequests.find(r => String(r.ID) === String(requestId));
       }
-      if (!request) {
-        request = allLeaveRequests.find(r => parseInt(r.id) === parseInt(requestId));
-      }
-      
-      console.log('Found request:', request);
-      console.log('======================');
       
       if (action === 'approve') {
-        modalTitle.textContent = '✅ Approve Leave Request';
-        modalMessage.textContent = `Are you sure you want to approve this leave request?`;
+        modalTitle.textContent = '✅ Approve Overtime Request';
+        modalMessage.textContent = `Are you sure you want to approve this overtime request?`;
         confirmBtn.className = 'btn-primary btn-approve';
         confirmBtn.textContent = 'Approve';
       } else if (action === 'reject') {
-        modalTitle.textContent = '❌ Reject Leave Request';
-        modalMessage.textContent = `Are you sure you want to reject this leave request?`;
+        modalTitle.textContent = '❌ Reject Overtime Request';
+        modalMessage.textContent = `Are you sure you want to reject this overtime request?`;
         confirmBtn.className = 'btn-primary btn-reject';
         confirmBtn.textContent = 'Reject';
       } else if (action === 'delete') {
-        modalTitle.textContent = '🗑️ Delete Leave Request';
-        modalMessage.textContent = `Are you sure you want to permanently delete this leave request?`;
+        modalTitle.textContent = '🗑️ Delete Overtime Request';
+        modalMessage.textContent = `Are you sure you want to permanently delete this overtime request?`;
         confirmBtn.className = 'btn-primary btn-delete';
         confirmBtn.textContent = 'Delete';
       }
@@ -418,9 +375,10 @@
       // Display employee details
       if (request) {
         employeeDetails.innerHTML = `
-          <div class="detail-row"><strong>Employee:</strong> ${request.employee_name}</div>
-          <div class="detail-row"><strong>Leave Type:</strong> ${formatLeaveType(request.leave_type)}</div>
-          <div class="detail-row"><strong>Duration:</strong> ${formatDate(request.start_date)} to ${formatDate(request.end_date)}</div>
+          <div class="detail-row"><strong>Employee:</strong> ${request.employee_name || 'N/A'}</div>
+          <div class="detail-row"><strong>Employee ID:</strong> ${request.employee_id || 'N/A'}</div>
+          <div class="detail-row"><strong>Date:</strong> ${formatDate(request.ot_date)}</div>
+          <div class="detail-row"><strong>Hours:</strong> ${request.hours} hours</div>
           <div class="detail-row"><strong>Reason:</strong> ${request.reason || 'No reason provided'}</div>
         `;
       }
@@ -443,8 +401,6 @@
         return;
       }
 
-      console.log('Confirming action:', currentAction, 'for request ID:', currentRequestId); // Debug log
-
       const confirmBtn = document.getElementById('confirmBtn');
       const originalText = confirmBtn.textContent;
       confirmBtn.disabled = true;
@@ -452,33 +408,32 @@
 
       try {
         if (currentAction === 'approve' || currentAction === 'reject') {
-          await updateLeaveStatus(currentRequestId, currentAction === 'approve' ? 'approved' : 'rejected');
+          await updateOvertimeStatus(currentRequestId, currentAction === 'approve' ? 'approved' : 'rejected');
         } else if (currentAction === 'delete') {
-          await deleteLeaveRequest(currentRequestId);
+          await deleteOvertimeRequest(currentRequestId);
         }
         
         closeModal();
-        await loadLeaveRequests();
+        await loadOvertimeRequests();
         
-        // Show appropriate success message based on action
         const actionMessages = {
-          'approve': 'Leave request approved successfully',
-          'reject': 'Leave request rejected',
-          'delete': 'Leave request deleted'
+          'approve': 'Overtime request approved successfully',
+          'reject': 'Overtime request rejected',
+          'delete': 'Overtime request deleted'
         };
         showToast(actionMessages[currentAction] || 'Action completed successfully', 'success');
       } catch (error) {
-        console.error(`Error ${currentAction}ing leave request:`, error);
-        showToast(`Failed to ${currentAction} leave request: ${error.message}`, 'error');
+        console.error(`Error ${currentAction}ing overtime request:`, error);
+        showToast(`Failed to ${currentAction} overtime request: ${error.message}`, 'error');
       } finally {
         confirmBtn.disabled = false;
         confirmBtn.textContent = originalText;
       }
     }
 
-    // Update leave request status
-    async function updateLeaveStatus(id, status) {
-      const response = await fetch(`${API_BASE}/leave-requests`, {
+    // Update overtime request status
+    async function updateOvertimeStatus(id, status) {
+      const response = await fetch(`${API_BASE}/overtime-requests`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -489,13 +444,13 @@
       const result = await response.json();
       
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to update leave request');
+        throw new Error(result.error || 'Failed to update overtime request');
       }
     }
 
-    // Delete leave request
-    async function deleteLeaveRequest(id) {
-      const response = await fetch(`${API_BASE}/leave-requests`, {
+    // Delete overtime request
+    async function deleteOvertimeRequest(id) {
+      const response = await fetch(`${API_BASE}/overtime-requests`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -506,13 +461,13 @@
       const result = await response.json();
       
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to delete leave request');
+        throw new Error(result.error || 'Failed to delete overtime request');
       }
     }
 
-    // View request details (for already processed requests)
+    // View request details
     function viewDetails(requestId) {
-      const request = allLeaveRequests.find(r => parseInt(r.id) === parseInt(requestId));
+      const request = allOvertimeRequests.find(r => String(r.id) === String(requestId) || String(r.ID) === String(requestId));
       if (!request) return;
 
       const modal = document.getElementById('confirmModal');
@@ -521,19 +476,18 @@
       const confirmBtn = document.getElementById('confirmBtn');
       const employeeDetails = document.getElementById('employeeDetails');
       
-      modalTitle.textContent = '📄 Leave Request Details';
+      modalTitle.textContent = '📄 Overtime Request Details';
       modalMessage.textContent = '';
       confirmBtn.style.display = 'none';
       
-      const statusEmoji = request.status === 'approved' ? '✅' : '❌';
+      const statusEmoji = request.status === 'approved' ? '✅' : request.status === 'rejected' ? '❌' : '⏳';
       
       employeeDetails.innerHTML = `
         <div class="detail-row"><strong>Request ID:</strong> ${request.id}</div>
-        <div class="detail-row"><strong>Employee:</strong> ${request.employee_name}</div>
-        <div class="detail-row"><strong>Leave Type:</strong> ${formatLeaveType(request.leave_type)}</div>
-        <div class="detail-row"><strong>Start Date:</strong> ${formatDate(request.start_date)}</div>
-        <div class="detail-row"><strong>End Date:</strong> ${formatDate(request.end_date)}</div>
-        <div class="detail-row"><strong>Duration:</strong> ${calculateDuration(request.start_date, request.end_date)}</div>
+        <div class="detail-row"><strong>Employee:</strong> ${request.employee_name || 'N/A'}</div>
+        <div class="detail-row"><strong>Employee ID:</strong> ${request.employee_id || 'N/A'}</div>
+        <div class="detail-row"><strong>Date:</strong> ${formatDate(request.ot_date)}</div>
+        <div class="detail-row"><strong>Hours:</strong> ${request.hours} hours</div>
         <div class="detail-row"><strong>Reason:</strong> ${request.reason || 'No reason provided'}</div>
         <div class="detail-row"><strong>Status:</strong> ${statusEmoji} ${capitalizeFirst(request.status)}</div>
         <div class="detail-row"><strong>Requested On:</strong> ${formatDateTime(request.date_requested)}</div>
@@ -552,13 +506,6 @@
     }
 
     // Utility Functions
-    function calculateDuration(startDate, endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      return `${days} day${days !== 1 ? 's' : ''}`;
-    }
-
     function formatDate(dateString) {
       if (!dateString) return 'N/A';
       const date = new Date(dateString);
@@ -577,24 +524,13 @@
       });
     }
 
-    function formatLeaveType(type) {
-      const types = {
-        'sick_leave': 'Sick Leave',
-        'vacation_leave': 'Vacation Leave',
-        'personal_leave': 'Personal Leave',
-        'emergency_leave': 'Emergency Leave',
-        'maternity_leave': 'Maternity Leave',
-        'paternity_leave': 'Paternity Leave'
-      };
-      return types[type] || type;
-    }
-
     function capitalizeFirst(str) {
+      if (!str) return '';
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     function truncateText(text, maxLength) {
-      if (text.length <= maxLength) return text;
+      if (!text || text.length <= maxLength) return text;
       return text.substring(0, maxLength) + '...';
     }
 
@@ -619,3 +555,8 @@
   </script>
 </body>
 </html>
+
+
+
+
+
