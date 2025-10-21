@@ -22,13 +22,6 @@ const EmployeeNavigation = {
         items: [
           { href: "profile.html", icon: "👤", text: "Profile & Settings" }
         ]
-      },
-      {
-        title: "Company Info",
-        items: [
-          { href: "../service.html", icon: "🔧", text: "Services" },
-          { href: "../contact.html", icon: "📞", text: "Contact Information" }
-        ]
       }
     ]
   },
