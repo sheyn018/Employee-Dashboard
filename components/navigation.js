@@ -22,8 +22,7 @@ const NavigationComponent = {
                 { href: "add-employee.html", icon: "👤➕", text: "Add Employee" },
                 { href: "evaluation-form.html", icon: "📊", text: "Employee Evaluation" },
                 { href: "evaluations-view.html", icon: "⭐", text: "View Evaluations" },
-                { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" },
-                { href: "performance.html", icon: "📈", text: "Performance" }
+                { href: "disciplinary.html", icon: "⚖️", text: "Disciplinary Actions" }
               ]
             },
             {

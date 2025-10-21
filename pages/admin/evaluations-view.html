@@ -145,11 +145,28 @@
       cursor: pointer;
       font-size: 13px;
       transition: all 0.3s ease;
+      margin-right: 5px;
     }
 
     .btn-view:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-delete {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #d32f2f, #f44336);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
     }
 
     .no-data {
@@ -492,6 +509,7 @@
           <td>${new Date(evaluation.date_created).toLocaleDateString()}</td>
           <td>
             <button class="btn-view" onclick="viewEvaluation(${evaluation.id})">View Details</button>
+            <button class="btn-delete" onclick="deleteEvaluation(${evaluation.id}, '${evaluation.employee_name}')">Delete</button>
           </td>
         `;
         tbody.appendChild(row);
@@ -663,6 +681,35 @@
       const modal = document.getElementById('evaluationModal');
       if (event.target == modal) {
         closeModal();
+      }
+    }
+
+    // Delete evaluation
+    async function deleteEvaluation(id, employeeName) {
+      if (!confirm(`Are you sure you want to delete the evaluation for ${employeeName}?\n\nThis action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/evaluations/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete evaluation');
+        }
+
+        // Show success message
+        alert(`Evaluation for ${employeeName} has been successfully deleted.`);
+
+        // Refresh the evaluations list
+        await fetchEvaluations();
+      } catch (error) {
+        console.error('Error deleting evaluation:', error);
+        alert('Failed to delete evaluation. Please try again.');
       }
     }
 

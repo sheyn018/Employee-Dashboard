@@ -193,6 +193,118 @@
     .blockquote p {color:#ecf0f1; font-weight:600;}
     .blockquote-footer {color:#bdc3c7; font-size:14px;}
     .blockquote-footer cite {color:#2ecc71; font-weight:600;}
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header .container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+      
+      nav ul {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      nav a {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      
+      .hero {
+        padding: 140px 20px 50px;
+      }
+      
+      .hero h2 {
+        font-size: 36px;
+      }
+      
+      .hero p {
+        font-size: 18px;
+      }
+      
+      .logo {
+        font-size: 28px;
+      }
+      
+      .logo-image {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .team-section {
+        padding: 40px 15px;
+      }
+      
+      .team-section h2 {
+        font-size: 28px;
+        margin-bottom: 30px;
+      }
+      
+      .team-cards {
+        gap: 20px;
+      }
+      
+      .team-card {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 130px 15px 40px;
+      }
+      
+      .hero h2 {
+        font-size: 28px;
+      }
+      
+      .hero p {
+        font-size: 16px;
+      }
+      
+      .logo {
+        font-size: 24px;
+      }
+      
+      .logo-image {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .tagline {
+        font-size: 12px;
+      }
+      
+      nav a {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      
+      .team-section h2 {
+        font-size: 24px;
+      }
+      
+      .team-card {
+        padding: 20px;
+        width: 100%;
+      }
+      
+      .team-card img {
+        width: 90px;
+        height: 90px;
+      }
+      
+      .team-card h3 {
+        font-size: 18px;
+      }
+      
+      .team-card p {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>

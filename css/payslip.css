@@ -418,9 +418,63 @@ tbody tr td[colspan="5"] {
 }
 
 /* Responsive improvements */
+@media (max-width: 1200px) {
+    .content {
+        padding: 30px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 12px 10px;
+    }
+}
+
+@media (max-width: 992px) {
+    .content {
+        padding: 25px;
+    }
+
+    header {
+        padding: 25px 30px;
+        margin-bottom: 30px;
+    }
+
+    header h1 {
+        font-size: 2.25rem;
+    }
+
+    .menu-btn, .logout-btn {
+        padding: 10px 16px;
+        font-size: 0.8rem;
+    }
+
+    table {
+        font-size: 13px;
+    }
+
+    th, td {
+        padding: 10px 8px;
+    }
+}
+
 @media (max-width: 768px) {
     .content {
-        padding: 20px;
+        padding: 20px 15px;
+    }
+
+    .menu-btn {
+        top: 15px;
+        left: 15px;
+        padding: 10px 14px;
+    }
+
+    .logout-btn {
+        top: 15px;
+        right: 15px;
+        padding: 10px 14px;
     }
     
     header {
@@ -432,12 +486,28 @@ tbody tr td[colspan="5"] {
         font-size: 2rem;
     }
     
+    /* Make tables scrollable on mobile */
     table {
-        font-size: 13px;
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        font-size: 12px;
+    }
+
+    thead, tbody, tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
     }
     
     th, td {
-        padding: 12px 8px;
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+
+    .employee-name {
+        font-size: 13px;
     }
     
     .modal-content {
@@ -451,13 +521,120 @@ tbody tr td[colspan="5"] {
     
     .action-buttons {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
     }
     
     .action-buttons .modal-btn {
         width: 100%;
-        max-width: 200px;
+        max-width: none;
         margin: 4px 0;
+    }
+
+    .history-table {
+        font-size: 11px;
+        display: block;
+        overflow-x: auto;
+    }
+
+    .history-table th {
+        padding: 10px 6px;
+        font-size: 11px;
+    }
+
+    .history-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+
+    .menu-btn, .logout-btn, .generate-btn, .modal-btn, .reset-btn, .delete-btn, .close-history-btn {
+        font-size: 0.8rem;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding: 15px 10px;
+    }
+
+    .menu-btn {
+        top: 10px;
+        left: 10px;
+        padding: 8px 12px;
+        font-size: 0.7rem;
+    }
+
+    .logout-btn {
+        top: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        font-size: 0.7rem;
+    }
+
+    header {
+        padding: 18px 15px;
+        margin-bottom: 20px;
+        border-radius: 10px;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    table {
+        font-size: 11px;
+    }
+
+    th, td {
+        padding: 8px 4px;
+        font-size: 11px;
+    }
+
+    .employee-name {
+        font-size: 12px;
+    }
+
+    .modal-content {
+        padding: 20px;
+        margin: 5px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.25rem;
+        margin-bottom: 16px;
+    }
+
+    .modal-content p {
+        font-size: 12px;
+        margin: 10px 0;
+    }
+
+    .modal-content p strong {
+        min-width: 90px;
+        font-size: 12px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .action-buttons {
+        gap: 8px;
+        margin-top: 20px;
+        padding-top: 16px;
+    }
+
+    .menu-btn, .logout-btn, .generate-btn, .modal-btn, .reset-btn, .delete-btn, .close-history-btn {
+        font-size: 0.75rem;
+        padding: 10px 12px;
+    }
+
+    .history-table {
+        font-size: 10px;
+    }
+
+    .history-table th,
+    .history-table td {
+        padding: 6px 4px;
+        font-size: 10px;
     }
 }
 

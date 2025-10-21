@@ -27,6 +27,12 @@ $path = parse_url($path, PHP_URL_PATH);
 $pathParts = explode('/', trim($path, '/'));
 $endpoint = end($pathParts);
 
+// Check if the endpoint is numeric (it's an ID, so get the actual endpoint)
+if (is_numeric($endpoint) && count($pathParts) >= 2) {
+    // The actual endpoint is the second-to-last part
+    $endpoint = $pathParts[count($pathParts) - 2];
+}
+
 // Check for query parameter action (for compatibility with existing pages)
 $action = isset($_GET['action']) ? $_GET['action'] : null;
 
@@ -1108,6 +1114,15 @@ function handleLeaveRequests($conn, $method) {
 
 // Employee evaluations
 function handleEvaluations($conn, $method) {
+    // Check if there's an ID in the URL path (for DELETE /evaluations/{id})
+    global $pathParts;
+    $evaluationId = null;
+    
+    // Check if the last part of the path is a number (evaluation ID)
+    if (count($pathParts) >= 2 && is_numeric(end($pathParts))) {
+        $evaluationId = intval(end($pathParts));
+    }
+    
     switch ($method) {
         case 'GET':
             // Get all evaluations, optionally filtered
@@ -1419,14 +1434,20 @@ function handleEvaluations($conn, $method) {
 
         case 'DELETE':
             // Delete evaluation
-            $input = json_decode(file_get_contents('php://input'), true);
-            
-            if (!isset($input['id'])) {
-                sendJsonResponse(['error' => 'Evaluation ID is required'], 400);
-                return;
+            // First check if ID is in the URL path
+            if ($evaluationId) {
+                $id = $evaluationId;
+            } else {
+                // Fall back to reading from request body
+                $input = json_decode(file_get_contents('php://input'), true);
+                
+                if (!isset($input['id'])) {
+                    sendJsonResponse(['error' => 'Evaluation ID is required'], 400);
+                    return;
+                }
+                
+                $id = intval($input['id']);
             }
-            
-            $id = intval($input['id']);
             
             if ($conn->query("DELETE FROM employee_evaluations WHERE id = $id")) {
                 sendJsonResponse(['success' => true]);
