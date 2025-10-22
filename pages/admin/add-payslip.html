@@ -362,20 +362,7 @@
         const messageDiv = document.getElementById("responseMessage");
 
         if (result.success) {
-          let successMessage = `<p class="success">✅ Payslip added successfully (ID: ${result.id})<br>
-            Employee: ${result.payslip_data.employee_name}<br>`;
-          
-          if (result.payslip_data.employee_id) {
-            successMessage += `Employee ID: ${result.payslip_data.employee_id}<br>`;
-          }
-          
-          successMessage += `Position: ${result.payslip_data.position}<br>
-            Earnings: ₱${parseFloat(result.payslip_data.earnings).toLocaleString()}<br>
-            Date: ${new Date(result.payslip_data.date_generated).toLocaleDateString()}</p>`;
-            
-          messageDiv.innerHTML = successMessage;
-          
-          // Generate HTML payslip in new tab
+          // Generate HTML payslip in new tab FIRST
           generatePayslipHTML({
             employee_name: document.getElementById("employee_name").value,
             employee_id: document.getElementById("employee_id").value,
@@ -394,10 +381,27 @@
             date_generated: document.getElementById("date_generated").value || new Date().toISOString().split('T')[0]
           });
           
+          let successMessage = `<p class="success">✅ Payslip added successfully (ID: ${result.id})<br>
+            Employee: ${result.payslip_data.employee_name}<br>`;
+          
+          if (result.payslip_data.employee_id) {
+            successMessage += `Employee ID: ${result.payslip_data.employee_id}<br>`;
+          }
+          
+          successMessage += `Position: ${result.payslip_data.position}<br>
+            Earnings: ₱${parseFloat(result.payslip_data.earnings).toLocaleString()}<br>
+            Date: ${new Date(result.payslip_data.date_generated).toLocaleDateString()}<br><br>
+            <strong>📄 The payslip has been opened in a new tab. You can stay on this page to add more payslips.</strong></p>`;
+            
+          messageDiv.innerHTML = successMessage;
+          
           document.getElementById("payslipForm").reset();
           // Reset date to today after form reset
           const today = new Date().toISOString().split('T')[0];
           document.getElementById('date_generated').value = today;
+          
+          // Scroll to top to show success message
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
           messageDiv.innerHTML = `<p class="error">❌ Error: ${result.error || 'Something went wrong'}</p>`;
         }
@@ -428,9 +432,16 @@
         date_generated: data.date_generated
       });
 
-      // Open payslip template in new tab with data
+      // Open payslip template in new tab with data (this will not affect current page)
       const payslipUrl = `payslip-template.html?${params.toString()}`;
-      window.open(payslipUrl, '_blank');
+      const newTab = window.open(payslipUrl, '_blank');
+      
+      // Ensure the new tab opened successfully
+      if (newTab) {
+        newTab.focus();
+      } else {
+        alert('Payslip generated successfully! Please allow pop-ups to view the payslip.');
+      }
     }
   </script>
 </body>

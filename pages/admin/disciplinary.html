@@ -78,6 +78,7 @@
           <th>Severity</th>
           <th>Status</th>
           <th>Date</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -273,7 +274,7 @@
         
         if (Array.isArray(data)) {
           if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">⚠️ No disciplinary actions found. Run setup_test_db.sql to add sample data.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8">⚠️ No disciplinary actions found. Run setup_test_db.sql to add sample data.</td></tr>';
             console.log('⚠️ No data returned from API');
           } else {
             console.log('✅ Loading', data.length, 'records');
@@ -286,6 +287,13 @@
                 <td>${capitalizeFirst(row.severity || '')}</td>
                 <td>${capitalizeFirst(row.status || '')}</td>
                 <td>${formatDate(row.incident_date || row.date_reported || '')}</td>
+                <td>
+                  <button onclick="deleteDisciplinaryAction(${row.id})" 
+                          style="background: #d32f2f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                          title="Delete disciplinary action">
+                    🗑️ Delete
+                  </button>
+                </td>
               </tr>`;
             });
           }
@@ -294,12 +302,41 @@
           tbody.innerHTML = `<tr><td colspan="5">❌ Error: ${data.error}</td></tr>`;
         } else {
           console.error('❌ Unexpected response format:', data);
-          tbody.innerHTML = '<tr><td colspan="5">❌ Unexpected response format</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8">❌ Unexpected response format</td></tr>';
         }
       } catch (error) {
         console.error('❌ Error loading data:', error);
         const tbody = document.querySelector("#disciplinaryTable tbody");
-        tbody.innerHTML = '<tr><td colspan="5">❌ Error loading data. Check console for details.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8">❌ Error loading data. Check console for details.</td></tr>';
+      }
+    }
+    
+    // Delete disciplinary action function
+    async function deleteDisciplinaryAction(actionId) {
+      if (!confirm(`Are you sure you want to delete disciplinary action record ID ${actionId}? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/disciplinary-actions`, {
+          method: "DELETE",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: actionId })
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('Disciplinary action deleted successfully!');
+          loadData(); // Reload the table
+        } else {
+          alert('Failed to delete disciplinary action: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting disciplinary action:', error);
+        alert('Error deleting disciplinary action record');
       }
     }
     
