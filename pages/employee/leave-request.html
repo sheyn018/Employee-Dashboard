@@ -24,9 +24,18 @@
       <div class="form-container">
         <form id="leaveRequestForm">
           <div class="form-group">
+            <label for="employeeId">Employee ID <span class="required">*</span></label>
+            <input type="number" id="employeeId" name="employee_id" required min="10000" max="99999" 
+                   placeholder="Enter your 5-digit employee ID">
+            <small id="employee_id_hint" style="color: #666; font-size: 11px;">Enter employee ID to auto-fill name</small>
+            <div class="error-message" id="employeeIdError"></div>
+          </div>
+
+          <div class="form-group">
             <label for="employeeName">Employee Name <span class="required">*</span></label>
-            <input type="text" id="employeeName" name="employee_name" required 
-                   placeholder="Enter your full name">
+            <input type="text" id="employeeName" name="employee_name" readonly 
+                   style="background: #f5f5f5;" placeholder="Auto-filled from Employee ID">
+            <small style="color: #666; font-size: 11px;">Auto-filled from Employee ID</small>
             <div class="error-message" id="nameError"></div>
           </div>
 
@@ -118,7 +127,112 @@
     // API base URL
     const API_BASE = 'http://localhost:3000/api/api.php';
 
+    // Store current employee data
+    let currentEmployeeId = null;
+    let currentEmployeeName = '';
+
+    // Employee ID lookup functionality
+    function setupEmployeeLookup() {
+      const employeeIdInput = document.getElementById('employeeId');
+      const employeeNameDisplay = document.getElementById('employeeName');
+      const employeeIdError = document.getElementById('employeeIdError');
+      const employeeIdHint = document.getElementById('employee_id_hint');
+      
+      let lookupTimeout = null;
+      
+      employeeIdInput.addEventListener('input', function() {
+        const employeeId = this.value.trim();
+        
+        // Clear previous timeout
+        if (lookupTimeout) {
+          clearTimeout(lookupTimeout);
+        }
+        
+        // Reset fields if input is cleared
+        if (!employeeId) {
+          employeeNameDisplay.value = '';
+          currentEmployeeId = null;
+          currentEmployeeName = '';
+          hideError('employeeIdError');
+          employeeIdHint.style.display = 'block';
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+          return;
+        }
+        
+        // Only lookup if it's a 5-digit number
+        if (employeeId.length === 5 && /^\d{5}$/.test(employeeId)) {
+          // Debounce lookup by 500ms
+          lookupTimeout = setTimeout(() => {
+            lookupEmployee(employeeId);
+          }, 500);
+        } else if (employeeId.length >= 5) {
+          showError('employeeIdError', 'Employee ID must be exactly 5 digits');
+          employeeNameDisplay.value = '';
+          currentEmployeeId = null;
+          currentEmployeeName = '';
+        }
+      });
+      
+      async function lookupEmployee(employeeId) {
+        try {
+          employeeIdHint.textContent = 'Looking up employee...';
+          employeeIdHint.style.color = '#1976d2';
+          hideError('employeeIdError');
+          
+          const response = await fetch(`${API_BASE}/employee-lookup?id=${employeeId}`);
+          const result = await response.json();
+          
+          if (response.ok && result.success && result.employee) {
+            // Auto-fill employee name
+            employeeNameDisplay.value = result.employee.name;
+            currentEmployeeId = result.employee.id;
+            currentEmployeeName = result.employee.name;
+            
+            // Show success message
+            employeeIdHint.textContent = '✓ Employee found';
+            employeeIdHint.style.color = '#2e7d32';
+            hideError('employeeIdError');
+            
+            // Reset hint after 2 seconds
+            setTimeout(() => {
+              employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+              employeeIdHint.style.color = '#666';
+            }, 2000);
+          } else {
+            // Employee not found
+            employeeNameDisplay.value = '';
+            currentEmployeeId = null;
+            currentEmployeeName = '';
+            showError('employeeIdError', result.error || 'Employee ID not found');
+            employeeIdHint.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error looking up employee:', error);
+          employeeNameDisplay.value = '';
+          currentEmployeeId = null;
+          currentEmployeeName = '';
+          showError('employeeIdError', 'Error connecting to server');
+          employeeIdHint.textContent = 'Enter employee ID to auto-fill name';
+          employeeIdHint.style.color = '#666';
+        }
+      }
+    }
+
     // Form validation functions
+    function validateEmployeeId(employeeId) {
+      if (!employeeId || employeeId.trim().length === 0) {
+        return "Employee ID is required";
+      }
+      const id = parseInt(employeeId);
+      if (isNaN(id) || id < 10000 || id > 99999) {
+        return "Employee ID must be a 5-digit number";
+      }
+      if (!currentEmployeeId || currentEmployeeId !== id) {
+        return "Please enter a valid Employee ID";
+      }
+      return null;
+    }
     function validateEmployeeName(name) {
       if (!name || name.trim().length < 2) {
         return "Employee name must be at least 2 characters long";
@@ -176,6 +290,7 @@
     }
 
     function hideAllErrors() {
+      hideError('employeeIdError');
       hideError('nameError');
       hideError('leaveTypeError');
       hideError('startDateError');
@@ -217,11 +332,14 @@
       hideMessages();
     }
 
-    // Set minimum date to today
+    // Set minimum date to today and initialize employee lookup
     document.addEventListener('DOMContentLoaded', function() {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('startDate').setAttribute('min', today);
       document.getElementById('endDate').setAttribute('min', today);
+      
+      // Setup employee ID lookup
+      setupEmployeeLookup();
     });
 
     // Real-time validation
@@ -289,7 +407,8 @@
       // Get form data
       const formData = new FormData(e.target);
       const data = {
-        employee_name: formData.get('employee_name').trim(),
+        employee_id: currentEmployeeId, // Use the validated employee ID
+        employee_name: currentEmployeeName, // Use the validated employee name
         leave_type: formData.get('leave_type'),
         start_date: formData.get('start_date'),
         end_date: formData.get('end_date'),
@@ -299,6 +418,12 @@
 
       // Validate form data
       let hasErrors = false;
+
+      const employeeIdError = validateEmployeeId(document.getElementById('employeeId').value);
+      if (employeeIdError) {
+        showError('employeeIdError', employeeIdError);
+        hasErrors = true;
+      }
 
       const nameError = validateEmployeeName(data.employee_name);
       if (nameError) {
@@ -347,6 +472,8 @@
           // Reset form after successful submission
           setTimeout(() => {
             resetForm();
+            currentEmployeeId = null;
+            currentEmployeeName = '';
           }, 2000);
         } else {
           throw new Error(result.error || 'Failed to submit leave request');

@@ -562,6 +562,49 @@ function handleSalaryRequests($conn, $method) {
         case 'POST':
             $input = json_decode(file_get_contents('php://input'), true);
 
+            // Validate required fields
+            if (!isset($input['employee_name'], $input['requested_salary'])) {
+                sendJsonResponse(['error' => 'Missing required fields: employee_name, requested_salary'], 400);
+                break;
+            }
+
+            // Validate employee_id if provided
+            $employeeId = null;
+            if (isset($input['employee_id']) && !empty($input['employee_id'])) {
+                $employeeId = intval($input['employee_id']);
+                
+                // Validate employee_id format
+                if ($employeeId < 10000 || $employeeId > 99999) {
+                    sendJsonResponse(['error' => 'Employee ID must be a 5-digit number'], 400);
+                    break;
+                }
+                
+                // Verify employee exists in activerecords
+                $stmt = $conn->prepare("SELECT name FROM activerecords WHERE id = ?");
+                $stmt->bind_param("i", $employeeId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if (!$result || $result->num_rows === 0) {
+                    sendJsonResponse(['error' => 'Employee ID not found in active records'], 404);
+                    break;
+                }
+                
+                // Optionally verify the name matches
+                $employeeRecord = $result->fetch_assoc();
+                if ($employeeRecord['name'] !== $input['employee_name']) {
+                    sendJsonResponse(['error' => 'Employee name does not match the provided Employee ID'], 400);
+                    break;
+                }
+            }
+
+            // Validate salary amount
+            $requestedSalary = floatval($input['requested_salary']);
+            if ($requestedSalary <= 0) {
+                sendJsonResponse(['error' => 'Requested salary must be greater than 0'], 400);
+                break;
+            }
+
             // Generate unique random 5-digit ID
             do {
                 $randomId = rand(10000, 99999);
@@ -571,9 +614,14 @@ function handleSalaryRequests($conn, $method) {
                 $result = $check->get_result();
             } while ($result && $result->num_rows > 0);
 
-            // Insert with custom ID
-            $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (id, employee_name, requested_salary, status, actions) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("isdss", $randomId, $input['employee_name'], $input['requested_salary'], $input['status'], $input['actions']);
+            // Insert with custom ID - include employee_id if provided
+            if ($employeeId !== null) {
+                $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (id, employee_id, employee_name, requested_salary, status, actions) VALUES (?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("iisdss", $randomId, $employeeId, $input['employee_name'], $requestedSalary, $input['status'], $input['actions']);
+            } else {
+                $stmt = $conn->prepare("INSERT INTO employeesalaryrequests (id, employee_name, requested_salary, status, actions) VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("isdss", $randomId, $input['employee_name'], $requestedSalary, $input['status'], $input['actions']);
+            }
             
             if ($stmt->execute()) {
                 sendJsonResponse(['success' => true, 'id' => $randomId]);

@@ -46,6 +46,7 @@
           <th>Type</th>
           <th>Amount</th>
           <th>Duration</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -209,13 +210,48 @@
               <td>${row.benefit_type || ''}</td>
               <td>$${parseFloat(row.amount || 0).toFixed(2)}</td>
               <td>${duration}</td>
+              <td>
+                <button onclick="deleteBenefit(${row.id})" 
+                        style="background: #d32f2f; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;"
+                        title="Delete benefit">
+                  🗑️ Delete
+                </button>
+              </td>
             </tr>`;
           });
         }
       } catch (error) {
         console.error('Error loading data:', error);
         const tbody = document.querySelector("#benefitsTable tbody");
-        tbody.innerHTML = '<tr><td colspan="5">Error loading data</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6">Error loading data</td></tr>';
+      }
+    }
+
+    async function deleteBenefit(benefitId) {
+      if (!confirm(`Are you sure you want to delete benefit record ID ${benefitId}? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:3000/api/api.php/benefits", {
+          method: "DELETE",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: benefitId })
+        });
+
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('Benefit record deleted successfully!');
+          loadData(); // Reload the table
+        } else {
+          alert('Failed to delete benefit: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting benefit:', error);
+        alert('Error deleting benefit record');
       }
     }
   </script>

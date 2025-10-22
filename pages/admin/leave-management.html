@@ -80,7 +80,8 @@
         <table class="leave-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Request ID</th>
+              <th>Employee ID</th>
               <th>Employee Name</th>
               <th>Leave Type</th>
               <th>Start Date</th>
@@ -299,6 +300,7 @@
         return `
           <tr data-request-id="${requestId}" data-request='${requestData}'>
             <td>${requestId}</td>
+            <td>${request.employee_id || 'N/A'}</td>
             <td class="employee-name">${request.employee_name}</td>
             <td>${leaveTypeDisplay}</td>
             <td>${formatDate(request.start_date)}</td>
@@ -522,6 +524,7 @@
       
       employeeDetails.innerHTML = `
         <div class="detail-row"><strong>Request ID:</strong> ${request.id}</div>
+        <div class="detail-row"><strong>Employee ID:</strong> ${request.employee_id || 'N/A'}</div>
         <div class="detail-row"><strong>Employee:</strong> ${request.employee_name}</div>
         <div class="detail-row"><strong>Leave Type:</strong> ${formatLeaveType(request.leave_type)}</div>
         <div class="detail-row"><strong>Start Date:</strong> ${formatDate(request.start_date)}</div>
